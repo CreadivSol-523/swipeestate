@@ -5,11 +5,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#476BE6',
-        secondary: '#F3F3F3',
-        'text-muted': '#555555',
-        'dark-heading': '#4B4B4B',
-        'text-blue': '#5347E6',
+        primary: '#38B6FF',
+        secondary: '#FFFDFE',
       },
       fontFamily: {
         figtree400: ['Figtree-Medium'],
