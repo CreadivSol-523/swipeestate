@@ -7,20 +7,23 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { authUser } from '../../redux/Features/authState';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
 
-const LoginScreen = ({ navigation }: { navigation: any }) => {
-  const [data, setData] = useState({ email: '', password: '' });
+const ForgetPasswordScreen = ({ navigation }: { navigation: any }) => {
+  const [data, setData] = useState({ email: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const dispatch = useDispatch();
 
-  const handleLogin = () => {
-    if (!data.email || !data.password) {
-      setError('Please fill in all fields');
+  const handleSendOTP = () => {
+    if (!data.email) {
+      setError('Please enter your email');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      setError('Please enter a valid email');
       return;
     }
 
@@ -28,16 +31,19 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
     setError('');
 
     setTimeout(() => {
-      dispatch(authUser({ data: { email: data.email, name: 'User' } }));
       setLoading(false);
+      navigation.navigate('VerifyOTPScreen', { email: data.email });
     }, 1500);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <Text style={styles.title}>Forgot Password</Text>
+        <Text style={styles.subtitle}>
+          Enter your email address and we'll send you an OTP to reset your
+          password
+        </Text>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
@@ -55,54 +61,32 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
           />
         </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your password"
-            placeholderTextColor="#999"
-            value={data.password}
-            onChangeText={text => {
-              setData({ ...data, password: text });
-              setError('');
-            }}
-            secureTextEntry
-          />
-        </View>
-
-        <TouchableOpacity
-          style={styles.forgotPassword}
-          onPress={() => navigation.navigate('ForgetPasswordScreen')}
-        >
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
-
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
+          onPress={handleSendOTP}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Login</Text>
+            <Text style={styles.buttonText}>Send OTP</Text>
           )}
         </TouchableOpacity>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
-            <Text style={styles.linkText}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>Back to Login</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-export default LoginScreen;
+export default ForgetPasswordScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -125,6 +109,7 @@ const styles = StyleSheet.create({
     fontFamily: Font.font400,
     color: '#666',
     marginBottom: 40,
+    lineHeight: 24,
   },
   inputContainer: {
     marginBottom: 20,
@@ -146,21 +131,13 @@ const styles = StyleSheet.create({
     color: '#000',
     backgroundColor: '#fff',
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    fontFamily: Font.font500,
-    color: colors.PrimaryColor,
-  },
   button: {
     height: 50,
     backgroundColor: colors.PrimaryColor,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
+    marginTop: 4,
     flexDirection: 'row',
     paddingHorizontal: 16,
   },
@@ -181,16 +158,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  footer: {
-    flexDirection: 'row',
+  backButton: {
     alignItems: 'center',
+    paddingVertical: 12,
   },
-  footerText: {
-    fontSize: 14,
-    fontFamily: Font.font400,
-    color: '#666',
-  },
-  linkText: {
+  backButtonText: {
     fontSize: 14,
     fontFamily: Font.font500,
     color: colors.PrimaryColor,

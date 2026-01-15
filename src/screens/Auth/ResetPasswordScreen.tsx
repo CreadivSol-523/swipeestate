@@ -7,20 +7,27 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { authUser } from '../../redux/Features/authState';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
 
-const LoginScreen = ({ navigation }: { navigation: any }) => {
-  const [data, setData] = useState({ email: '', password: '' });
+const ResetPasswordScreen = ({ navigation }: { navigation: any }) => {
+  const [data, setData] = useState({ newPassword: '', reenterNewPassword: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const dispatch = useDispatch();
 
-  const handleLogin = () => {
-    if (!data.email || !data.password) {
+  const handleResetPassword = () => {
+    if (!data.newPassword || !data.reenterNewPassword) {
       setError('Please fill in all fields');
+      return;
+    }
+
+    if (data.newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (data.newPassword !== data.reenterNewPassword) {
+      setError('Passwords do not match');
       return;
     }
 
@@ -28,81 +35,66 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
     setError('');
 
     setTimeout(() => {
-      dispatch(authUser({ data: { email: data.email, name: 'User' } }));
       setLoading(false);
+      navigation.navigate('LoginScreen');
     }, 1500);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <Text style={styles.title}>Reset Password</Text>
+        <Text style={styles.subtitle}>Enter your new password</Text>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>New Password</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter your email"
+            placeholder="Enter new password"
             placeholderTextColor="#999"
-            value={data.email}
+            value={data.newPassword}
             onChangeText={text => {
-              setData({ ...data, email: text });
-              setError('');
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your password"
-            placeholderTextColor="#999"
-            value={data.password}
-            onChangeText={text => {
-              setData({ ...data, password: text });
+              setData({ ...data, newPassword: text });
               setError('');
             }}
             secureTextEntry
           />
         </View>
 
-        <TouchableOpacity
-          style={styles.forgotPassword}
-          onPress={() => navigation.navigate('ForgetPasswordScreen')}
-        >
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Re-enter New Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Re-enter new password"
+            placeholderTextColor="#999"
+            value={data.reenterNewPassword}
+            onChangeText={text => {
+              setData({ ...data, reenterNewPassword: text });
+              setError('');
+            }}
+            secureTextEntry
+          />
+        </View>
 
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
+          onPress={handleResetPassword}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Login</Text>
+            <Text style={styles.buttonText}>Reset Password</Text>
           )}
         </TouchableOpacity>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
-            <Text style={styles.linkText}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
 };
 
-export default LoginScreen;
+export default ResetPasswordScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -146,21 +138,12 @@ const styles = StyleSheet.create({
     color: '#000',
     backgroundColor: '#fff',
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    fontFamily: Font.font500,
-    color: colors.PrimaryColor,
-  },
   button: {
     height: 50,
     backgroundColor: colors.PrimaryColor,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 24,
+    marginTop: 4,
     flexDirection: 'row',
     paddingHorizontal: 16,
   },
@@ -180,19 +163,5 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     marginBottom: 16,
     textAlign: 'center',
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    fontFamily: Font.font400,
-    color: '#666',
-  },
-  linkText: {
-    fontSize: 14,
-    fontFamily: Font.font500,
-    color: colors.PrimaryColor,
   },
 });

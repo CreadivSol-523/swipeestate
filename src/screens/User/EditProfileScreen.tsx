@@ -7,20 +7,32 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../../redux/store';
 import { authUser } from '../../redux/Features/authState';
+import Icon from 'react-native-vector-icons/Ionicons';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
 
-const LoginScreen = ({ navigation }: { navigation: any }) => {
-  const [data, setData] = useState({ email: '', password: '' });
+const EditProfileScreen = ({ navigation }: { navigation: any }) => {
+  const userData = useSelector((state: RootState) => state?.userData?.data);
+  const [data, setData] = useState({
+    name: userData?.name || '',
+    email: userData?.email || '',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const dispatch = useDispatch();
 
-  const handleLogin = () => {
-    if (!data.email || !data.password) {
+  const handleSave = () => {
+    if (!data.name || !data.email) {
       setError('Please fill in all fields');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      setError('Please enter a valid email');
       return;
     }
 
@@ -28,16 +40,39 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
     setError('');
 
     setTimeout(() => {
-      dispatch(authUser({ data: { email: data.email, name: 'User' } }));
+      dispatch(authUser({ data: { name: data.name, email: data.email } }));
       setLoading(false);
+      navigation.goBack();
     }, 1500);
   };
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Icon name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <View style={styles.placeholder} />
+      </View>
+
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your name"
+            placeholderTextColor="#999"
+            value={data.name}
+            onChangeText={text => {
+              setData({ ...data, name: text });
+              setError('');
+            }}
+          />
+        </View>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
@@ -55,76 +90,55 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
           />
         </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your password"
-            placeholderTextColor="#999"
-            value={data.password}
-            onChangeText={text => {
-              setData({ ...data, password: text });
-              setError('');
-            }}
-            secureTextEntry
-          />
-        </View>
-
-        <TouchableOpacity
-          style={styles.forgotPassword}
-          onPress={() => navigation.navigate('ForgetPasswordScreen')}
-        >
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
-
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
+          onPress={handleSave}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Login</Text>
+            <Text style={styles.buttonText}>Save Changes</Text>
           )}
         </TouchableOpacity>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
-            <Text style={styles.linkText}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
 };
 
-export default LoginScreen;
+export default EditProfileScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.SecondaryColor,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 16,
+  },
+  backButton: {
+    width: 40,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontFamily: Font.font500,
+    color: '#000',
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
+  },
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: Font.font500,
-    color: '#000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: Font.font400,
-    color: '#666',
-    marginBottom: 40,
+    paddingTop: 24,
   },
   inputContainer: {
     marginBottom: 20,
@@ -146,21 +160,12 @@ const styles = StyleSheet.create({
     color: '#000',
     backgroundColor: '#fff',
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    fontFamily: Font.font500,
-    color: colors.PrimaryColor,
-  },
   button: {
     height: 50,
     backgroundColor: colors.PrimaryColor,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 24,
+    marginTop: 4,
     flexDirection: 'row',
     paddingHorizontal: 16,
   },
@@ -180,19 +185,5 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     marginBottom: 16,
     textAlign: 'center',
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    fontFamily: Font.font400,
-    color: '#666',
-  },
-  linkText: {
-    fontSize: 14,
-    fontFamily: Font.font500,
-    color: colors.PrimaryColor,
   },
 });
