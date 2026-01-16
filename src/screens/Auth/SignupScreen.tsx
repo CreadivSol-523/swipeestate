@@ -24,21 +24,22 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
      const { email, password, name, city, confirmPassword, phone } = data;
 
      const handleSignup = () => {
-          if (!data.name || !data.email || !data.password) {
-               setError('Please fill in all fields');
-               return;
-          }
+          // if (!data.name || !data.email || !data.password) {
+          //      setError('Please fill in all fields');
+          //      return;
+          // }
 
-          if (data.password.length < 6) {
-               setError('Password must be at least 6 characters');
-               return;
-          }
+          // if (data.password.length < 6) {
+          //      setError('Password must be at least 6 characters');
+          //      return;
+          // }
 
           setLoading(true);
           setError('');
 
           setTimeout(() => {
-               dispatch(authUser({ data: { email: data.email, name: data.name } }));
+               // dispatch(authUser({ data: { email: data.email, name: data.name } }));
+               navigation.navigate('LoginScreen');
                setLoading(false);
           }, 1500);
      };
@@ -136,7 +137,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
 
                     {/* Type Input */}
                     <View style={styles.inputGroup}>
-                         <Text style={styles.label}>Account Type</Text>
+                         <Text style={styles.label}>Income</Text>
                          <View style={styles.inputWrapper}>
                               <View style={styles.inputIconContainer}>
                                    <Icon name="income" size={18} color="#9CA3AF" />
@@ -145,8 +146,8 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                                    style={styles.input}
                                    placeholder="Enter your Account Type"
                                    placeholderTextColor="#9CA3AF"
-                                   value={email}
-                                   onChangeText={value => handleData('email', value)}
+                                   // value={email}
+                                   // onChangeText={value => handleData('email', value)}
                                    autoCapitalize="none"
                                    autoCorrect={false}
                               />
@@ -199,7 +200,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
 
                     {/* Signup Button */}
                     <TouchableOpacity style={styles.loginButton} onPress={handleSignup} activeOpacity={0.8}>
-                         <Text style={styles.loginButtonText}>Signup</Text>
+                         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Signup</Text>}
                     </TouchableOpacity>
 
                     {/* Divider */}
