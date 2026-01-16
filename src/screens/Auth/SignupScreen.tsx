@@ -52,7 +52,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
 
           setTimeout(() => {
                // dispatch(authUser({ data: { email: data.email, name: data.name } }));
-               navigation.navigate('LoginScreen');
+               navigation.navigate('SelectPlanScreen', { email, password, name, city, phone, selectedIncome });
                setLoading(false);
           }, 1500);
      };

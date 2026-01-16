@@ -1,7 +1,11 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { authUser } from '../../redux/Features/authState';
 
-const SelectPlan = () => {
+const SelectPlan = ({ route }: { route: { params: { email: string; password: string; name: string; city: string; phone: string; selectedIncome: string } } }) => {
+     const { email, password, name, city, phone, selectedIncome } = route.params;
+     const dispatch = useDispatch();
      const plans = [
           {
                name: 'Bronze',
@@ -27,8 +31,7 @@ const SelectPlan = () => {
      ];
 
      const handleSelectPlan = (planName: any) => {
-          console.log(`Selected plan: ${planName}`);
-          // Add your plan selection logic here
+          dispatch(authUser({ data: { email, password, name, city, phone, selectedIncome, role: 'User' } }));
      };
 
      return (
