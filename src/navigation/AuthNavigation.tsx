@@ -4,6 +4,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import SignupScreen from '../screens/Auth/SignupScreen';
+import ForgetPasswordScreen from '../screens/Auth/ForgetPasswordScreen';
+import VerifyOTPScreen from '../screens/Auth/VerifyOTPScreen';
+import ResetPasswordScreen from '../screens/Auth/ResetPasswordScreen';
 interface AuthProps {
   initRoute: string;
 }
@@ -25,6 +28,21 @@ const AuthNaivgation = ({ initRoute }: AuthProps): JSX.Element => {
           name="SignupScreen"
           component={SignupScreen}
           options={{ title: 'Signup' }}
+        />
+        <Stack.Screen
+          name="ForgetPasswordScreen"
+          component={ForgetPasswordScreen}
+          options={{ title: 'Forget Password' }}
+        />
+        <Stack.Screen
+          name="VerifyOTPScreen"
+          component={VerifyOTPScreen}
+          options={{ title: 'Verify OTP' }}
+        />
+        <Stack.Screen
+          name="ResetPasswordScreen"
+          component={ResetPasswordScreen}
+          options={{ title: 'Reset Password' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

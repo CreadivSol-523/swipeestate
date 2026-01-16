@@ -1,0 +1,203 @@
+import React, { useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import colors from '../../assests/color/color';
+import Font from '../../assests/fonts/Font';
+
+const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
+  const [data, setData] = useState({
+    oldPassword: '',
+    newPassword: '',
+    reenterNewPassword: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChangePassword = () => {
+    if (!data.oldPassword || !data.newPassword || !data.reenterNewPassword) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    if (data.newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (data.newPassword !== data.reenterNewPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    setTimeout(() => {
+      setLoading(false);
+      navigation.goBack();
+    }, 1500);
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Icon name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Change Password</Text>
+        <View style={styles.placeholder} />
+      </View>
+
+      <View style={styles.content}>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Old Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter old password"
+            placeholderTextColor="#999"
+            value={data.oldPassword}
+            onChangeText={text => {
+              setData({ ...data, oldPassword: text });
+              setError('');
+            }}
+            secureTextEntry
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>New Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter new password"
+            placeholderTextColor="#999"
+            value={data.newPassword}
+            onChangeText={text => {
+              setData({ ...data, newPassword: text });
+              setError('');
+            }}
+            secureTextEntry
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Re-enter New Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Re-enter new password"
+            placeholderTextColor="#999"
+            value={data.reenterNewPassword}
+            onChangeText={text => {
+              setData({ ...data, reenterNewPassword: text });
+              setError('');
+            }}
+            secureTextEntry
+          />
+        </View>
+
+        {error && <Text style={styles.errorText}>{error}</Text>}
+
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleChangePassword}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Change Password</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default ChangePasswordScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.SecondaryColor,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 16,
+  },
+  backButton: {
+    width: 40,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontFamily: Font.font500,
+    color: '#000',
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontFamily: Font.font500,
+    color: '#000',
+    marginBottom: 8,
+  },
+  input: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontFamily: Font.font400,
+    color: '#000',
+    backgroundColor: '#fff',
+  },
+  button: {
+    height: 50,
+    backgroundColor: colors.PrimaryColor,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 4,
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 16,
+    fontFamily: Font.font500,
+    color: '#fff',
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: Font.font400,
+    color: '#FF3B30',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+});

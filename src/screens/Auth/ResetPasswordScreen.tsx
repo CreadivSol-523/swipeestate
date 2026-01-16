@@ -1,26 +1,38 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { authUser } from '../../redux/Features/authState';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
 import CustomLogo from '../../components/CustomLogo/CustomLogo';
-import { useForm } from '../../utils/UseForm/UseForm';
 import Icon from '../../components/Icons/Icons';
 
-const LoginScreen = ({ navigation }: { navigation: any }) => {
+const ResetPasswordScreen = ({ navigation }: { navigation: any }) => {
+     const [data, setData] = useState({ newPassword: '', reenterNewPassword: '' });
      const [loading, setLoading] = useState(false);
      const [error, setError] = useState('');
      const [showPassword, setShowPassword] = useState(false);
 
-     const dispatch = useDispatch();
+     const { newPassword, reenterNewPassword } = data;
 
-     const { data, handleChange: handleData } = useForm({ initialState: { email: '', password: '' } });
-     const { email, password } = data;
+     const handleFields = (name: string, value: any) => {
+          setData(prev => ({
+               ...prev,
+               [name]: value,
+          }));
+     };
 
-     const handleLogin = () => {
-          if (!data.email || !data.password) {
+     const handleResetPassword = () => {
+          if (!data.newPassword || !data.reenterNewPassword) {
                setError('Please fill in all fields');
+               return;
+          }
+
+          if (data.newPassword.length < 6) {
+               setError('Password must be at least 6 characters');
+               return;
+          }
+
+          if (data.newPassword !== data.reenterNewPassword) {
+               setError('Passwords do not match');
                return;
           }
 
@@ -28,8 +40,8 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
           setError('');
 
           setTimeout(() => {
-               dispatch(authUser({ data: { email: data.email, name: 'User' } }));
                setLoading(false);
+               navigation.navigate('LoginScreen');
           }, 1500);
      };
 
@@ -44,27 +56,7 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
 
                {/* Login Form */}
                <View style={styles.formContainer}>
-                    <Text style={styles.welcomeText}>Welcome Back!</Text>
-
-                    {/* Email Input */}
-                    <View style={styles.inputGroup}>
-                         <Text style={styles.label}>Email</Text>
-                         <View style={styles.inputWrapper}>
-                              <View style={styles.inputIconContainer}>
-                                   <Icon name="mail" size={18} color="#9CA3AF" />
-                              </View>
-                              <TextInput
-                                   style={styles.input}
-                                   placeholder="Enter your email"
-                                   placeholderTextColor="#9CA3AF"
-                                   value={email}
-                                   onChangeText={value => handleData('email', value)}
-                                   keyboardType="email-address"
-                                   autoCapitalize="none"
-                                   autoCorrect={false}
-                              />
-                         </View>
-                    </View>
+                    <Text style={styles.welcomeText}>Reset Password!</Text>
 
                     {/* Password Input */}
                     <View style={styles.inputGroup}>
@@ -77,8 +69,8 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
                                    style={styles.input}
                                    placeholder="Enter your password"
                                    placeholderTextColor="#9CA3AF"
-                                   value={password}
-                                   onChangeText={value => handleData('password', value)}
+                                   value={newPassword}
+                                   onChangeText={value => handleFields('newPassword', value)}
                                    secureTextEntry={!showPassword}
                                    autoCapitalize="none"
                               />
@@ -88,47 +80,32 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
                          </View>
                     </View>
 
-                    {/* Forgot Password */}
-                    <TouchableOpacity style={styles.forgotPassword} onPress={() => navigation.navigate('ForgetPasswordScreen')}>
-                         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                    </TouchableOpacity>
+                    {/* Comfirm Password Input */}
+                    <View style={styles.inputGroup}>
+                         <Text style={styles.label}>Password</Text>
+                         <View style={styles.inputWrapper}>
+                              <View style={styles.inputIconContainer}>
+                                   <Icon name="lock" size={18} color="#9CA3AF" />
+                              </View>
+                              <TextInput
+                                   style={styles.input}
+                                   placeholder="Enter your password"
+                                   placeholderTextColor="#9CA3AF"
+                                   value={reenterNewPassword}
+                                   onChangeText={value => handleFields('reenterNewPassword', value)}
+                                   secureTextEntry={!showPassword}
+                                   autoCapitalize="none"
+                              />
+                              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
+                                   <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color="#9CA3AF" />
+                              </TouchableOpacity>
+                         </View>
+                    </View>
 
                     {/* Login Button */}
-                    <TouchableOpacity style={styles.loginButton} onPress={handleLogin} activeOpacity={0.8}>
-                         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Login</Text>}
+                    <TouchableOpacity style={styles.loginButton} onPress={handleResetPassword} activeOpacity={0.8}>
+                         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Reset Password</Text>}
                     </TouchableOpacity>
-
-                    {/* Divider */}
-                    <View style={styles.divider}>
-                         <View style={styles.dividerLine} />
-                         <Text style={styles.dividerText}>Or continue with</Text>
-                         <View style={styles.dividerLine} />
-                    </View>
-
-                    {/* Social Login Buttons */}
-                    <View style={styles.socialButtons}>
-                         <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                              <View style={[styles.socialIcon, { backgroundColor: '#EA4335' }]}>
-                                   <Icon name="google" size={20} color="#FFFFFF" />
-                              </View>
-                              <Text style={styles.socialButtonText}>Google</Text>
-                         </TouchableOpacity>
-
-                         <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                              <View style={[styles.socialIcon, { backgroundColor: '#1877F2' }]}>
-                                   <Icon name="facebook" size={20} color="#FFFFFF" />
-                              </View>
-                              <Text style={styles.socialButtonText}>Facebook</Text>
-                         </TouchableOpacity>
-                    </View>
-
-                    {/* Sign Up Link */}
-                    <View style={styles.signupContainer}>
-                         <Text style={styles.signupText}>Don't have an account? </Text>
-                         <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
-                              <Text style={styles.signupLink}>Sign Up</Text>
-                         </TouchableOpacity>
-                    </View>
                </View>
 
                {/* Footer */}
@@ -137,7 +114,7 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
      );
 };
 
-export default LoginScreen;
+export default ResetPasswordScreen;
 
 const styles = StyleSheet.create({
      scrollContent: {

@@ -1,26 +1,24 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { authUser } from '../../redux/Features/authState';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
 import CustomLogo from '../../components/CustomLogo/CustomLogo';
-import { useForm } from '../../utils/UseForm/UseForm';
 import Icon from '../../components/Icons/Icons';
 
-const LoginScreen = ({ navigation }: { navigation: any }) => {
+const ForgetPasswordScreen = ({ navigation }: { navigation: any }) => {
+     const [email, setEmail] = useState<string>('');
      const [loading, setLoading] = useState(false);
      const [error, setError] = useState('');
-     const [showPassword, setShowPassword] = useState(false);
 
-     const dispatch = useDispatch();
+     const handleSendOTP = () => {
+          if (!email) {
+               setError('Please enter your email');
+               return;
+          }
 
-     const { data, handleChange: handleData } = useForm({ initialState: { email: '', password: '' } });
-     const { email, password } = data;
-
-     const handleLogin = () => {
-          if (!data.email || !data.password) {
-               setError('Please fill in all fields');
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+               setError('Please enter a valid email');
                return;
           }
 
@@ -28,8 +26,8 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
           setError('');
 
           setTimeout(() => {
-               dispatch(authUser({ data: { email: data.email, name: 'User' } }));
                setLoading(false);
+               navigation.navigate('VerifyOTPScreen', { email: email });
           }, 1500);
      };
 
@@ -44,7 +42,7 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
 
                {/* Login Form */}
                <View style={styles.formContainer}>
-                    <Text style={styles.welcomeText}>Welcome Back!</Text>
+                    <Text style={styles.welcomeText}>Forgot Password!</Text>
 
                     {/* Email Input */}
                     <View style={styles.inputGroup}>
@@ -58,7 +56,7 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
                                    placeholder="Enter your email"
                                    placeholderTextColor="#9CA3AF"
                                    value={email}
-                                   onChangeText={value => handleData('email', value)}
+                                   onChangeText={value => setEmail(value)}
                                    keyboardType="email-address"
                                    autoCapitalize="none"
                                    autoCorrect={false}
@@ -66,61 +64,10 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
                          </View>
                     </View>
 
-                    {/* Password Input */}
-                    <View style={styles.inputGroup}>
-                         <Text style={styles.label}>Password</Text>
-                         <View style={styles.inputWrapper}>
-                              <View style={styles.inputIconContainer}>
-                                   <Icon name="lock" size={18} color="#9CA3AF" />
-                              </View>
-                              <TextInput
-                                   style={styles.input}
-                                   placeholder="Enter your password"
-                                   placeholderTextColor="#9CA3AF"
-                                   value={password}
-                                   onChangeText={value => handleData('password', value)}
-                                   secureTextEntry={!showPassword}
-                                   autoCapitalize="none"
-                              />
-                              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
-                                   <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color="#9CA3AF" />
-                              </TouchableOpacity>
-                         </View>
-                    </View>
-
-                    {/* Forgot Password */}
-                    <TouchableOpacity style={styles.forgotPassword} onPress={() => navigation.navigate('ForgetPasswordScreen')}>
-                         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                    </TouchableOpacity>
-
                     {/* Login Button */}
-                    <TouchableOpacity style={styles.loginButton} onPress={handleLogin} activeOpacity={0.8}>
-                         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Login</Text>}
+                    <TouchableOpacity style={styles.loginButton} onPress={handleSendOTP} activeOpacity={0.8}>
+                         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Continue</Text>}
                     </TouchableOpacity>
-
-                    {/* Divider */}
-                    <View style={styles.divider}>
-                         <View style={styles.dividerLine} />
-                         <Text style={styles.dividerText}>Or continue with</Text>
-                         <View style={styles.dividerLine} />
-                    </View>
-
-                    {/* Social Login Buttons */}
-                    <View style={styles.socialButtons}>
-                         <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                              <View style={[styles.socialIcon, { backgroundColor: '#EA4335' }]}>
-                                   <Icon name="google" size={20} color="#FFFFFF" />
-                              </View>
-                              <Text style={styles.socialButtonText}>Google</Text>
-                         </TouchableOpacity>
-
-                         <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                              <View style={[styles.socialIcon, { backgroundColor: '#1877F2' }]}>
-                                   <Icon name="facebook" size={20} color="#FFFFFF" />
-                              </View>
-                              <Text style={styles.socialButtonText}>Facebook</Text>
-                         </TouchableOpacity>
-                    </View>
 
                     {/* Sign Up Link */}
                     <View style={styles.signupContainer}>
@@ -137,7 +84,7 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
      );
 };
 
-export default LoginScreen;
+export default ForgetPasswordScreen;
 
 const styles = StyleSheet.create({
      scrollContent: {

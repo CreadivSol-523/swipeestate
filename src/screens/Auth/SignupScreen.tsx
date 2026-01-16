@@ -1,32 +1,46 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, StatusBar } from 'react-native';
-import colors from '../../assests/Colors/Colors';
-import CustomLogo from '../../components/CustomLogo/CustomLogo';
-import Navigation from '../../utils/NavigationProps/NavigationProps';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { authUser } from '../../redux/Features/authState';
+import Font from '../../assests/fonts/Font';
+import colors from '../../assests/color/color';
+import { useForm } from '../../utils/UseForm/UseForm';
+import Icon from '../../components/Icons/Icons';
 
-const Icon = ({ name, size = 20, color = '#000' }: { name: string; size: number; color: string }) => {
-     const icons: any = {
-          mail: '✉',
-          lock: '🔒',
-          eye: '👁',
-          eyeOff: '👁',
-          home: '🏠',
-          heart: '❤️',
-          sparkles: '✨',
-          google: 'G',
-          facebook: 'f',
-     };
-
-     return <Text style={{ fontSize: size, color }}>{icons?.[name] || '•'}</Text>;
-};
-
-const SignupScreen = ({ navigation }: { navigation: Navigation }) => {
-     const [email, setEmail] = useState('');
-     const [password, setPassword] = useState('');
+const SignupScreen = ({ navigation }: { navigation: any }) => {
+     const [loading, setLoading] = useState(false);
+     const [error, setError] = useState('');
      const [showPassword, setShowPassword] = useState(false);
+     const dispatch = useDispatch();
 
-     const handleLogin = () => {
-          console.log('Login attempt with:', { email, password });
+     const {
+          data,
+          handleChange: handleData,
+          setData,
+     } = useForm({
+          initialState: { email: '', password: '', name: '', phone: '', confirmPassword: '', city: '' },
+     });
+
+     const { email, password, name, city, confirmPassword, phone } = data;
+
+     const handleSignup = () => {
+          if (!data.name || !data.email || !data.password) {
+               setError('Please fill in all fields');
+               return;
+          }
+
+          if (data.password.length < 6) {
+               setError('Password must be at least 6 characters');
+               return;
+          }
+
+          setLoading(true);
+          setError('');
+
+          setTimeout(() => {
+               dispatch(authUser({ data: { email: data.email, name: data.name } }));
+               setLoading(false);
+          }, 1500);
      };
 
      return (
@@ -45,12 +59,15 @@ const SignupScreen = ({ navigation }: { navigation: Navigation }) => {
                     <View style={styles.inputGroup}>
                          <Text style={styles.label}>Full Name</Text>
                          <View style={styles.inputWrapper}>
+                              <View style={styles.inputIconContainer}>
+                                   <Icon name="user" size={18} color="#9CA3AF" />
+                              </View>
                               <TextInput
-                                   style={[styles.input, { paddingLeft: 35 }]}
+                                   style={[styles.input]}
                                    placeholder="Enter your Full Name"
                                    placeholderTextColor="#9CA3AF"
-                                   value={email}
-                                   onChangeText={setEmail}
+                                   value={name}
+                                   onChangeText={value => handleData('name', value)}
                                    autoCapitalize="none"
                                    autoCorrect={false}
                               />
@@ -69,7 +86,7 @@ const SignupScreen = ({ navigation }: { navigation: Navigation }) => {
                                    placeholder="Enter your email"
                                    placeholderTextColor="#9CA3AF"
                                    value={email}
-                                   onChangeText={setEmail}
+                                   onChangeText={value => handleData('email', value)}
                                    keyboardType="email-address"
                                    autoCapitalize="none"
                                    autoCorrect={false}
@@ -82,14 +99,14 @@ const SignupScreen = ({ navigation }: { navigation: Navigation }) => {
                          <Text style={styles.label}>Phone</Text>
                          <View style={styles.inputWrapper}>
                               <View style={styles.inputIconContainer}>
-                                   <Icon name="mail" size={18} color="#9CA3AF" />
+                                   <Icon name="phone" size={18} color="#9CA3AF" />
                               </View>
                               <TextInput
                                    style={styles.input}
                                    placeholder="Enter your Phone"
                                    placeholderTextColor="#9CA3AF"
-                                   value={email}
-                                   onChangeText={setEmail}
+                                   value={phone}
+                                   onChangeText={value => handleData('phone', value)}
                                    keyboardType="phone-pad"
                                    autoCapitalize="none"
                                    autoCorrect={false}
@@ -102,14 +119,14 @@ const SignupScreen = ({ navigation }: { navigation: Navigation }) => {
                          <Text style={styles.label}>City</Text>
                          <View style={styles.inputWrapper}>
                               <View style={styles.inputIconContainer}>
-                                   <Icon name="mail" size={18} color="#9CA3AF" />
+                                   <Icon name="city" size={18} color="#9CA3AF" />
                               </View>
                               <TextInput
                                    style={styles.input}
                                    placeholder="Enter your City"
                                    placeholderTextColor="#9CA3AF"
-                                   value={email}
-                                   onChangeText={setEmail}
+                                   value={city}
+                                   onChangeText={value => handleData('city', value)}
                                    keyboardType="default"
                                    autoCapitalize="none"
                                    autoCorrect={false}
@@ -122,14 +139,14 @@ const SignupScreen = ({ navigation }: { navigation: Navigation }) => {
                          <Text style={styles.label}>Account Type</Text>
                          <View style={styles.inputWrapper}>
                               <View style={styles.inputIconContainer}>
-                                   <Icon name="mail" size={18} color="#9CA3AF" />
+                                   <Icon name="income" size={18} color="#9CA3AF" />
                               </View>
                               <TextInput
                                    style={styles.input}
                                    placeholder="Enter your Account Type"
                                    placeholderTextColor="#9CA3AF"
                                    value={email}
-                                   onChangeText={setEmail}
+                                   onChangeText={value => handleData('email', value)}
                                    autoCapitalize="none"
                                    autoCorrect={false}
                               />
@@ -148,7 +165,7 @@ const SignupScreen = ({ navigation }: { navigation: Navigation }) => {
                                    placeholder="Enter your password"
                                    placeholderTextColor="#9CA3AF"
                                    value={password}
-                                   onChangeText={setPassword}
+                                   onChangeText={value => handleData('password', value)}
                                    secureTextEntry={!showPassword}
                                    autoCapitalize="none"
                               />
@@ -169,8 +186,8 @@ const SignupScreen = ({ navigation }: { navigation: Navigation }) => {
                                    style={styles.input}
                                    placeholder="Enter your Confirm password"
                                    placeholderTextColor="#9CA3AF"
-                                   value={password}
-                                   onChangeText={setPassword}
+                                   value={confirmPassword}
+                                   onChangeText={value => handleData('confirmPassword', value)}
                                    secureTextEntry={!showPassword}
                                    autoCapitalize="none"
                               />
@@ -181,7 +198,7 @@ const SignupScreen = ({ navigation }: { navigation: Navigation }) => {
                     </View>
 
                     {/* Signup Button */}
-                    <TouchableOpacity style={styles.loginButton} onPress={handleLogin} activeOpacity={0.8}>
+                    <TouchableOpacity style={styles.loginButton} onPress={handleSignup} activeOpacity={0.8}>
                          <Text style={styles.loginButtonText}>Signup</Text>
                     </TouchableOpacity>
 

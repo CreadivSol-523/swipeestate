@@ -1,26 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { authUser } from '../../redux/Features/authState';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
 import CustomLogo from '../../components/CustomLogo/CustomLogo';
-import { useForm } from '../../utils/UseForm/UseForm';
-import Icon from '../../components/Icons/Icons';
 
-const LoginScreen = ({ navigation }: { navigation: any }) => {
+const VerifyOTPScreen = ({ navigation, route }: { navigation: any; route: any }) => {
+     const [data, setData] = useState({ otp: ['', '', '', '', '', ''] });
      const [loading, setLoading] = useState(false);
      const [error, setError] = useState('');
-     const [showPassword, setShowPassword] = useState(false);
+     const inputRefs = useRef<Array<TextInput | null>>([]);
+     const email = route.params?.email || '';
 
-     const dispatch = useDispatch();
+     const handleOTPChange = (text: string, index: number) => {
+          if (text.length > 1) {
+               text = text[text.length - 1];
+          }
 
-     const { data, handleChange: handleData } = useForm({ initialState: { email: '', password: '' } });
-     const { email, password } = data;
+          const newOtp = [...data.otp];
+          newOtp[index] = text;
+          setData({ ...data, otp: newOtp });
+          setError('');
 
-     const handleLogin = () => {
-          if (!data.email || !data.password) {
-               setError('Please fill in all fields');
+          if (text && index < 5) {
+               inputRefs.current[index + 1]?.focus();
+          }
+     };
+
+     const handleKeyPress = (e: { nativeEvent: { key: string } }, index: number) => {
+          if (e.nativeEvent.key === 'Backspace' && !data.otp[index] && index > 0) {
+               inputRefs.current[index - 1]?.focus();
+          }
+     };
+
+     const handleVerifyOTP = () => {
+          const otpValue = data.otp.join('');
+
+          if (otpValue.length !== 6) {
+               setError('Please enter complete OTP');
                return;
           }
 
@@ -28,9 +44,14 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
           setError('');
 
           setTimeout(() => {
-               dispatch(authUser({ data: { email: data.email, name: 'User' } }));
                setLoading(false);
+               navigation.navigate('ResetPasswordScreen', { email });
           }, 1500);
+     };
+
+     const handleResendOTP = () => {
+          setData({ ...data, otp: ['', '', '', '', '', ''] });
+          setError('');
      };
 
      return (
@@ -44,89 +65,35 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
 
                {/* Login Form */}
                <View style={styles.formContainer}>
-                    <Text style={styles.welcomeText}>Welcome Back!</Text>
+                    <Text style={styles.welcomeText}>Reset Password!</Text>
 
-                    {/* Email Input */}
-                    <View style={styles.inputGroup}>
-                         <Text style={styles.label}>Email</Text>
-                         <View style={styles.inputWrapper}>
-                              <View style={styles.inputIconContainer}>
-                                   <Icon name="mail" size={18} color="#9CA3AF" />
-                              </View>
+                    <View style={styles.otpContainer}>
+                         {data.otp.map((digit, index) => (
                               <TextInput
-                                   style={styles.input}
-                                   placeholder="Enter your email"
-                                   placeholderTextColor="#9CA3AF"
-                                   value={email}
-                                   onChangeText={value => handleData('email', value)}
-                                   keyboardType="email-address"
-                                   autoCapitalize="none"
-                                   autoCorrect={false}
+                                   key={index}
+                                   ref={ref => {
+                                        inputRefs.current[index] = ref;
+                                   }}
+                                   style={[styles.otpInput, digit && styles.otpInputFilled]}
+                                   value={digit}
+                                   onChangeText={text => handleOTPChange(text, index)}
+                                   onKeyPress={e => handleKeyPress(e, index)}
+                                   keyboardType="number-pad"
+                                   maxLength={1}
+                                   selectTextOnFocus
                               />
-                         </View>
+                         ))}
                     </View>
-
-                    {/* Password Input */}
-                    <View style={styles.inputGroup}>
-                         <Text style={styles.label}>Password</Text>
-                         <View style={styles.inputWrapper}>
-                              <View style={styles.inputIconContainer}>
-                                   <Icon name="lock" size={18} color="#9CA3AF" />
-                              </View>
-                              <TextInput
-                                   style={styles.input}
-                                   placeholder="Enter your password"
-                                   placeholderTextColor="#9CA3AF"
-                                   value={password}
-                                   onChangeText={value => handleData('password', value)}
-                                   secureTextEntry={!showPassword}
-                                   autoCapitalize="none"
-                              />
-                              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
-                                   <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color="#9CA3AF" />
-                              </TouchableOpacity>
-                         </View>
-                    </View>
-
-                    {/* Forgot Password */}
-                    <TouchableOpacity style={styles.forgotPassword} onPress={() => navigation.navigate('ForgetPasswordScreen')}>
-                         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                    </TouchableOpacity>
 
                     {/* Login Button */}
-                    <TouchableOpacity style={styles.loginButton} onPress={handleLogin} activeOpacity={0.8}>
-                         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Login</Text>}
+                    <TouchableOpacity style={styles.loginButton} onPress={handleVerifyOTP} activeOpacity={0.8}>
+                         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Verify OTP</Text>}
                     </TouchableOpacity>
-
-                    {/* Divider */}
-                    <View style={styles.divider}>
-                         <View style={styles.dividerLine} />
-                         <Text style={styles.dividerText}>Or continue with</Text>
-                         <View style={styles.dividerLine} />
-                    </View>
-
-                    {/* Social Login Buttons */}
-                    <View style={styles.socialButtons}>
-                         <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                              <View style={[styles.socialIcon, { backgroundColor: '#EA4335' }]}>
-                                   <Icon name="google" size={20} color="#FFFFFF" />
-                              </View>
-                              <Text style={styles.socialButtonText}>Google</Text>
-                         </TouchableOpacity>
-
-                         <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                              <View style={[styles.socialIcon, { backgroundColor: '#1877F2' }]}>
-                                   <Icon name="facebook" size={20} color="#FFFFFF" />
-                              </View>
-                              <Text style={styles.socialButtonText}>Facebook</Text>
-                         </TouchableOpacity>
-                    </View>
-
                     {/* Sign Up Link */}
                     <View style={styles.signupContainer}>
-                         <Text style={styles.signupText}>Don't have an account? </Text>
-                         <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
-                              <Text style={styles.signupLink}>Sign Up</Text>
+                         <Text style={styles.signupText}>Didn’t receive the OTP? </Text>
+                         <TouchableOpacity onPress={handleResendOTP}>
+                              <Text style={styles.signupLink}>Resend</Text>
                          </TouchableOpacity>
                     </View>
                </View>
@@ -137,7 +104,7 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
      );
 };
 
-export default LoginScreen;
+export default VerifyOTPScreen;
 
 const styles = StyleSheet.create({
      scrollContent: {
@@ -175,6 +142,7 @@ const styles = StyleSheet.create({
           shadowRadius: 16,
           elevation: 10,
      },
+
      welcomeText: {
           fontSize: 24,
           fontWeight: 'bold',
@@ -184,6 +152,26 @@ const styles = StyleSheet.create({
      },
      inputGroup: {
           marginBottom: 20,
+     },
+     otpContainer: {
+          flexDirection: 'row',
+          marginBottom: 32,
+          gap: 12,
+     },
+     otpInput: {
+          flex: 1,
+          height: 56,
+          borderWidth: 1,
+          borderColor: '#E0E0E0',
+          borderRadius: 8,
+          textAlign: 'center',
+          fontSize: 24,
+          fontFamily: Font.font500,
+          color: '#000',
+          backgroundColor: '#fff',
+     },
+     otpInputFilled: {
+          borderColor: colors.PrimaryColor,
      },
      label: {
           fontSize: 14,
