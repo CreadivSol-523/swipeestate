@@ -19,18 +19,19 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
      const { email, password } = data;
 
      const handleLogin = () => {
-          if (!data.email || !data.password) {
-               setError('Please fill in all fields');
-               return;
-          }
+          // if (!data.email || !data.password) {
+          //      setError('Please fill in all fields');
+          //      return;
+          // }
 
-          setLoading(true);
-          setError('');
+          // setLoading(true);
+          // setError('');
 
-          setTimeout(() => {
-               dispatch(authUser({ data: { email: data.email, name: 'User' } }));
-               setLoading(false);
-          }, 1500);
+          // setTimeout(() => {
+          //      dispatch(authUser({ data: { email: data.email, name: 'User' } }));
+          //      setLoading(false);
+          // }, 1500);
+          navigation.navigate('SelectPlanScreen');
      };
 
      return (
