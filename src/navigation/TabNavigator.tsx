@@ -1,69 +1,8 @@
-// import React, { JSX } from 'react';
-// import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-// import { createStackNavigator } from '@react-navigation/stack';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
-// import Icon from 'react-native-vector-icons/Ionicons';
-// import colors from '../assests/color/color';
-// import ProfileScreen from '../screens/User/ProfileScreen';
-// import EditProfileScreen from '../screens/User/EditProfileScreen';
-// import ChangePasswordScreen from '../screens/User/ChangePasswordScreen';
-// import HomeScreen from '../screens/User/HomeScreen';
-// import { NavigationContainer } from '@react-navigation/native';
-
-// const Tab = createBottomTabNavigator();
-// const ProfileStackNavigator = createStackNavigator();
-
-// const ProfileStack = (): JSX.Element => {
-//      return (
-//           <ProfileStackNavigator.Navigator screenOptions={{ headerShown: false }}>
-//                <ProfileStackNavigator.Screen name="ProfileMain" component={ProfileScreen} />
-//                <ProfileStackNavigator.Screen name="EditProfileScreen" component={EditProfileScreen} />
-//                <ProfileStackNavigator.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} />
-//           </ProfileStackNavigator.Navigator>
-//      );
-// };
-
-// const TabNavigation = (): JSX.Element => {
-//      return (
-//           <NavigationContainer>
-//                <Tab.Navigator
-//                     screenOptions={{
-//                          headerShown: false,
-//                          tabBarActiveTintColor: colors.PrimaryColor,
-//                          tabBarInactiveTintColor: '#999',
-//                          tabBarStyle: {
-//                               height: 60,
-//                               paddingBottom: 8,
-//                               paddingTop: 8,
-//                          },
-//                     }}
-//                >
-//                     <Tab.Screen
-//                          name="Home"
-//                          component={HomeScreen}
-//                          options={{
-//                               tabBarIcon: ({ color, size }) => <Icon name="home" size={size} color={color} />,
-//                          }}
-//                     />
-//                     <Tab.Screen
-//                          name="Profile"
-//                          component={ProfileStack}
-//                          options={{
-//                               tabBarIcon: ({ color, size }) => <Icon name="person" size={size} color={color} />,
-//                          }}
-//                     />
-//                </Tab.Navigator>
-//           </NavigationContainer>
-//      );
-// };
-
-// export default TabNavigation;
-
 import React, { JSX } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, Alert } from 'react-native';
 import colors from '../assests/color/color';
 import ProfileScreen from '../screens/User/ProfileScreen';
 import EditProfileScreen from '../screens/User/EditProfileScreen';
@@ -78,9 +17,9 @@ const ProfileStackNavigator = createStackNavigator();
 const ProfileStack = (): JSX.Element => {
      return (
           <ProfileStackNavigator.Navigator screenOptions={{ headerShown: false }}>
-               <ProfileStackNavigator.Screen name="ProfileMain" component={ProfileScreen} />
-               <ProfileStackNavigator.Screen name="EditProfileScreen" component={EditProfileScreen} />
-               <ProfileStackNavigator.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} />
+               <ProfileStackNavigator.Screen name="ProfileMain" component={ProfileScreen} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
           </ProfileStackNavigator.Navigator>
      );
 };
@@ -147,6 +86,12 @@ const TabNavigation = (): JSX.Element => {
                          options={{
                               tabBarIcon: ({ color, focused }) => <TabBarIcon name="heart" color={color} focused={focused} />,
                          }}
+                         listeners={{
+                              tabPress: e => {
+                                   e.preventDefault();
+                                   Alert.alert('Coming Soon', 'Favorites feature is under development');
+                              },
+                         }}
                     />
                     <Tab.Screen
                          name="Search"
@@ -158,6 +103,12 @@ const TabNavigation = (): JSX.Element => {
                                    </View>
                               ),
                               tabBarLabel: '',
+                         }}
+                         listeners={{
+                              tabPress: e => {
+                                   e.preventDefault();
+                                   Alert.alert('Coming Soon', 'Search feature is under development');
+                              },
                          }}
                     />
                     <Tab.Screen
@@ -175,6 +126,12 @@ const TabNavigation = (): JSX.Element => {
                                    height: 18,
                                    borderRadius: 9,
                                    marginTop: 2,
+                              },
+                         }}
+                         listeners={{
+                              tabPress: e => {
+                                   e.preventDefault();
+                                   Alert.alert('Coming Soon', 'Messages feature is under development');
                               },
                          }}
                     />
