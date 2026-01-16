@@ -60,7 +60,6 @@ const SAMPLE_PROPERTIES = [
 
 const HomeScreen = () => {
   const swiperRef = useRef<Swiper<any>>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   const renderCard = (property: any) => {
     if (!property) return null;
@@ -148,7 +147,6 @@ const HomeScreen = () => {
           renderCard={renderCard}
           onSwipedLeft={handleSwipeLeft}
           onSwipedRight={handleSwipeRight}
-          onSwiped={index => setCurrentIndex(index + 1)}
           cardIndex={0}
           backgroundColor="transparent"
           stackSize={3}
@@ -201,12 +199,6 @@ const HomeScreen = () => {
         >
           {renderNoMoreCards()}
         </Swiper>
-      </View>
-
-      <View style={styles.progressContainer}>
-        <Text style={styles.progressText}>
-          {currentIndex} / {SAMPLE_PROPERTIES.length}
-        </Text>
       </View>
     </View>
   );
