@@ -6,6 +6,7 @@ import { authUser } from '../../redux/Features/authState';
 import Icon from 'react-native-vector-icons/Ionicons';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
+import FieldWrapper from '../../components/FieldWrapper/FieldWrapper';
 
 const EditProfileScreen = ({ navigation }: { navigation: any }) => {
      const userData = useSelector((state: RootState) => state?.userData?.data);
@@ -70,54 +71,54 @@ const EditProfileScreen = ({ navigation }: { navigation: any }) => {
           }, 1500);
      };
 
-     const InputField = ({
-          icon,
-          label,
-          placeholder,
-          value,
-          onChangeText,
-          keyboardType = 'default',
-          fieldName,
-     }: {
-          icon: string;
-          label: string;
-          placeholder: string;
-          value: string;
-          onChangeText: (text: string) => void;
-          keyboardType?: any;
-          fieldName: string;
-     }) => (
-          <View style={styles.inputContainer}>
-               <Text style={styles.label}>{label}</Text>
-               <View style={[styles.inputWrapper, focusedField === fieldName && styles.inputWrapperFocused, errors[fieldName] && styles.inputWrapperError]}>
-                    <View style={styles.inputIconContainer}>
-                         <Icon name={icon} size={20} color={errors[fieldName] ? '#FF3B30' : colors.PrimaryColor} />
-                    </View>
-                    <TextInput
-                         style={styles.input}
-                         placeholder={placeholder}
-                         placeholderTextColor="#999"
-                         value={value}
-                         onChangeText={text => {
-                              onChangeText(text);
-                              if (errors[fieldName]) {
-                                   setErrors({ ...errors, [fieldName]: '' });
-                              }
-                         }}
-                         onFocus={() => setFocusedField(fieldName)}
-                         onBlur={() => setFocusedField('')}
-                         keyboardType={keyboardType}
-                         autoCapitalize={fieldName === 'email' ? 'none' : 'words'}
-                    />
-                    {errors[fieldName] && <Icon name="alert-circle" size={20} color="#FF3B30" style={styles.errorIcon} />}
-               </View>
-               {errors[fieldName] && (
-                    <View style={styles.errorContainer}>
-                         <Text style={styles.errorText}>{errors[fieldName]}</Text>
-                    </View>
-               )}
-          </View>
-     );
+     // const InputField = ({
+     //      icon,
+     //      label,
+     //      placeholder,
+     //      value,
+     //      onChangeText,
+     //      keyboardType = 'default',
+     //      fieldName,
+     // }: {
+     //      icon: string;
+     //      label: string;
+     //      placeholder: string;
+     //      value: string;
+     //      onChangeText: (text: string) => void;
+     //      keyboardType?: any;
+     //      fieldName: string;
+     // }) => (
+     //      <View style={styles.inputContainer}>
+     //           <Text style={styles.label}>{label}</Text>
+     //           <View style={[styles.inputWrapper, focusedField === fieldName && styles.inputWrapperFocused, errors[fieldName] && styles.inputWrapperError]}>
+     //                <View style={styles.inputIconContainer}>
+     //                     <Icon name={icon} size={20} color={errors[fieldName] ? '#FF3B30' : colors.PrimaryColor} />
+     //                </View>
+     //                <TextInput
+     //                     style={styles.input}
+     //                     placeholder={placeholder}
+     //                     placeholderTextColor="#999"
+     //                     value={value}
+     //                     onChangeText={text => {
+     //                          onChangeText(text);
+     //                          if (errors[fieldName]) {
+     //                               setErrors({ ...errors, [fieldName]: '' });
+     //                          }
+     //                     }}
+     //                     onFocus={() => setFocusedField(fieldName)}
+     //                     onBlur={() => setFocusedField('')}
+     //                     keyboardType={keyboardType}
+     //                     autoCapitalize={fieldName === 'email' ? 'none' : 'words'}
+     //                />
+     //                {errors[fieldName] && <Icon name="alert-circle" size={20} color="#FF3B30" style={styles.errorIcon} />}
+     //           </View>
+     //           {errors[fieldName] && (
+     //                <View style={styles.errorContainer}>
+     //                     <Text style={styles.errorText}>{errors[fieldName]}</Text>
+     //                </View>
+     //           )}
+     //      </View>
+     // );
 
      return (
           <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -148,46 +149,22 @@ const EditProfileScreen = ({ navigation }: { navigation: any }) => {
                     <View style={styles.formSection}>
                          <Text style={styles.sectionTitle}>Personal Information</Text>
 
-                         <InputField
-                              icon="person-outline"
-                              label="Full Name"
-                              placeholder="Enter your full name"
-                              value={data.name}
-                              onChangeText={text => setData({ ...data, name: text })}
-                              fieldName="name"
-                         />
+                         <FieldWrapper icon="user" label="Full Name" placeholder="Enter your full name" value={data.name} onChangeText={text => setData({ ...data, name: text })} fieldType="text" />
 
-                         <InputField
-                              icon="call-outline"
-                              label="Phone Number"
-                              placeholder="+92 300 1234567"
-                              value={data.phone}
-                              onChangeText={text => setData({ ...data, phone: text })}
-                              keyboardType="phone-pad"
-                              fieldName="phone"
-                         />
+                         <FieldWrapper icon="call" label="Phone Number" placeholder="+92 300 1234567" value={data.phone} onChangeText={text => setData({ ...data, phone: text })} fieldType="phone" />
 
-                         <InputField
-                              icon="mail-outline"
+                         <FieldWrapper
+                              icon="mail"
                               label="Email Address"
                               placeholder="example@email.com"
                               value={data.email}
                               onChangeText={text => setData({ ...data, email: text })}
-                              keyboardType="email-address"
-                              fieldName="email"
+                              fieldType="email"
                          />
 
-                         <InputField icon="location-outline" label="City" placeholder="Enter your city" value={data.city} onChangeText={text => setData({ ...data, city: text })} fieldName="city" />
+                         <FieldWrapper icon="city" label="City" placeholder="Enter your city" value={data.city} onChangeText={text => setData({ ...data, city: text })} fieldType="text" />
 
-                         <InputField
-                              icon="cash-outline"
-                              label="Monthly Income"
-                              placeholder="PKR 50,000"
-                              value={data.income}
-                              onChangeText={text => setData({ ...data, income: text })}
-                              keyboardType="numeric"
-                              fieldName="income"
-                         />
+                         <FieldWrapper icon="dollar" label="Monthly Income" placeholder="PKR 50,000" value={data.income} onChangeText={text => setData({ ...data, income: text })} fieldType="number" />
                     </View>
 
                     {/* Action Buttons */}

@@ -3,6 +3,8 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator,
 import Icon from 'react-native-vector-icons/Ionicons';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
+import Field from '../../components/Field/Field';
+import FieldWrapper from '../../components/FieldWrapper/FieldWrapper';
 
 const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
      const [data, setData] = useState({
@@ -10,38 +12,9 @@ const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
           newPassword: '',
           reenterNewPassword: '',
      });
-     const [showPassword, setShowPassword] = useState({
-          old: false,
-          new: false,
-          reenter: false,
-     });
      const [loading, setLoading] = useState(false);
      const [errors, setErrors] = useState<{ [key: string]: string }>({});
-     const [focusedField, setFocusedField] = useState('');
-     const [passwordStrength, setPasswordStrength] = useState(0);
-
-     const calculatePasswordStrength = (password: string) => {
-          let strength = 0;
-          if (password.length >= 6) strength++;
-          if (password.length >= 8) strength++;
-          if (/[A-Z]/.test(password)) strength++;
-          if (/[0-9]/.test(password)) strength++;
-          if (/[^A-Za-z0-9]/.test(password)) strength++;
-          return strength;
-     };
-
-     const getStrengthColor = () => {
-          if (passwordStrength <= 1) return '#FF3B30';
-          if (passwordStrength <= 3) return '#FF9500';
-          return '#4CAF50';
-     };
-
-     const getStrengthText = () => {
-          if (passwordStrength <= 1) return 'Weak';
-          if (passwordStrength <= 3) return 'Medium';
-          return 'Strong';
-     };
-
+     console.log(data);
      const validateForm = () => {
           const newErrors: { [key: string]: string } = {};
 
@@ -82,60 +55,6 @@ const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
           }, 1500);
      };
 
-     const PasswordInput = ({
-          icon,
-          label,
-          placeholder,
-          value,
-          onChangeText,
-          fieldName,
-          showKey,
-     }: {
-          icon: string;
-          label: string;
-          placeholder: string;
-          value: string;
-          onChangeText: (text: string) => void;
-          fieldName: string;
-          showKey: 'old' | 'new' | 'reenter';
-     }) => (
-          <View style={styles.inputContainer}>
-               <Text style={styles.label}>{label}</Text>
-               <View style={[styles.inputWrapper, focusedField === fieldName && styles.inputWrapperFocused, errors[fieldName] && styles.inputWrapperError]}>
-                    <View style={styles.inputIconContainer}>
-                         <Icon name={icon} size={20} color={errors[fieldName] ? '#FF3B30' : colors.PrimaryColor} />
-                    </View>
-                    <TextInput
-                         style={styles.input}
-                         placeholder={placeholder}
-                         placeholderTextColor="#999"
-                         value={value}
-                         onChangeText={text => {
-                              onChangeText(text);
-                              if (errors[fieldName]) {
-                                   setErrors({ ...errors, [fieldName]: '' });
-                              }
-                              if (fieldName === 'newPassword') {
-                                   setPasswordStrength(calculatePasswordStrength(text));
-                              }
-                         }}
-                         onFocus={() => setFocusedField(fieldName)}
-                         onBlur={() => setFocusedField('')}
-                         secureTextEntry={!showPassword[showKey]}
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword({ ...showPassword, [showKey]: !showPassword[showKey] })} style={styles.eyeButton}>
-                         <Icon name={showPassword[showKey] ? 'eye-outline' : 'eye-off-outline'} size={22} color="#999" />
-                    </TouchableOpacity>
-               </View>
-               {errors[fieldName] && (
-                    <View style={styles.errorContainer}>
-                         <Icon name="alert-circle" size={16} color="#FF3B30" />
-                         <Text style={styles.errorText}>{errors[fieldName]}</Text>
-                    </View>
-               )}
-          </View>
-     );
-
      return (
           <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                {/* Header */}
@@ -159,66 +78,55 @@ const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
 
                     {/* Form Section */}
                     <View style={styles.formSection}>
-                         <PasswordInput
-                              icon="lock-closed-outline"
+                         <FieldWrapper
+                              icon="lock"
                               label="Current Password"
                               placeholder="Enter your current password"
                               value={data.oldPassword}
                               onChangeText={text => setData({ ...data, oldPassword: text })}
-                              fieldName="oldPassword"
-                              showKey="old"
                          />
+                         <FieldWrapper icon="lock" label="New Password" placeholder="Enter your new password" value={data.newPassword} onChangeText={text => setData({ ...data, newPassword: text })} />
 
-                         <PasswordInput
-                              icon="key-outline"
-                              label="New Password"
-                              placeholder="Enter your new password"
-                              value={data.newPassword}
-                              onChangeText={text => setData({ ...data, newPassword: text })}
-                              fieldName="newPassword"
-                              showKey="new"
-                         />
-
-                         {/* Password Strength Indicator */}
-                         {data.newPassword.length > 0 && (
-                              <View style={styles.strengthContainer}>
-                                   <View style={styles.strengthBar}>
-                                        <View style={[styles.strengthFill, { width: `${(passwordStrength / 5) * 100}%`, backgroundColor: getStrengthColor() }]} />
-                                   </View>
-                                   <Text style={[styles.strengthText, { color: getStrengthColor() }]}>{getStrengthText()}</Text>
-                              </View>
-                         )}
-
-                         <PasswordInput
-                              icon="checkmark-circle-outline"
+                         <FieldWrapper
+                              icon="lock"
                               label="Confirm New Password"
                               placeholder="Re-enter your new password"
                               value={data.reenterNewPassword}
                               onChangeText={text => setData({ ...data, reenterNewPassword: text })}
-                              fieldName="reenterNewPassword"
-                              showKey="reenter"
                          />
 
                          {/* Password Requirements */}
                          <View style={styles.requirementsContainer}>
                               <Text style={styles.requirementsTitle}>Password must contain:</Text>
                               <View style={styles.requirementRow}>
-                                   <Icon name={data.newPassword.length >= 6 ? 'checkmark-circle' : 'ellipse-outline'} size={18} color={data.newPassword.length >= 6 ? '#4CAF50' : '#999'} />
+                                   <Icon
+                                        name={data.newPassword.length >= 6 ? 'checkmark-circle' : 'ellipse-outline'}
+                                        size={18}
+                                        color={data.newPassword.length >= 6 || data.reenterNewPassword.length >= 6 ? '#4CAF50' : '#999'}
+                                   />
                                    <Text style={styles.requirementText}>At least 6 characters</Text>
                               </View>
                               <View style={styles.requirementRow}>
-                                   <Icon name={/[A-Z]/.test(data.newPassword) ? 'checkmark-circle' : 'ellipse-outline'} size={18} color={/[A-Z]/.test(data.newPassword) ? '#4CAF50' : '#999'} />
+                                   <Icon
+                                        name={/[A-Z]/.test(data.newPassword) || /[A-Z]/.test(data.reenterNewPassword) ? 'checkmark-circle' : 'ellipse-outline'}
+                                        size={18}
+                                        color={/[A-Z]/.test(data.newPassword) ? '#4CAF50' : '#999'}
+                                   />
                                    <Text style={styles.requirementText}>One uppercase letter</Text>
                               </View>
                               <View style={styles.requirementRow}>
-                                   <Icon name={/[0-9]/.test(data.newPassword) ? 'checkmark-circle' : 'ellipse-outline'} size={18} color={/[0-9]/.test(data.newPassword) ? '#4CAF50' : '#999'} />
+                                   <Icon
+                                        name={/[0-9]/.test(data.newPassword) || /[0-9]/.test(data.reenterNewPassword) ? 'checkmark-circle' : 'ellipse-outline'}
+                                        size={18}
+                                        color={/[0-9]/.test(data.newPassword) || /[0-9]/.test(data.reenterNewPassword) ? '#4CAF50' : '#999'}
+                                   />
                                    <Text style={styles.requirementText}>One number</Text>
                               </View>
                               <View style={styles.requirementRow}>
                                    <Icon
-                                        name={/[^A-Za-z0-9]/.test(data.newPassword) ? 'checkmark-circle' : 'ellipse-outline'}
+                                        name={/[^A-Za-z0-9]/.test(data.newPassword) || /[^A-Za-z0-9]/.test(data.reenterNewPassword) ? 'checkmark-circle' : 'ellipse-outline'}
                                         size={18}
-                                        color={/[^A-Za-z0-9]/.test(data.newPassword) ? '#4CAF50' : '#999'}
+                                        color={/[^A-Za-z0-9]/.test(data.newPassword) || /[^A-Za-z0-9]/.test(data.reenterNewPassword) ? '#4CAF50' : '#999'}
                                    />
                                    <Text style={styles.requirementText}>One special character</Text>
                               </View>
@@ -261,7 +169,7 @@ const styles = StyleSheet.create({
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingHorizontal: 24,
-          paddingTop: 60,
+          paddingTop: 10,
           paddingBottom: 16,
           backgroundColor: '#fff',
           borderBottomWidth: 1,
@@ -383,7 +291,6 @@ const styles = StyleSheet.create({
      strengthFill: {
           height: '100%',
           borderRadius: 3,
-          transition: 'width 0.3s ease',
      },
      strengthText: {
           fontSize: 13,
