@@ -6,12 +6,25 @@ import Font from '../../assests/fonts/Font';
 import colors from '../../assests/color/color';
 import { useForm } from '../../utils/UseForm/UseForm';
 import Icon from '../../components/Icons/Icons';
+import CustomDropdown, { DropdownOption } from '../../components/CustomDropdown/CustomDropdown';
 
 const SignupScreen = ({ navigation }: { navigation: any }) => {
      const [loading, setLoading] = useState(false);
      const [error, setError] = useState('');
      const [showPassword, setShowPassword] = useState(false);
      const dispatch = useDispatch();
+     const [selectedIncome, setSelectedIncome] = useState('');
+
+     const incomeRanges: DropdownOption[] = [
+          { label: 'Under ₨25,000', value: '0-25000' },
+          { label: '₨25,000 - ₨50,000', value: '25000-50000' },
+          { label: '₨50,000 - ₨75,000', value: '50000-75000' },
+          { label: '₨75,000 - ₨1,00,000', value: '75000-100000' },
+          { label: '₨1,00,000 - ₨1,50,000', value: '100000-150000' },
+          { label: '₨1,50,000 - ₨2,00,000', value: '150000-200000' },
+          { label: '₨2,00,000 - ₨3,00,000', value: '200000-300000' },
+          { label: 'Above ₨3,00,000', value: '300000+' },
+     ];
 
      const {
           data,
@@ -135,24 +148,33 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                          </View>
                     </View>
 
-                    {/* Type Input */}
-                    <View style={styles.inputGroup}>
-                         <Text style={styles.label}>Income</Text>
-                         <View style={styles.inputWrapper}>
-                              <View style={styles.inputIconContainer}>
-                                   <Icon name="income" size={18} color="#9CA3AF" />
-                              </View>
-                              <TextInput
-                                   style={styles.input}
-                                   placeholder="Enter your Account Type"
-                                   placeholderTextColor="#9CA3AF"
-                                   // value={email}
-                                   // onChangeText={value => handleData('email', value)}
-                                   autoCapitalize="none"
-                                   autoCorrect={false}
-                              />
-                         </View>
-                    </View>
+                    <CustomDropdown
+                         label="Income Range"
+                         placeholder="Select your income range"
+                         options={incomeRanges}
+                         value={selectedIncome}
+                         onValueChange={(value, label) => {
+                              setSelectedIncome(value);
+                              console.log('Selected:', value, label);
+                         }}
+                         iconName="income"
+                         iconSize={18}
+                         iconColor="#9CA3AF"
+                    />
+
+                    <CustomDropdown
+                         label="Cradit Score"
+                         placeholder="Select your income range"
+                         options={incomeRanges}
+                         value={selectedIncome}
+                         onValueChange={(value, label) => {
+                              setSelectedIncome(value);
+                              console.log('Selected:', value, label);
+                         }}
+                         iconName="income"
+                         iconSize={18}
+                         iconColor="#9CA3AF"
+                    />
 
                     {/* Password Input */}
                     <View style={styles.inputGroup}>
