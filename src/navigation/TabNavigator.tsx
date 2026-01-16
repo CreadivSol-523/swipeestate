@@ -1,66 +1,192 @@
 import React, { JSX } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { View, StyleSheet, Platform, Alert } from 'react-native';
 import colors from '../assests/color/color';
 import ProfileScreen from '../screens/User/ProfileScreen';
 import EditProfileScreen from '../screens/User/EditProfileScreen';
 import ChangePasswordScreen from '../screens/User/ChangePasswordScreen';
 import HomeScreen from '../screens/User/HomeScreen';
 import { NavigationContainer } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const ProfileStackNavigator = createStackNavigator();
 
 const ProfileStack = (): JSX.Element => {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="ProfileMain" component={ProfileScreen} />
-      <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
-      <Stack.Screen
-        name="ChangePasswordScreen"
-        component={ChangePasswordScreen}
-      />
-    </Stack.Navigator>
-  );
+     return (
+          <ProfileStackNavigator.Navigator screenOptions={{ headerShown: false }}>
+               <ProfileStackNavigator.Screen name="ProfileMain" component={ProfileScreen} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
+          </ProfileStackNavigator.Navigator>
+     );
+};
+
+// Custom Tab Bar Icon Component with animated background
+const TabBarIcon = ({ name, color, focused }: { name: string; color: string; focused: boolean }) => {
+     return (
+          <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
+               <Icon name={focused ? name : `${name}-outline`} size={24} color={color} />
+               {focused && <View style={styles.activeDot} />}
+          </View>
+     );
 };
 
 const TabNavigation = (): JSX.Element => {
-  return (
-    <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: colors.PrimaryColor,
-          tabBarInactiveTintColor: '#999',
-          tabBarStyle: {
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 8,
-          },
-        }}
-      >
-        <Tab.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Icon name="home" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Profile"
-          component={ProfileStack}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Icon name="person" size={size} color={color} />
-            ),
-          }}
-        />
-      </Tab.Navigator>
-    </NavigationContainer>
-  );
+     const insets = useSafeAreaInsets();
+
+     return (
+          <NavigationContainer>
+               <Tab.Navigator
+                    screenOptions={{
+                         headerShown: false,
+                         tabBarActiveTintColor: colors.PrimaryColor,
+                         tabBarInactiveTintColor: '#9CA3AF',
+                         tabBarStyle: {
+                              height: 60 + insets.bottom + 4,
+                              backgroundColor: '#FFFFFF',
+                              borderTopWidth: 1,
+                              borderTopColor: '#F0F0F0',
+                              paddingBottom: 10,
+                              paddingTop: 10,
+                              ...Platform.select({
+                                   ios: {
+                                        shadowColor: '#000',
+                                        shadowOffset: { width: 0, height: -2 },
+                                        shadowOpacity: 0.1,
+                                        shadowRadius: 8,
+                                   },
+                                   android: {
+                                        elevation: 8,
+                                   },
+                              }),
+                         },
+                         tabBarLabelStyle: {
+                              fontSize: 12,
+                              fontWeight: '600',
+                              marginTop: 4,
+                         },
+                         tabBarItemStyle: {
+                              paddingVertical: 5,
+                         },
+                    }}
+               >
+                    <Tab.Screen
+                         name="Home"
+                         component={HomeScreen}
+                         options={{
+                              tabBarIcon: ({ color, focused }) => <TabBarIcon name="home" color={color} focused={focused} />,
+                         }}
+                    />
+                    <Tab.Screen
+                         name="Favorites"
+                         component={HomeScreen}
+                         options={{
+                              tabBarIcon: ({ color, focused }) => <TabBarIcon name="heart" color={color} focused={focused} />,
+                         }}
+                         listeners={{
+                              tabPress: e => {
+                                   e.preventDefault();
+                                   Alert.alert('Coming Soon', 'Favorites feature is under development');
+                              },
+                         }}
+                    />
+                    <Tab.Screen
+                         name="Search"
+                         component={HomeScreen}
+                         options={{
+                              tabBarIcon: ({ color, focused }) => (
+                                   <View style={styles.searchIconContainer}>
+                                        <Icon name="search" size={36} color="#FFFFFF" />
+                                   </View>
+                              ),
+                              tabBarLabel: '',
+                         }}
+                         listeners={{
+                              tabPress: e => {
+                                   e.preventDefault();
+                                   Alert.alert('Coming Soon', 'Search feature is under development');
+                              },
+                         }}
+                    />
+                    <Tab.Screen
+                         name="Messages"
+                         component={HomeScreen}
+                         options={{
+                              tabBarIcon: ({ color, focused }) => <TabBarIcon name="chatbubble" color={color} focused={focused} />,
+                              tabBarBadge: 3,
+                              tabBarBadgeStyle: {
+                                   backgroundColor: '#EF4444',
+                                   color: '#FFFFFF',
+                                   fontSize: 10,
+                                   fontWeight: 'bold',
+                                   minWidth: 18,
+                                   height: 18,
+                                   borderRadius: 9,
+                                   marginTop: 2,
+                              },
+                         }}
+                         listeners={{
+                              tabPress: e => {
+                                   e.preventDefault();
+                                   Alert.alert('Coming Soon', 'Messages feature is under development');
+                              },
+                         }}
+                    />
+                    <Tab.Screen
+                         name="Profile"
+                         component={ProfileStack}
+                         options={{
+                              tabBarIcon: ({ color, focused }) => <TabBarIcon name="person" color={color} focused={focused} />,
+                         }}
+                    />
+               </Tab.Navigator>
+          </NavigationContainer>
+     );
 };
+
+const styles = StyleSheet.create({
+     iconContainer: {
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 50,
+          height: 40,
+          borderRadius: 16,
+     },
+     iconContainerActive: {
+          backgroundColor: `${colors.PrimaryColor}15`,
+     },
+     activeDot: {
+          width: 4,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: colors.PrimaryColor,
+          marginTop: 4,
+          position: 'absolute',
+          bottom: -2,
+     },
+     searchIconContainer: {
+          width: 70,
+          height: 70,
+          borderRadius: 70,
+          backgroundColor: colors.PrimaryColor,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: -20,
+          ...Platform.select({
+               ios: {
+                    shadowColor: colors.PrimaryColor,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.4,
+                    shadowRadius: 12,
+               },
+               android: {
+                    elevation: 8,
+               },
+          }),
+     },
+});
 
 export default TabNavigation;

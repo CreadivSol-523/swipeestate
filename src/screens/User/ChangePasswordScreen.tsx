@@ -1,203 +1,367 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
+import Field from '../../components/Field/Field';
+import FieldWrapper from '../../components/FieldWrapper/FieldWrapper';
 
 const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
-  const [data, setData] = useState({
-    oldPassword: '',
-    newPassword: '',
-    reenterNewPassword: '',
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+     const [data, setData] = useState({
+          oldPassword: '',
+          newPassword: '',
+          reenterNewPassword: '',
+     });
+     const [loading, setLoading] = useState(false);
+     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+     console.log(data);
+     const validateForm = () => {
+          const newErrors: { [key: string]: string } = {};
 
-  const handleChangePassword = () => {
-    if (!data.oldPassword || !data.newPassword || !data.reenterNewPassword) {
-      setError('Please fill in all fields');
-      return;
-    }
+          if (!data.oldPassword.trim()) {
+               newErrors.oldPassword = 'Old password is required';
+          }
 
-    if (data.newPassword.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
+          if (!data.newPassword.trim()) {
+               newErrors.newPassword = 'New password is required';
+          } else if (data.newPassword.length < 6) {
+               newErrors.newPassword = 'Password must be at least 6 characters';
+          }
 
-    if (data.newPassword !== data.reenterNewPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+          if (!data.reenterNewPassword.trim()) {
+               newErrors.reenterNewPassword = 'Please confirm your password';
+          } else if (data.newPassword !== data.reenterNewPassword) {
+               newErrors.reenterNewPassword = 'Passwords do not match';
+          }
 
-    setLoading(true);
-    setError('');
+          if (data.oldPassword === data.newPassword && data.oldPassword) {
+               newErrors.newPassword = 'New password must be different from old password';
+          }
 
-    setTimeout(() => {
-      setLoading(false);
-      navigation.goBack();
-    }, 1500);
-  };
+          setErrors(newErrors);
+          return Object.keys(newErrors).length === 0;
+     };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Icon name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Change Password</Text>
-        <View style={styles.placeholder} />
-      </View>
+     const handleChangePassword = () => {
+          if (!validateForm()) {
+               return;
+          }
 
-      <View style={styles.content}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Old Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter old password"
-            placeholderTextColor="#999"
-            value={data.oldPassword}
-            onChangeText={text => {
-              setData({ ...data, oldPassword: text });
-              setError('');
-            }}
-            secureTextEntry
-          />
-        </View>
+          setLoading(true);
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>New Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter new password"
-            placeholderTextColor="#999"
-            value={data.newPassword}
-            onChangeText={text => {
-              setData({ ...data, newPassword: text });
-              setError('');
-            }}
-            secureTextEntry
-          />
-        </View>
+          setTimeout(() => {
+               setLoading(false);
+               navigation.goBack();
+          }, 1500);
+     };
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Re-enter New Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Re-enter new password"
-            placeholderTextColor="#999"
-            value={data.reenterNewPassword}
-            onChangeText={text => {
-              setData({ ...data, reenterNewPassword: text });
-              setError('');
-            }}
-            secureTextEntry
-          />
-        </View>
+     return (
+          <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+               {/* Header */}
+               <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                         <Icon name="arrow-back" size={24} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Change Password</Text>
+                    <View style={styles.placeholder} />
+               </View>
 
-        {error && <Text style={styles.errorText}>{error}</Text>}
+               <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    {/* Security Icon */}
+                    <View style={styles.securitySection}>
+                         <View style={styles.securityIconContainer}>
+                              <Icon name="shield-checkmark" size={48} color={colors.PrimaryColor} />
+                         </View>
+                         <Text style={styles.securityTitle}>Secure Your Account</Text>
+                         <Text style={styles.securitySubtitle}>Choose a strong password to keep your account safe</Text>
+                    </View>
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleChangePassword}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Change Password</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+                    {/* Form Section */}
+                    <View style={styles.formSection}>
+                         <FieldWrapper
+                              icon="lock"
+                              label="Current Password"
+                              placeholder="Enter your current password"
+                              value={data.oldPassword}
+                              onChangeText={text => setData({ ...data, oldPassword: text })}
+                         />
+                         <FieldWrapper icon="lock" label="New Password" placeholder="Enter your new password" value={data.newPassword} onChangeText={text => setData({ ...data, newPassword: text })} />
+
+                         <FieldWrapper
+                              icon="lock"
+                              label="Confirm New Password"
+                              placeholder="Re-enter your new password"
+                              value={data.reenterNewPassword}
+                              onChangeText={text => setData({ ...data, reenterNewPassword: text })}
+                         />
+
+                         {/* Password Requirements */}
+                         <View style={styles.requirementsContainer}>
+                              <Text style={styles.requirementsTitle}>Password must contain:</Text>
+                              <View style={styles.requirementRow}>
+                                   <Icon
+                                        name={data.newPassword.length >= 6 ? 'checkmark-circle' : 'ellipse-outline'}
+                                        size={18}
+                                        color={data.newPassword.length >= 6 || data.reenterNewPassword.length >= 6 ? '#4CAF50' : '#999'}
+                                   />
+                                   <Text style={styles.requirementText}>At least 6 characters</Text>
+                              </View>
+                              <View style={styles.requirementRow}>
+                                   <Icon
+                                        name={/[A-Z]/.test(data.newPassword) || /[A-Z]/.test(data.reenterNewPassword) ? 'checkmark-circle' : 'ellipse-outline'}
+                                        size={18}
+                                        color={/[A-Z]/.test(data.newPassword) ? '#4CAF50' : '#999'}
+                                   />
+                                   <Text style={styles.requirementText}>One uppercase letter</Text>
+                              </View>
+                              <View style={styles.requirementRow}>
+                                   <Icon
+                                        name={/[0-9]/.test(data.newPassword) || /[0-9]/.test(data.reenterNewPassword) ? 'checkmark-circle' : 'ellipse-outline'}
+                                        size={18}
+                                        color={/[0-9]/.test(data.newPassword) || /[0-9]/.test(data.reenterNewPassword) ? '#4CAF50' : '#999'}
+                                   />
+                                   <Text style={styles.requirementText}>One number</Text>
+                              </View>
+                              <View style={styles.requirementRow}>
+                                   <Icon
+                                        name={/[^A-Za-z0-9]/.test(data.newPassword) || /[^A-Za-z0-9]/.test(data.reenterNewPassword) ? 'checkmark-circle' : 'ellipse-outline'}
+                                        size={18}
+                                        color={/[^A-Za-z0-9]/.test(data.newPassword) || /[^A-Za-z0-9]/.test(data.reenterNewPassword) ? '#4CAF50' : '#999'}
+                                   />
+                                   <Text style={styles.requirementText}>One special character</Text>
+                              </View>
+                         </View>
+                    </View>
+
+                    {/* Action Buttons */}
+                    <View style={styles.actionSection}>
+                         <TouchableOpacity style={[styles.changeButton, loading && styles.buttonDisabled]} onPress={handleChangePassword} disabled={loading} activeOpacity={0.8}>
+                              {loading ? (
+                                   <ActivityIndicator color="#fff" />
+                              ) : (
+                                   <>
+                                        <Icon name="shield-checkmark-outline" size={24} color="#fff" />
+                                        <Text style={styles.changeButtonText}>Update Password</Text>
+                                   </>
+                              )}
+                         </TouchableOpacity>
+
+                         <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()} disabled={loading}>
+                              <Text style={styles.cancelButtonText}>Cancel</Text>
+                         </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.bottomSpacing} />
+               </ScrollView>
+          </KeyboardAvoidingView>
+     );
 };
 
 export default ChangePasswordScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.SecondaryColor,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-  },
-  backButton: {
-    width: 40,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontFamily: Font.font500,
-    color: '#000',
-    textAlign: 'center',
-  },
-  placeholder: {
-    width: 40,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontFamily: Font.font500,
-    color: '#000',
-    marginBottom: 8,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    fontFamily: Font.font400,
-    color: '#000',
-    backgroundColor: '#fff',
-  },
-  button: {
-    height: 50,
-    backgroundColor: colors.PrimaryColor,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 4,
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontFamily: Font.font500,
-    color: '#fff',
-  },
-  errorText: {
-    fontSize: 14,
-    fontFamily: Font.font400,
-    color: '#FF3B30',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
+     container: {
+          flex: 1,
+          backgroundColor: '#F8F9FA',
+     },
+     header: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 24,
+          paddingTop: 10,
+          paddingBottom: 16,
+          backgroundColor: '#fff',
+          borderBottomWidth: 1,
+          borderBottomColor: '#F0F0F0',
+     },
+     backButton: {
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: '#F5F5F5',
+          alignItems: 'center',
+          justifyContent: 'center',
+     },
+     headerTitle: {
+          fontSize: 20,
+          fontFamily: Font.font500,
+          color: '#000',
+     },
+     placeholder: {
+          width: 40,
+     },
+     scrollView: {
+          flex: 1,
+     },
+     securitySection: {
+          alignItems: 'center',
+          paddingVertical: 32,
+          backgroundColor: '#fff',
+          marginBottom: 16,
+     },
+     securityIconContainer: {
+          width: 90,
+          height: 90,
+          borderRadius: 45,
+          backgroundColor: '#E3F2FD',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 16,
+     },
+     securityTitle: {
+          fontSize: 22,
+          fontFamily: Font.font500,
+          color: '#000',
+          marginBottom: 8,
+     },
+     securitySubtitle: {
+          fontSize: 14,
+          fontFamily: Font.font400,
+          color: '#999',
+          textAlign: 'center',
+          paddingHorizontal: 40,
+     },
+     formSection: {
+          paddingHorizontal: 24,
+          paddingTop: 24,
+     },
+     inputContainer: {
+          marginBottom: 20,
+     },
+     label: {
+          fontSize: 14,
+          fontFamily: Font.font500,
+          color: '#000',
+          marginBottom: 8,
+     },
+     inputWrapper: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#fff',
+          borderRadius: 12,
+          borderWidth: 1.5,
+          borderColor: '#E0E0E0',
+          paddingHorizontal: 16,
+          height: 56,
+     },
+     inputWrapperFocused: {
+          borderColor: colors.PrimaryColor,
+          backgroundColor: '#F0F7FF',
+     },
+     inputWrapperError: {
+          borderColor: '#FF3B30',
+          backgroundColor: '#FFF5F5',
+     },
+     inputIconContainer: {
+          marginRight: 12,
+     },
+     input: {
+          flex: 1,
+          fontSize: 16,
+          fontFamily: Font.font400,
+          color: '#000',
+          paddingVertical: 0,
+     },
+     eyeButton: {
+          padding: 4,
+          marginLeft: 8,
+     },
+     errorContainer: {
+          marginTop: 6,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+     },
+     errorText: {
+          fontSize: 13,
+          fontFamily: Font.font400,
+          color: '#FF3B30',
+     },
+     strengthContainer: {
+          marginBottom: 20,
+     },
+     strengthBar: {
+          height: 6,
+          backgroundColor: '#E0E0E0',
+          borderRadius: 3,
+          overflow: 'hidden',
+          marginBottom: 8,
+     },
+     strengthFill: {
+          height: '100%',
+          borderRadius: 3,
+     },
+     strengthText: {
+          fontSize: 13,
+          fontFamily: Font.font500,
+          textAlign: 'right',
+     },
+     requirementsContainer: {
+          backgroundColor: '#F0F7FF',
+          padding: 16,
+          borderRadius: 12,
+          marginBottom: 24,
+     },
+     requirementsTitle: {
+          fontSize: 14,
+          fontFamily: Font.font500,
+          color: '#000',
+          marginBottom: 12,
+     },
+     requirementRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          marginBottom: 8,
+     },
+     requirementText: {
+          fontSize: 13,
+          fontFamily: Font.font400,
+          color: '#666',
+     },
+     actionSection: {
+          paddingHorizontal: 24,
+          paddingTop: 8,
+     },
+     changeButton: {
+          height: 56,
+          backgroundColor: colors.PrimaryColor,
+          borderRadius: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          marginBottom: 12,
+          shadowColor: colors.PrimaryColor,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 4,
+     },
+     buttonDisabled: {
+          opacity: 0.6,
+     },
+     changeButtonText: {
+          fontSize: 16,
+          fontFamily: Font.font500,
+          color: '#fff',
+     },
+     cancelButton: {
+          height: 56,
+          backgroundColor: '#fff',
+          borderRadius: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 1.5,
+          borderColor: '#E0E0E0',
+     },
+     cancelButtonText: {
+          fontSize: 16,
+          fontFamily: Font.font500,
+          color: '#666',
+     },
+     bottomSpacing: {
+          height: 40,
+     },
 });

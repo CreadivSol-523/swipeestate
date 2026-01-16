@@ -1,170 +1,253 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
+import CustomLogo from '../../components/CustomLogo/CustomLogo';
+import Icon from '../../components/Icons/Icons';
 
 const ForgetPasswordScreen = ({ navigation }: { navigation: any }) => {
-  const [data, setData] = useState({ email: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+     const [email, setEmail] = useState<string>('');
+     const [loading, setLoading] = useState(false);
+     const [error, setError] = useState('');
 
-  const handleSendOTP = () => {
-    if (!data.email) {
-      setError('Please enter your email');
-      return;
-    }
+     const handleSendOTP = () => {
+          if (!email) {
+               setError('Please enter your email');
+               return;
+          }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email)) {
-      setError('Please enter a valid email');
-      return;
-    }
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+               setError('Please enter a valid email');
+               return;
+          }
 
-    setLoading(true);
-    setError('');
+          setLoading(true);
+          setError('');
 
-    setTimeout(() => {
-      setLoading(false);
-      navigation.navigate('VerifyOTPScreen', { email: data.email });
-    }, 1500);
-  };
+          setTimeout(() => {
+               setLoading(false);
+               navigation.navigate('VerifyOTPScreen', { email: email });
+          }, 1500);
+     };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Forgot Password</Text>
-        <Text style={styles.subtitle}>
-          Enter your email address and we'll send you an OTP to reset your
-          password
-        </Text>
+     return (
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+               {/* Logo Section */}
+               <View style={styles.logoContainer}>
+                    <CustomLogo />
+                    <Text style={styles.title}>Swipe Estate</Text>
+                    <Text style={styles.subtitle}>WHERE DREAMS COME TRUE</Text>
+               </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            placeholderTextColor="#999"
-            value={data.email}
-            onChangeText={text => {
-              setData({ ...data, email: text });
-              setError('');
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
+               {/* Login Form */}
+               <View style={styles.formContainer}>
+                    <Text style={styles.welcomeText}>Forgot Password!</Text>
 
-        {error && <Text style={styles.errorText}>{error}</Text>}
+                    {/* Email Input */}
+                    <View style={styles.inputGroup}>
+                         <Text style={styles.label}>Email</Text>
+                         <View style={styles.inputWrapper}>
+                              <View style={styles.inputIconContainer}>
+                                   <Icon name="mail" size={18} color="#9CA3AF" />
+                              </View>
+                              <TextInput
+                                   style={styles.input}
+                                   placeholder="Enter your email"
+                                   placeholderTextColor="#9CA3AF"
+                                   value={email}
+                                   onChangeText={value => setEmail(value)}
+                                   keyboardType="email-address"
+                                   autoCapitalize="none"
+                                   autoCorrect={false}
+                              />
+                         </View>
+                    </View>
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleSendOTP}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Send OTP</Text>
-          )}
-        </TouchableOpacity>
+                    {/* Login Button */}
+                    <TouchableOpacity style={styles.loginButton} onPress={handleSendOTP} activeOpacity={0.8}>
+                         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Continue</Text>}
+                    </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>Back to Login</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+                    {/* Sign Up Link */}
+                    <View style={styles.signupContainer}>
+                         <Text style={styles.signupText}>Don't have an account? </Text>
+                         <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
+                              <Text style={styles.signupLink}>Sign Up</Text>
+                         </TouchableOpacity>
+                    </View>
+               </View>
+
+               {/* Footer */}
+               <Text style={styles.footer}>© 2026 Swipe Estate. All rights reserved.</Text>
+          </ScrollView>
+     );
 };
 
 export default ForgetPasswordScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.SecondaryColor,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: Font.font500,
-    color: '#000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: Font.font400,
-    color: '#666',
-    marginBottom: 40,
-    lineHeight: 24,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontFamily: Font.font500,
-    color: '#000',
-    marginBottom: 8,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    fontFamily: Font.font400,
-    color: '#000',
-    backgroundColor: '#fff',
-  },
-  button: {
-    height: 50,
-    backgroundColor: colors.PrimaryColor,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 4,
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontFamily: Font.font500,
-    color: '#fff',
-  },
-  errorText: {
-    fontSize: 14,
-    fontFamily: Font.font400,
-    color: '#FF3B30',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  backButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  backButtonText: {
-    fontSize: 14,
-    fontFamily: Font.font500,
-    color: colors.PrimaryColor,
-  },
+     scrollContent: {
+          flexGrow: 1,
+          paddingHorizontal: 20,
+          paddingTop: 40,
+          paddingBottom: 20,
+          backgroundColor: '#fff',
+     },
+     logoContainer: {
+          alignItems: 'center',
+          marginBottom: 40,
+     },
+
+     title: {
+          fontSize: 36,
+          fontWeight: 'bold',
+          color: colors.textBlue,
+          marginBottom: 8,
+     },
+     subtitle: {
+          fontSize: 16,
+          color: colors.textColor,
+          fontWeight: '600',
+          fontStyle: 'italic',
+          letterSpacing: 0.5,
+     },
+     formContainer: {
+          backgroundColor: '#FFFFFF',
+          borderRadius: 30,
+          padding: 24,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 16,
+          elevation: 10,
+     },
+     welcomeText: {
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: '#1F2937',
+          textAlign: 'center',
+          marginBottom: 24,
+     },
+     inputGroup: {
+          marginBottom: 20,
+     },
+     label: {
+          fontSize: 14,
+          fontWeight: '600',
+          color: '#374151',
+          marginBottom: 8,
+     },
+     inputWrapper: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          borderWidth: 2,
+          borderColor: '#E5E7EB',
+          borderRadius: 16,
+          backgroundColor: '#FFFFFF',
+     },
+     inputIconContainer: {
+          paddingLeft: 16,
+          justifyContent: 'center',
+     },
+     input: {
+          flex: 1,
+          paddingVertical: 14,
+          paddingHorizontal: 12,
+          fontSize: 16,
+          color: '#1F2937',
+     },
+     eyeIconContainer: {
+          paddingRight: 16,
+          paddingLeft: 8,
+     },
+     forgotPassword: {
+          alignSelf: 'flex-end',
+          marginBottom: 20,
+     },
+     forgotPasswordText: {
+          fontSize: 14,
+          color: '#0EA5E9',
+          fontWeight: '600',
+     },
+     loginButton: {
+          backgroundColor: '#0EA5E9',
+          borderRadius: 16,
+          paddingVertical: 16,
+          alignItems: 'center',
+          shadowColor: '#0EA5E9',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 6,
+     },
+     loginButtonText: {
+          color: '#FFFFFF',
+          fontSize: 18,
+          fontWeight: 'bold',
+     },
+     divider: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginVertical: 24,
+     },
+     dividerLine: {
+          flex: 1,
+          height: 1,
+          backgroundColor: '#E5E7EB',
+     },
+     dividerText: {
+          marginHorizontal: 16,
+          fontSize: 14,
+          color: '#6B7280',
+     },
+     socialButtons: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          gap: 12,
+     },
+     socialButton: {
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 2,
+          borderColor: '#E5E7EB',
+          borderRadius: 16,
+          paddingVertical: 14,
+          gap: 8,
+     },
+     socialIcon: {
+          width: 28,
+          height: 28,
+          borderRadius: 14,
+          justifyContent: 'center',
+          alignItems: 'center',
+     },
+     socialButtonText: {
+          fontSize: 14,
+          fontWeight: '600',
+          color: '#374151',
+     },
+     signupContainer: {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          marginTop: 24,
+     },
+     signupText: {
+          fontSize: 14,
+          color: '#6B7280',
+     },
+     signupLink: {
+          fontSize: 14,
+          color: '#0EA5E9',
+          fontWeight: '700',
+     },
+     footer: {
+          textAlign: 'center',
+          color: '#FFFFFF',
+          fontSize: 12,
+          marginTop: 24,
+          opacity: 0.8,
+     },
 });

@@ -1,167 +1,283 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
+import CustomLogo from '../../components/CustomLogo/CustomLogo';
+import Icon from '../../components/Icons/Icons';
 
 const ResetPasswordScreen = ({ navigation }: { navigation: any }) => {
-  const [data, setData] = useState({ newPassword: '', reenterNewPassword: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+     const [data, setData] = useState({ newPassword: '', reenterNewPassword: '' });
+     const [loading, setLoading] = useState(false);
+     const [error, setError] = useState('');
+     const [showPassword, setShowPassword] = useState(false);
 
-  const handleResetPassword = () => {
-    if (!data.newPassword || !data.reenterNewPassword) {
-      setError('Please fill in all fields');
-      return;
-    }
+     const { newPassword, reenterNewPassword } = data;
 
-    if (data.newPassword.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
+     const handleFields = (name: string, value: any) => {
+          setData(prev => ({
+               ...prev,
+               [name]: value,
+          }));
+     };
 
-    if (data.newPassword !== data.reenterNewPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+     const handleResetPassword = () => {
+          if (!data.newPassword || !data.reenterNewPassword) {
+               setError('Please fill in all fields');
+               return;
+          }
 
-    setLoading(true);
-    setError('');
+          if (data.newPassword.length < 6) {
+               setError('Password must be at least 6 characters');
+               return;
+          }
 
-    setTimeout(() => {
-      setLoading(false);
-      navigation.navigate('LoginScreen');
-    }, 1500);
-  };
+          if (data.newPassword !== data.reenterNewPassword) {
+               setError('Passwords do not match');
+               return;
+          }
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Reset Password</Text>
-        <Text style={styles.subtitle}>Enter your new password</Text>
+          setLoading(true);
+          setError('');
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>New Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter new password"
-            placeholderTextColor="#999"
-            value={data.newPassword}
-            onChangeText={text => {
-              setData({ ...data, newPassword: text });
-              setError('');
-            }}
-            secureTextEntry
-          />
-        </View>
+          setTimeout(() => {
+               setLoading(false);
+               navigation.navigate('LoginScreen');
+          }, 1500);
+     };
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Re-enter New Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Re-enter new password"
-            placeholderTextColor="#999"
-            value={data.reenterNewPassword}
-            onChangeText={text => {
-              setData({ ...data, reenterNewPassword: text });
-              setError('');
-            }}
-            secureTextEntry
-          />
-        </View>
+     return (
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+               {/* Logo Section */}
+               <View style={styles.logoContainer}>
+                    <CustomLogo />
+                    <Text style={styles.title}>Swipe Estate</Text>
+                    <Text style={styles.subtitle}>WHERE DREAMS COME TRUE</Text>
+               </View>
 
-        {error && <Text style={styles.errorText}>{error}</Text>}
+               {/* Login Form */}
+               <View style={styles.formContainer}>
+                    <Text style={styles.welcomeText}>Reset Password!</Text>
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleResetPassword}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Reset Password</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+                    {/* Password Input */}
+                    <View style={styles.inputGroup}>
+                         <Text style={styles.label}>Password</Text>
+                         <View style={styles.inputWrapper}>
+                              <View style={styles.inputIconContainer}>
+                                   <Icon name="lock" size={18} color="#9CA3AF" />
+                              </View>
+                              <TextInput
+                                   style={styles.input}
+                                   placeholder="Enter your password"
+                                   placeholderTextColor="#9CA3AF"
+                                   value={newPassword}
+                                   onChangeText={value => handleFields('newPassword', value)}
+                                   secureTextEntry={!showPassword}
+                                   autoCapitalize="none"
+                              />
+                              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
+                                   <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color="#9CA3AF" />
+                              </TouchableOpacity>
+                         </View>
+                    </View>
+
+                    {/* Comfirm Password Input */}
+                    <View style={styles.inputGroup}>
+                         <Text style={styles.label}>Password</Text>
+                         <View style={styles.inputWrapper}>
+                              <View style={styles.inputIconContainer}>
+                                   <Icon name="lock" size={18} color="#9CA3AF" />
+                              </View>
+                              <TextInput
+                                   style={styles.input}
+                                   placeholder="Enter your password"
+                                   placeholderTextColor="#9CA3AF"
+                                   value={reenterNewPassword}
+                                   onChangeText={value => handleFields('reenterNewPassword', value)}
+                                   secureTextEntry={!showPassword}
+                                   autoCapitalize="none"
+                              />
+                              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
+                                   <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color="#9CA3AF" />
+                              </TouchableOpacity>
+                         </View>
+                    </View>
+
+                    {/* Login Button */}
+                    <TouchableOpacity style={styles.loginButton} onPress={handleResetPassword} activeOpacity={0.8}>
+                         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Reset Password</Text>}
+                    </TouchableOpacity>
+               </View>
+
+               {/* Footer */}
+               <Text style={styles.footer}>© 2026 Swipe Estate. All rights reserved.</Text>
+          </ScrollView>
+     );
 };
 
 export default ResetPasswordScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.SecondaryColor,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: Font.font500,
-    color: '#000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: Font.font400,
-    color: '#666',
-    marginBottom: 40,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontFamily: Font.font500,
-    color: '#000',
-    marginBottom: 8,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    fontFamily: Font.font400,
-    color: '#000',
-    backgroundColor: '#fff',
-  },
-  button: {
-    height: 50,
-    backgroundColor: colors.PrimaryColor,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 4,
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontFamily: Font.font500,
-    color: '#fff',
-  },
-  errorText: {
-    fontSize: 14,
-    fontFamily: Font.font400,
-    color: '#FF3B30',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
+     scrollContent: {
+          flexGrow: 1,
+          paddingHorizontal: 20,
+          paddingTop: 40,
+          paddingBottom: 20,
+          backgroundColor: '#fff',
+     },
+     logoContainer: {
+          alignItems: 'center',
+          marginBottom: 40,
+     },
+
+     title: {
+          fontSize: 36,
+          fontWeight: 'bold',
+          color: colors.textBlue,
+          marginBottom: 8,
+     },
+     subtitle: {
+          fontSize: 16,
+          color: colors.textColor,
+          fontWeight: '600',
+          fontStyle: 'italic',
+          letterSpacing: 0.5,
+     },
+     formContainer: {
+          backgroundColor: '#FFFFFF',
+          borderRadius: 30,
+          padding: 24,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 16,
+          elevation: 10,
+     },
+     welcomeText: {
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: '#1F2937',
+          textAlign: 'center',
+          marginBottom: 24,
+     },
+     inputGroup: {
+          marginBottom: 20,
+     },
+     label: {
+          fontSize: 14,
+          fontWeight: '600',
+          color: '#374151',
+          marginBottom: 8,
+     },
+     inputWrapper: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          borderWidth: 2,
+          borderColor: '#E5E7EB',
+          borderRadius: 16,
+          backgroundColor: '#FFFFFF',
+     },
+     inputIconContainer: {
+          paddingLeft: 16,
+          justifyContent: 'center',
+     },
+     input: {
+          flex: 1,
+          paddingVertical: 14,
+          paddingHorizontal: 12,
+          fontSize: 16,
+          color: '#1F2937',
+     },
+     eyeIconContainer: {
+          paddingRight: 16,
+          paddingLeft: 8,
+     },
+     forgotPassword: {
+          alignSelf: 'flex-end',
+          marginBottom: 20,
+     },
+     forgotPasswordText: {
+          fontSize: 14,
+          color: '#0EA5E9',
+          fontWeight: '600',
+     },
+     loginButton: {
+          backgroundColor: '#0EA5E9',
+          borderRadius: 16,
+          paddingVertical: 16,
+          alignItems: 'center',
+          shadowColor: '#0EA5E9',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 6,
+     },
+     loginButtonText: {
+          color: '#FFFFFF',
+          fontSize: 18,
+          fontWeight: 'bold',
+     },
+     divider: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginVertical: 24,
+     },
+     dividerLine: {
+          flex: 1,
+          height: 1,
+          backgroundColor: '#E5E7EB',
+     },
+     dividerText: {
+          marginHorizontal: 16,
+          fontSize: 14,
+          color: '#6B7280',
+     },
+     socialButtons: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          gap: 12,
+     },
+     socialButton: {
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 2,
+          borderColor: '#E5E7EB',
+          borderRadius: 16,
+          paddingVertical: 14,
+          gap: 8,
+     },
+     socialIcon: {
+          width: 28,
+          height: 28,
+          borderRadius: 14,
+          justifyContent: 'center',
+          alignItems: 'center',
+     },
+     socialButtonText: {
+          fontSize: 14,
+          fontWeight: '600',
+          color: '#374151',
+     },
+     signupContainer: {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          marginTop: 24,
+     },
+     signupText: {
+          fontSize: 14,
+          color: '#6B7280',
+     },
+     signupLink: {
+          fontSize: 14,
+          color: '#0EA5E9',
+          fontWeight: '700',
+     },
+     footer: {
+          textAlign: 'center',
+          color: '#FFFFFF',
+          fontSize: 12,
+          marginTop: 24,
+          opacity: 0.8,
+     },
 });
