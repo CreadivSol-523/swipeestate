@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import RootNavigation from './src/navigation/RootNavigation';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
+import { StripeProvider } from '@stripe/stripe-react-native';
 
 function App() {
      return (
@@ -13,12 +14,14 @@ function App() {
                <SafeAreaProvider>
                     <GestureHandlerRootView>
                          <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-                              <PaperProvider>
-                                   <RootNavigation />
-                                   {/* <View>
+                              <StripeProvider publishableKey="pk_live_51SUAWx37OtZDzMilzhN2AqFFidTz2aCvVAttrYwcMbr1clvx9myDHJ9YftVl39wlMcorcF1yuXo1kdrBJv1mFlSE00oVB3qsfy">
+                                   <PaperProvider>
+                                        <RootNavigation />
+                                        {/* <View>
                                         <Text className="text-[100px]">hello</Text>
                                    </View> */}
-                              </PaperProvider>
+                                   </PaperProvider>
+                              </StripeProvider>
                          </SafeAreaView>
                     </GestureHandlerRootView>
                </SafeAreaProvider>

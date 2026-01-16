@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { authUser } from '../../redux/Features/authState';
+import { useCreateIntendHandler } from '../../models/Subscription/Subscription';
+import { useStripe } from '@stripe/stripe-react-native';
 
 const SelectPlan = ({ route }: { route: { params: { email: string; password: string; name: string; city: string; phone: string; selectedIncome: string } } }) => {
      const { email, password, name, city, phone, selectedIncome } = route.params;
      const dispatch = useDispatch();
+
+     const [isPaymentSheetReady, setIsPaymentSheetReady] = useState(false);
+     const [selectedPlan, setSelectedPlan] = useState<any>(null);
+
+     const { initPaymentSheet, presentPaymentSheet } = useStripe();
+
      const plans = [
           {
                name: 'Bronze',
@@ -30,8 +38,56 @@ const SelectPlan = ({ route }: { route: { params: { email: string; password: str
           },
      ];
 
-     const handleSelectPlan = (planName: any) => {
-          dispatch(authUser({ data: { email, password, name, city, phone, selectedIncome, role: 'User' } }));
+     const { handleCreateIntendAPI } = useCreateIntendHandler();
+     const handleSelectPlan = async (plan: any) => {
+          setSelectedPlan(plan);
+          await initializePaymentSheet(plan);
+     };
+
+     const openPaymentSheet = async () => {
+          const { error } = await presentPaymentSheet();
+
+          if (error) {
+               console.error('Payment failed:', error);
+               return;
+          }
+
+          dispatch(
+               authUser({
+                    data: {
+                         email,
+                         password,
+                         name,
+                         city,
+                         phone,
+                         selectedIncome,
+                         role: 'User',
+                    },
+               }),
+          );
+     };
+
+     const initializePaymentSheet = async (plan: any) => {
+          try {
+               const paymentRes = await handleCreateIntendAPI(Number(plan.price));
+
+               if (!paymentRes?.paymentIntend) return;
+
+               const { error } = await initPaymentSheet({
+                    merchantDisplayName: 'ABC, Inc.',
+                    paymentIntentClientSecret: paymentRes.paymentIntend,
+                    allowsDelayedPaymentMethods: true,
+               });
+
+               if (error) {
+                    console.error('Init Sheet Error:', error);
+                    return;
+               }
+
+               openPaymentSheet();
+          } catch (err) {
+               console.error(err);
+          }
      };
 
      return (
@@ -63,7 +119,7 @@ const SelectPlan = ({ route }: { route: { params: { email: string; password: str
                                    {plan.price}
                                    <Text style={styles.period}>/ {plan.period}</Text>
                               </Text>
-                              <TouchableOpacity style={styles.getPlanButton} onPress={() => handleSelectPlan(plan.name)}>
+                              <TouchableOpacity style={styles.getPlanButton} onPress={() => handleSelectPlan(plan)}>
                                    <Text style={styles.getPlanButtonText}>GET PLAN</Text>
                               </TouchableOpacity>
                          </View>
