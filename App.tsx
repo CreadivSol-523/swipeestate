@@ -8,19 +8,22 @@ import { Provider } from 'react-redux';
 import store from './src/redux/store';
 
 function App() {
-  return (
-    <Provider store={store}>
-      <SafeAreaProvider>
-        <GestureHandlerRootView>
-          <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-            <PaperProvider>
-              <RootNavigation />
-            </PaperProvider>
-          </SafeAreaView>
-        </GestureHandlerRootView>
-      </SafeAreaProvider>
-    </Provider>
-  );
+     return (
+          <Provider store={store}>
+               <SafeAreaProvider>
+                    <GestureHandlerRootView>
+                         <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+                              <PaperProvider>
+                                   <RootNavigation />
+                                   {/* <View>
+                                        <Text className="text-[100px]">hello</Text>
+                                   </View> */}
+                              </PaperProvider>
+                         </SafeAreaView>
+                    </GestureHandlerRootView>
+               </SafeAreaProvider>
+          </Provider>
+     );
 }
 const styles = StyleSheet.create({});
 export default App;
