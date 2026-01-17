@@ -14,12 +14,9 @@ function App() {
                <SafeAreaProvider>
                     <GestureHandlerRootView>
                          <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-                              <StripeProvider publishableKey="pk_live_51SUAWx37OtZDzMilzhN2AqFFidTz2aCvVAttrYwcMbr1clvx9myDHJ9YftVl39wlMcorcF1yuXo1kdrBJv1mFlSE00oVB3qsfy">
+                              <StripeProvider publishableKey="pk_test_51SN0PD6LeihmLmRESnfivV5WX3wlrfaM6MSlXnuDjbsHDtCdKzKEfCdyEqLZm58JuvxzTqzWhWsjaaq4uWDGivIf00Rq5iTgf8">
                                    <PaperProvider>
                                         <RootNavigation />
-                                        {/* <View>
-                                        <Text className="text-[100px]">hello</Text>
-                                   </View> */}
                                    </PaperProvider>
                               </StripeProvider>
                          </SafeAreaView>

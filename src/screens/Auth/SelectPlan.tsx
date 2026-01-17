@@ -4,9 +4,16 @@ import { useDispatch } from 'react-redux';
 import { authUser } from '../../redux/Features/authState';
 import { useCreateIntendHandler } from '../../models/Subscription/Subscription';
 import { useStripe } from '@stripe/stripe-react-native';
+import Spinner from '../../components/Loader/Spinner';
+import colors from '../../assests/Colors/Colors';
 
-const SelectPlan = ({ route }: { route: { params: { email: string; password: string; name: string; city: string; phone: string; selectedIncome: string } } }) => {
-     const { email, password, name, city, phone, selectedIncome } = route.params;
+const SelectPlan = ({
+     route,
+}: {
+     route: { params: { email: string; password: string; name: string; city: string; phone: string; selectedIncome: string; confirmPassword: string; acountType: string; craditScore: string } };
+}) => {
+     const [isLoading, setIsLoading] = useState(false);
+     const { email, password, name, city, confirmPassword, phone, selectedIncome, acountType, craditScore } = route.params;
      const dispatch = useDispatch();
 
      const [isPaymentSheetReady, setIsPaymentSheetReady] = useState(false);
@@ -40,6 +47,7 @@ const SelectPlan = ({ route }: { route: { params: { email: string; password: str
 
      const { handleCreateIntendAPI } = useCreateIntendHandler();
      const handleSelectPlan = async (plan: any) => {
+          console.log(plan);
           setSelectedPlan(plan);
           await initializePaymentSheet(plan);
      };
@@ -59,9 +67,11 @@ const SelectPlan = ({ route }: { route: { params: { email: string; password: str
                          password,
                          name,
                          city,
+                         confirmPassword,
                          phone,
                          selectedIncome,
-                         role: 'User',
+                         role: acountType,
+                         craditScore,
                     },
                }),
           );
@@ -69,6 +79,7 @@ const SelectPlan = ({ route }: { route: { params: { email: string; password: str
 
      const initializePaymentSheet = async (plan: any) => {
           try {
+               setIsLoading(true);
                const paymentRes = await handleCreateIntendAPI(Number(plan.price));
 
                if (!paymentRes?.paymentIntend) return;
@@ -80,10 +91,12 @@ const SelectPlan = ({ route }: { route: { params: { email: string; password: str
                });
 
                if (error) {
+                    setIsLoading(false);
                     console.error('Init Sheet Error:', error);
                     return;
+               } else {
+                    setIsLoading(false);
                }
-
                openPaymentSheet();
           } catch (err) {
                console.error(err);
@@ -91,43 +104,46 @@ const SelectPlan = ({ route }: { route: { params: { email: string; password: str
      };
 
      return (
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-               {/* Header */}
-               <View style={styles.header}>
-                    <Text style={styles.headerTitle}>SELECT PLAN</Text>
-                    <Text style={styles.headerSubtitle}>Pick the option that gives you the comfort you deserve</Text>
-               </View>
-
-               {/* Plans */}
-               {plans.map((plan, index) => (
-                    <View key={index} style={styles.planCard}>
-                         <Text style={styles.planName}>{plan.name}</Text>
-                         <Text style={styles.planDescription}>{plan.description}</Text>
-
-                         {/* Features */}
-                         <View style={styles.featuresContainer}>
-                              {plan.features.map((feature, idx) => (
-                                   <View key={idx} style={styles.featureItem}>
-                                        <Text style={styles.featureTitle}>{feature}</Text>
-                                   </View>
-                              ))}
-                         </View>
-
-                         {/* Price and Button */}
-                         <View style={styles.priceRow}>
-                              <Text style={styles.price}>
-                                   {plan.price}
-                                   <Text style={styles.period}>/ {plan.period}</Text>
-                              </Text>
-                              <TouchableOpacity style={styles.getPlanButton} onPress={() => handleSelectPlan(plan)}>
-                                   <Text style={styles.getPlanButtonText}>GET PLAN</Text>
-                              </TouchableOpacity>
-                         </View>
+          <>
+               <Spinner visible={isLoading} color={colors.textBlue} />
+               <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                    {/* Header */}
+                    <View style={styles.header}>
+                         <Text style={styles.headerTitle}>SELECT PLAN</Text>
+                         <Text style={styles.headerSubtitle}>Pick the option that gives you the comfort you deserve</Text>
                     </View>
-               ))}
 
-               <View style={styles.bottomSpacing} />
-          </ScrollView>
+                    {/* Plans */}
+                    {plans.map((plan, index) => (
+                         <View key={index} style={styles.planCard}>
+                              <Text style={styles.planName}>{plan.name}</Text>
+                              <Text style={styles.planDescription}>{plan.description}</Text>
+
+                              {/* Features */}
+                              <View style={styles.featuresContainer}>
+                                   {plan.features.map((feature, idx) => (
+                                        <View key={idx} style={styles.featureItem}>
+                                             <Text style={styles.featureTitle}>{feature}</Text>
+                                        </View>
+                                   ))}
+                              </View>
+
+                              {/* Price and Button */}
+                              <View style={styles.priceRow}>
+                                   <Text style={styles.price}>
+                                        {plan.price}
+                                        <Text style={styles.period}>/ {plan.period}</Text>
+                                   </Text>
+                                   <TouchableOpacity style={styles.getPlanButton} onPress={() => handleSelectPlan(plan)}>
+                                        <Text style={styles.getPlanButtonText}>GET PLAN</Text>
+                                   </TouchableOpacity>
+                              </View>
+                         </View>
+                    ))}
+
+                    <View style={styles.bottomSpacing} />
+               </ScrollView>
+          </>
      );
 };
 

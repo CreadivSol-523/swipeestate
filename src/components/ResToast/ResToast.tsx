@@ -96,7 +96,7 @@ const ResToast = ({ title, type, res }: ResToastProps) => {
           );
      };
      return Notifier.showNotification({
-          duration: 3000,
+          duration: 2000,
           showAnimationDuration: 800,
           showEasing: Easing.linear,
           hideOnPress: false,

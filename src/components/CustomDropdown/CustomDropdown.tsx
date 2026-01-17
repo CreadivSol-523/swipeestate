@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import Icon from '../Icons/Icons';
 
 // Icon component placeholder - replace with your actual icon component
-const Icon = ({ name, size, color }: { name: string; size: number; color: string }) => <View style={{ width: size, height: size, backgroundColor: color, borderRadius: size / 2 }} />;
+// const Icon = ({ name, size, color }: { name: string; size: number; color: string }) => <View style={{ width: size, height: size, backgroundColor: color, borderRadius: size / 2 }} />;
 
 export interface DropdownOption {
      label: string;
@@ -10,7 +11,7 @@ export interface DropdownOption {
 }
 
 interface CustomDropdownProps {
-     label: string;
+     label?: string;
      placeholder?: string;
      options: DropdownOption[];
      value?: string;
@@ -21,6 +22,7 @@ interface CustomDropdownProps {
      containerStyle?: ViewStyle;
      dropdownStyle?: ViewStyle;
      maxHeight?: number;
+     height?: number;
      disabled?: boolean;
 }
 
@@ -36,6 +38,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
      containerStyle,
      dropdownStyle,
      maxHeight = 280,
+     height = 200,
      disabled = false,
 }) => {
      const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -60,7 +63,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
                          disabled={disabled}
                     >
                          <View style={styles.inputIconContainer}>
-                              <Icon name={iconName} size={iconSize} color={iconColor} />
+                              <Icon name={iconName} size={18} color="#9CA3AF" />
                          </View>
 
                          <Text style={[styles.selectText, !displayText && styles.placeholder]}>{displayText || placeholder}</Text>
@@ -72,7 +75,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
                     {/* Dropdown Menu */}
                     {isDropdownOpen && !disabled && (
-                         <View style={[styles.dropdownMenu, { maxHeight }]}>
+                         <View style={[styles.dropdownMenu, { maxHeight, height }]}>
                               <ScrollView style={styles.optionsList} showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
                                    {options.map((item, index) => (
                                         <TouchableOpacity
@@ -159,7 +162,6 @@ const styles = StyleSheet.create({
           transform: [{ rotate: '180deg' }],
      },
      dropdownMenu: {
-          height: 200,
           left: 0,
           right: 0,
           backgroundColor: '#FFFFFF',

@@ -4,17 +4,17 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import TabNavigation from './TabNavigator';
 import { NotifierWrapper } from 'react-native-notifier';
+import AgentTabs from './AgentTabs';
 
 const RootNavigation = (): JSX.Element => {
      const selector = useSelector((state: RootState) => state?.userData);
      const isLoggin = selector.isLoggin;
-
+     const accType = selector?.data?.acountType;
+     console.log(accType);
      return (
           <>
                {isLoggin ? (
-                    <NotifierWrapper>
-                         <TabNavigation />
-                    </NotifierWrapper>
+                    <NotifierWrapper>{accType === 'agent' ? <AgentTabs /> : <TabNavigation />}</NotifierWrapper>
                ) : (
                     <NotifierWrapper>
                          <AuthNaivgation initRoute={'LoginScreen'} />

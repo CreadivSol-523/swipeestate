@@ -1,3 +1,4 @@
-const API_BASE_URL = 'https://api.justseniors.org';
+// const API_BASE_URL = 'https://api.justseniors.org';
+const API_BASE_URL = 'http://192.168.0.101:5000';
 
 export default API_BASE_URL;

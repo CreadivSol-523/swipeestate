@@ -28,7 +28,21 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
           setError('');
 
           setTimeout(() => {
-               dispatch(authUser({ data: { email: data.email, name: 'John', role: 'User', password: data.password, city: 'Houston', phone: '+123456789', selectedIncome: '25000-50000' } }));
+               dispatch(
+                    authUser({
+                         data: {
+                              email: email,
+                              name: 'John',
+                              role: 'User',
+                              password: password,
+                              city: 'Houston',
+                              phone: '+123456789',
+                              selectedIncome: '25000-50000',
+                              acountType: email === 'test@gmail.com' ? 'buyer' : 'agent',
+                              craditScore: '',
+                         },
+                    }),
+               );
                setLoading(false);
           }, 1500);
           // navigation.navigate('SelectPlanScreen');

@@ -4,6 +4,9 @@ import Swiper from 'react-native-deck-swiper';
 import Icon from 'react-native-vector-icons/Ionicons';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
+import Field from '../../components/Field/Field';
+import CustomDropdown from '../../components/CustomDropdown/CustomDropdown';
+import { windowWidth } from '../../utils/Dimension/Dimension';
 
 const SAMPLE_PROPERTIES = [
      {
@@ -67,11 +70,14 @@ const SAMPLE_PROPERTIES = [
           featured: true,
      },
 ];
+type FilterKey = 'budget' | 'bedrooms' | 'location' | 'type' | 'rating' | 'area';
 
 const HomeScreen = () => {
      const swiperRef = useRef<Swiper<any>>(null);
      const [currentIndex, setCurrentIndex] = useState(0);
      const [likedProperties, setLikedProperties] = useState<number[]>([]);
+     const [selectedFilter, setSelectedFilter] = useState<FilterKey | string | undefined>(undefined);
+     const [selectedValue, setSelectedValue] = useState<string | undefined | null>(undefined);
 
      const renderCard = (property: any) => {
           if (!property) return null;
@@ -146,21 +152,45 @@ const HomeScreen = () => {
                                    <Text style={styles.detailLabel}>sq ft</Text>
                               </View>
                          </View>
-
-                         {/* Price Section */}
-                         <View style={styles.priceSection}>
-                              <View>
-                                   <Text style={styles.priceLabel}>Total Price</Text>
-                                   <Text style={styles.priceText}>{property.price}</Text>
-                              </View>
-                              <TouchableOpacity style={styles.viewDetailsButton}>
-                                   <Text style={styles.viewDetailsText}>Details</Text>
-                                   <Icon name="chevron-forward" size={16} color={colors.PrimaryColor} />
-                              </TouchableOpacity>
-                         </View>
                     </View>
                </View>
           );
+     };
+
+     const FILTER_CONFIG: Record<FilterKey, { label: string; value: string }[]> = {
+          budget: [
+               { label: 'Under $300k', value: 'under_300' },
+               { label: '$300k – $500k', value: '300_500' },
+               { label: '$500k – $800k', value: '500_800' },
+               { label: '$800k+', value: '800_plus' },
+          ],
+          bedrooms: [
+               { label: 'Studio', value: '0' },
+               { label: '1 Bedroom', value: '1' },
+               { label: '2 Bedrooms', value: '2' },
+               { label: '3+ Bedrooms', value: '3_plus' },
+          ],
+          location: [
+               { label: 'Downtown', value: 'downtown' },
+               { label: 'Suburbs', value: 'suburbs' },
+               { label: 'City Center', value: 'city_center' },
+          ],
+          type: [
+               { label: 'Apartment', value: 'apartment' },
+               { label: 'House', value: 'house' },
+               { label: 'Studio', value: 'studio' },
+               { label: 'Penthouse', value: 'penthouse' },
+          ],
+          rating: [
+               { label: '4.0+', value: '4' },
+               { label: '4.5+', value: '4.5' },
+               { label: 'Any', value: 'any' },
+          ],
+          area: [
+               { label: 'Under 800 sq ft', value: 'under_800' },
+               { label: '800 – 1500 sq ft', value: '800_1500' },
+               { label: '1500+ sq ft', value: '1500_plus' },
+          ],
      };
 
      const renderNoMoreCards = () => {
@@ -196,29 +226,69 @@ const HomeScreen = () => {
           }
      };
 
+     const isLastCard = currentIndex == SAMPLE_PROPERTIES.length - 1;
+
      const handleLikePress = () => {
-          if (currentIndex < SAMPLE_PROPERTIES.length) {
-               swiperRef.current?.swipeRight();
-          }
+          if (isLastCard) return;
+          swiperRef.current?.swipeRight();
      };
 
      const handlePassPress = () => {
-          if (currentIndex < SAMPLE_PROPERTIES.length) {
-               swiperRef.current?.swipeLeft();
-          }
+          if (isLastCard) return;
+          swiperRef.current?.swipeLeft();
      };
 
      const handleUndoPress = () => {
           if (currentIndex > 0) {
                swiperRef.current?.swipeBack();
-               setCurrentIndex(currentIndex - 1);
+               setCurrentIndex(0);
           }
      };
 
      return (
           <View style={styles.container}>
                {/* Enhanced Header */}
-
+               <View style={{ paddingBottom: 100 }}>
+                    <View style={{ paddingInline: 20, flexDirection: 'row', width: '100%', justifyContent: 'space-between', position: 'absolute' }}>
+                         <CustomDropdown
+                              placeholder="Filter By"
+                              options={[
+                                   { label: 'Budget', value: 'budget' },
+                                   { label: 'Bedrooms', value: 'bedrooms' },
+                                   { label: 'Location', value: 'location' },
+                                   { label: 'Property Type', value: 'type' },
+                                   { label: 'Rating', value: 'rating' },
+                                   { label: 'Area Size', value: 'area' },
+                              ]}
+                              value={selectedFilter}
+                              onValueChange={value => {
+                                   setSelectedFilter(value);
+                                   setSelectedValue(null); // reset second dropdown
+                              }}
+                              iconName="filter"
+                              iconSize={18}
+                              iconColor="#9CA3AF"
+                              maxHeight={150}
+                              dropdownStyle={{ width: windowWidth / 2 - 40 }}
+                         />
+                         {selectedFilter && (
+                              <CustomDropdown
+                                   placeholder={`Select ${selectedFilter}`}
+                                   options={(FILTER_CONFIG as any)[selectedFilter]}
+                                   value={selectedValue ?? undefined}
+                                   onValueChange={value => {
+                                        setSelectedValue(value);
+                                        console.log('Applied filter:', selectedFilter, value);
+                                   }}
+                                   iconName="options"
+                                   iconSize={18}
+                                   iconColor="#9CA3AF"
+                                   maxHeight={150}
+                                   dropdownStyle={{ width: windowWidth / 2 - 40 }}
+                              />
+                         )}
+                    </View>
+               </View>
                {/* Swiper Container */}
                <View style={styles.swiperContainer}>
                     <Swiper
@@ -227,20 +297,20 @@ const HomeScreen = () => {
                          renderCard={renderCard}
                          onSwipedLeft={handleSwipeLeft}
                          onSwipedRight={handleSwipeRight}
+                         showSecondCard
+                         secondCardZoom={100}
                          onSwiped={index => {
-                              // Don't increment beyond array length
-                              if (index < SAMPLE_PROPERTIES.length - 1) {
-                                   setCurrentIndex(index + 1);
-                              }
+                              setCurrentIndex(index + 1);
                          }}
-                         cardIndex={0}
                          backgroundColor="transparent"
                          stackSize={2}
                          stackScale={5}
                          stackSeparation={14}
                          animateCardOpacity
                          verticalSwipe={false}
-                         infinite={true}
+                         infinite={false}
+                         disableLeftSwipe={isLastCard}
+                         disableRightSwipe={isLastCard}
                          disableBottomSwipe={true}
                          disableTopSwipe={true}
                          overlayLabels={{
@@ -383,7 +453,6 @@ const styles = StyleSheet.create({
           left: 0,
      },
      card: {
-          height: '80%',
           borderRadius: 24,
           backgroundColor: '#fff',
           marginHorizontal: 16,
@@ -565,6 +634,7 @@ const styles = StyleSheet.create({
           paddingHorizontal: 32,
           paddingBottom: 32,
           gap: 16,
+          zIndex: 1000,
      },
      actionButton: {
           width: 64,

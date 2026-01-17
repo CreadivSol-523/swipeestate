@@ -7,13 +7,13 @@ import colors from '../../assests/color/color';
 import { useForm } from '../../utils/UseForm/UseForm';
 import Icon from '../../components/Icons/Icons';
 import CustomDropdown, { DropdownOption } from '../../components/CustomDropdown/CustomDropdown';
+import ResToast from '../../components/ResToast/ResToast';
 
 const SignupScreen = ({ navigation }: { navigation: any }) => {
      const [loading, setLoading] = useState(false);
      const [error, setError] = useState('');
      const [showPassword, setShowPassword] = useState(false);
      const dispatch = useDispatch();
-     const [selectedIncome, setSelectedIncome] = useState('');
 
      const incomeRanges: DropdownOption[] = [
           { label: 'Under ₨25,000', value: '0-25000' },
@@ -31,12 +31,18 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
           handleChange: handleData,
           setData,
      } = useForm({
-          initialState: { email: '', password: '', name: '', phone: '', confirmPassword: '', city: '' },
+          initialState: { email: '', password: '', name: '', phone: '', confirmPassword: '', city: '', selectedIncome: '', acountType: '', craditScore: '' },
      });
 
-     const { email, password, name, city, confirmPassword, phone } = data;
-
+     const { email, password, name, city, confirmPassword, phone, selectedIncome, acountType, craditScore } = data;
+     console.log(data);
      const handleSignup = () => {
+          const hasEmpty = Object.values(data).some(v => v === '');
+          console.log(hasEmpty);
+
+          // if (hasEmpty) {
+          //      return ResToast({ title: 'All Fields Required', type: 'warning' });
+          // }
           // if (!data.name || !data.email || !data.password) {
           //      setError('Please fill in all fields');
           //      return;
@@ -52,7 +58,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
 
           setTimeout(() => {
                // dispatch(authUser({ data: { email: data.email, name: data.name } }));
-               navigation.navigate('SelectPlanScreen', { email, password, name, city, phone, selectedIncome });
+               navigation.navigate('SelectPlanScreen', { email, password, name, city, confirmPassword, phone, selectedIncome, acountType, craditScore });
                setLoading(false);
           }, 1500);
      };
@@ -149,13 +155,30 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                     </View>
 
                     <CustomDropdown
+                         label="Account Type"
+                         placeholder="Select your Account Type"
+                         options={[
+                              { label: 'Buyer', value: 'buyer' },
+                              { label: 'Agent', value: 'agent' },
+                         ]}
+                         value={acountType}
+                         onValueChange={(value, label) => {
+                              handleData('acountType', value);
+                         }}
+                         iconName="info"
+                         iconSize={18}
+                         iconColor="#9CA3AF"
+                         maxHeight={100}
+                         height={100}
+                    />
+
+                    <CustomDropdown
                          label="Income Range"
                          placeholder="Select your income range"
                          options={incomeRanges}
                          value={selectedIncome}
                          onValueChange={(value, label) => {
-                              setSelectedIncome(value);
-                              console.log('Selected:', value, label);
+                              handleData('selectedIncome', value);
                          }}
                          iconName="income"
                          iconSize={18}
@@ -168,10 +191,9 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                          options={incomeRanges}
                          value={selectedIncome}
                          onValueChange={(value, label) => {
-                              setSelectedIncome(value);
-                              console.log('Selected:', value, label);
+                              handleData('craditScore', value);
                          }}
-                         iconName="income"
+                         iconName="credit"
                          iconSize={18}
                          iconColor="#9CA3AF"
                     />
