@@ -6,6 +6,9 @@ import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
 import CustomDropdown from '../../components/CustomDropdown/CustomDropdown';
 import { windowHeight, windowWidth } from '../../utils/Dimension/Dimension';
+import ResToast from '../../components/ResToast/ResToast';
+import LimitReachedModal from '../../components/LimitReachModal/LimitReachModal';
+import Navigation from '../../utils/NavigationProps/NavigationProps';
 
 const SAMPLE_USERS = [
      {
@@ -67,12 +70,13 @@ const SAMPLE_USERS = [
 
 type FilterKey = 'income' | 'creditScore' | 'location' | 'age' | 'verified';
 
-const UserSwipeScreen = () => {
+const UserSwipeScreen = ({ navigation }: { navigation: Navigation }) => {
      const swiperRef = useRef<Swiper<any>>(null);
      const [currentIndex, setCurrentIndex] = useState(0);
      const [acceptedUsers, setAcceptedUsers] = useState<number[]>([]);
      const [selectedFilter, setSelectedFilter] = useState<FilterKey | string | undefined>(undefined);
      const [selectedValue, setSelectedValue] = useState<string | undefined | null>(undefined);
+     const [modalVisible, setModalVisible] = useState(false);
 
      const renderCard = (user: any) => {
           if (!user) return null;
@@ -185,15 +189,22 @@ const UserSwipeScreen = () => {
                </View>
           );
      };
+     const isLastCard = currentIndex === SAMPLE_USERS.length - 1;
 
      const handleSwipeLeft = (index: number) => {
           console.log('Rejected:', SAMPLE_USERS[index].name);
+          if (isLastCard) {
+               return setModalVisible(true);
+          }
           if (index === SAMPLE_USERS.length - 1) {
                setCurrentIndex(SAMPLE_USERS.length);
           }
      };
 
      const handleSwipeRight = (index: number) => {
+          if (isLastCard) {
+               return setModalVisible(true);
+          }
           console.log('Accepted:', SAMPLE_USERS[index].name);
           setAcceptedUsers([...acceptedUsers, SAMPLE_USERS[index].id]);
           if (index === SAMPLE_USERS.length - 1) {
@@ -201,15 +212,17 @@ const UserSwipeScreen = () => {
           }
      };
 
-     const isLastCard = currentIndex === SAMPLE_USERS.length - 1;
-
      const handleAcceptPress = () => {
-          if (isLastCard) return;
+          if (isLastCard) {
+               return setModalVisible(true);
+          }
           swiperRef.current?.swipeRight();
      };
 
      const handleRejectPress = () => {
-          if (isLastCard) return;
+          if (isLastCard) {
+               return setModalVisible(true);
+          }
           swiperRef.current?.swipeLeft();
      };
 
@@ -221,133 +234,146 @@ const UserSwipeScreen = () => {
      };
 
      return (
-          <View style={styles.container}>
-               {/* Filter Section */}
-               <View style={{ paddingBottom: 100 }}>
-                    <View style={{ paddingInline: 20, flexDirection: 'row', width: '100%', justifyContent: 'space-between', position: 'absolute' }}>
-                         <CustomDropdown
-                              placeholder="Filter By"
-                              options={[
-                                   { label: 'Income', value: 'income' },
-                                   { label: 'Credit Score', value: 'creditScore' },
-                                   { label: 'Location', value: 'location' },
-                                   { label: 'Age', value: 'age' },
-                                   { label: 'Verification', value: 'verified' },
-                              ]}
-                              value={selectedFilter}
-                              onValueChange={value => {
-                                   setSelectedFilter(value);
-                                   setSelectedValue(null);
-                              }}
-                              iconName="filter"
-                              iconSize={18}
-                              iconColor="#9CA3AF"
-                              maxHeight={150}
-                              dropdownStyle={{ width: windowWidth / 2 - 40 }}
-                         />
-                         {selectedFilter && (
+          <>
+               <View style={styles.container}>
+                    {/* Filter Section */}
+                    <View style={{ paddingBottom: 100 }}>
+                         <View style={{ paddingInline: 20, flexDirection: 'row', width: '100%', justifyContent: 'space-between', position: 'absolute' }}>
                               <CustomDropdown
-                                   placeholder={`Select ${selectedFilter}`}
-                                   options={(FILTER_CONFIG as any)[selectedFilter]}
-                                   value={selectedValue ?? undefined}
+                                   placeholder="Filter By"
+                                   options={[
+                                        { label: 'Income', value: 'income' },
+                                        { label: 'Credit Score', value: 'creditScore' },
+                                        { label: 'Location', value: 'location' },
+                                        { label: 'Age', value: 'age' },
+                                        { label: 'Verification', value: 'verified' },
+                                   ]}
+                                   value={selectedFilter}
                                    onValueChange={value => {
-                                        setSelectedValue(value);
-                                        console.log('Applied filter:', selectedFilter, value);
+                                        setSelectedFilter(value);
+                                        setSelectedValue(null);
                                    }}
-                                   iconName="options"
+                                   iconName="filter"
                                    iconSize={18}
                                    iconColor="#9CA3AF"
                                    maxHeight={150}
                                    dropdownStyle={{ width: windowWidth / 2 - 40 }}
                               />
-                         )}
+                              {selectedFilter && (
+                                   <CustomDropdown
+                                        placeholder={`Select ${selectedFilter}`}
+                                        options={(FILTER_CONFIG as any)[selectedFilter]}
+                                        value={selectedValue ?? undefined}
+                                        onValueChange={value => {
+                                             setSelectedValue(value);
+                                             console.log('Applied filter:', selectedFilter, value);
+                                        }}
+                                        iconName="options"
+                                        iconSize={18}
+                                        iconColor="#9CA3AF"
+                                        maxHeight={150}
+                                        dropdownStyle={{ width: windowWidth / 2 - 40 }}
+                                   />
+                              )}
+                         </View>
+                    </View>
+
+                    {/* Swiper Container */}
+                    <View style={styles.swiperContainer}>
+                         <Swiper
+                              ref={swiperRef}
+                              cards={SAMPLE_USERS}
+                              renderCard={renderCard}
+                              onSwipedLeft={handleSwipeLeft}
+                              onSwipedRight={handleSwipeRight}
+                              showSecondCard
+                              secondCardZoom={100}
+                              onSwiped={index => {
+                                   setCurrentIndex(index + 1);
+                              }}
+                              backgroundColor="transparent"
+                              stackSize={2}
+                              stackScale={5}
+                              stackSeparation={14}
+                              animateCardOpacity
+                              verticalSwipe={false}
+                              infinite={false}
+                              disableLeftSwipe={isLastCard}
+                              disableRightSwipe={isLastCard}
+                              disableBottomSwipe={true}
+                              disableTopSwipe={true}
+                              overlayLabels={{
+                                   left: {
+                                        title: 'REJECT',
+                                        style: {
+                                             label: {
+                                                  backgroundColor: '#FF3B30',
+                                                  color: '#fff',
+                                                  fontSize: 20,
+                                                  fontFamily: Font.font500,
+                                                  borderRadius: 8,
+                                                  padding: 8,
+                                             },
+                                             wrapper: {
+                                                  flexDirection: 'column',
+                                                  alignItems: 'flex-end',
+                                                  marginTop: 20,
+                                                  marginLeft: -40,
+                                             },
+                                        },
+                                   },
+                                   right: {
+                                        title: 'ACCEPT',
+                                        style: {
+                                             label: {
+                                                  backgroundColor: colors.PrimaryColor,
+                                                  color: '#fff',
+                                                  fontSize: 20,
+                                                  fontFamily: Font.font500,
+                                                  borderRadius: 8,
+                                                  padding: 8,
+                                             },
+                                             wrapper: {
+                                                  flexDirection: 'column',
+                                                  alignItems: 'flex-start',
+                                                  marginTop: 20,
+                                                  marginLeft: 40,
+                                             },
+                                        },
+                                   },
+                              }}
+                              containerStyle={styles.cardContainer}
+                              cardStyle={styles.cardStyle}
+                         />
+                    </View>
+
+                    {/* Action Buttons */}
+                    <View style={styles.actionsContainer}>
+                         <TouchableOpacity style={[styles.actionButton, styles.rejectButton]} onPress={handleRejectPress}>
+                              <Icon name="close" size={32} color="#FF3B30" />
+                         </TouchableOpacity>
+
+                         <TouchableOpacity style={[styles.actionButton, styles.undoButton]} onPress={handleUndoPress}>
+                              <Icon name="arrow-undo" size={24} color="#999" />
+                         </TouchableOpacity>
+
+                         <TouchableOpacity style={[styles.actionButton, styles.acceptButton]} onPress={handleAcceptPress}>
+                              <Icon name="checkmark" size={36} color={colors.PrimaryColor} />
+                         </TouchableOpacity>
                     </View>
                </View>
-
-               {/* Swiper Container */}
-               <View style={styles.swiperContainer}>
-                    <Swiper
-                         ref={swiperRef}
-                         cards={SAMPLE_USERS}
-                         renderCard={renderCard}
-                         onSwipedLeft={handleSwipeLeft}
-                         onSwipedRight={handleSwipeRight}
-                         showSecondCard
-                         secondCardZoom={100}
-                         onSwiped={index => {
-                              setCurrentIndex(index + 1);
-                         }}
-                         backgroundColor="transparent"
-                         stackSize={2}
-                         stackScale={5}
-                         stackSeparation={14}
-                         animateCardOpacity
-                         verticalSwipe={false}
-                         infinite={false}
-                         disableLeftSwipe={isLastCard}
-                         disableRightSwipe={isLastCard}
-                         disableBottomSwipe={true}
-                         disableTopSwipe={true}
-                         overlayLabels={{
-                              left: {
-                                   title: 'REJECT',
-                                   style: {
-                                        label: {
-                                             backgroundColor: '#FF3B30',
-                                             color: '#fff',
-                                             fontSize: 20,
-                                             fontFamily: Font.font500,
-                                             borderRadius: 8,
-                                             padding: 8,
-                                        },
-                                        wrapper: {
-                                             flexDirection: 'column',
-                                             alignItems: 'flex-end',
-                                             marginTop: 20,
-                                             marginLeft: -40,
-                                        },
-                                   },
-                              },
-                              right: {
-                                   title: 'ACCEPT',
-                                   style: {
-                                        label: {
-                                             backgroundColor: colors.PrimaryColor,
-                                             color: '#fff',
-                                             fontSize: 20,
-                                             fontFamily: Font.font500,
-                                             borderRadius: 8,
-                                             padding: 8,
-                                        },
-                                        wrapper: {
-                                             flexDirection: 'column',
-                                             alignItems: 'flex-start',
-                                             marginTop: 20,
-                                             marginLeft: 40,
-                                        },
-                                   },
-                              },
-                         }}
-                         containerStyle={styles.cardContainer}
-                         cardStyle={styles.cardStyle}
-                    />
-               </View>
-
-               {/* Action Buttons */}
-               <View style={styles.actionsContainer}>
-                    <TouchableOpacity style={[styles.actionButton, styles.rejectButton]} onPress={handleRejectPress}>
-                         <Icon name="close" size={32} color="#FF3B30" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.actionButton, styles.undoButton]} onPress={handleUndoPress}>
-                         <Icon name="arrow-undo" size={24} color="#999" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.actionButton, styles.acceptButton]} onPress={handleAcceptPress}>
-                         <Icon name="checkmark" size={36} color={colors.PrimaryColor} />
-                    </TouchableOpacity>
-               </View>
-          </View>
+               <LimitReachedModal
+                    visible={modalVisible}
+                    onClose={() => setModalVisible(false)}
+                    onUpgrade={() => {
+                         setModalVisible(false);
+                         navigation.navigate('SubscriptionManagment');
+                    }}
+                    limitType="listings"
+                    currentLimit={5}
+                    currentPlan="Basic"
+               />
+          </>
      );
 };
 

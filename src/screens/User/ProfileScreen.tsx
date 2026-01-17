@@ -93,13 +93,13 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                          <Icon name="chevron-forward" size={20} color="#999" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('SubscriptionManagment')}>
                          <View style={styles.actionIconContainer}>
-                              <Icon name="notifications-outline" size={22} color={colors.PrimaryColor} />
+                              <Icon name="card-outline" size={22} color={colors.PrimaryColor} />
                          </View>
                          <View style={styles.actionContent}>
-                              <Text style={styles.actionTitle}>Notifications</Text>
-                              <Text style={styles.actionSubtitle}>Manage your notifications</Text>
+                              <Text style={styles.actionTitle}>Subscription</Text>
+                              <Text style={styles.actionSubtitle}>Manage your Subscription</Text>
                          </View>
                          <Icon name="chevron-forward" size={20} color="#999" />
                     </TouchableOpacity>

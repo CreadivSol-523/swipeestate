@@ -11,10 +11,21 @@ import HomeScreen from '../screens/Agent/HomeScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ListingScreen from '../screens/Agent/ListingScreen';
+import SubscriptionManagment from '../screens/Subscription/SubscriptionManagment';
 
 const Tab = createBottomTabNavigator();
 const ProfileStackNavigator = createStackNavigator();
 const ListStackNavigator = createStackNavigator();
+const HomeStackNavigator = createStackNavigator();
+
+const HomeStack = (): JSX.Element => {
+     return (
+          <HomeStackNavigator.Navigator screenOptions={{ headerShown: false }}>
+               <HomeStackNavigator.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }} />
+               <HomeStackNavigator.Screen name="SubscriptionManagment" component={SubscriptionManagment} options={{ headerShown: false }} />
+          </HomeStackNavigator.Navigator>
+     );
+};
 
 const ProfileStack = (): JSX.Element => {
      return (
@@ -22,6 +33,7 @@ const ProfileStack = (): JSX.Element => {
                <ProfileStackNavigator.Screen name="ProfileMain" component={ProfileScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="SubscriptionManagment" component={SubscriptionManagment} options={{ headerShown: false }} />
           </ProfileStackNavigator.Navigator>
      );
 };
@@ -87,7 +99,7 @@ const AgentTabs = (): JSX.Element => {
                >
                     <Tab.Screen
                          name="Home"
-                         component={HomeScreen}
+                         component={HomeStack}
                          options={{
                               tabBarIcon: ({ color, focused }) => <TabBarIcon name="home" color={color} focused={focused} />,
                          }}
