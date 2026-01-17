@@ -7,7 +7,7 @@ import colors from '../assests/color/color';
 import ProfileScreen from '../screens/User/ProfileScreen';
 import EditProfileScreen from '../screens/User/EditProfileScreen';
 import ChangePasswordScreen from '../screens/User/ChangePasswordScreen';
-import HomeScreen from '../screens/User/HomeScreen';
+import HomeScreen from '../screens/Agent/HomeScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ListingScreen from '../screens/Agent/ListingScreen';
