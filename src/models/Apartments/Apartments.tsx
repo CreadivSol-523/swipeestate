@@ -21,9 +21,28 @@ export const useCreateApartmentHandler = () => {
 
      const handleBuyPlanAPI = async (data: ApartmentsType) => {
           try {
-               const { title, type, amenities, area, availability, bathrooms, bedrooms, description, featured, furnished, location, price, balcony, featuredImages, floor, images, parking } = data;
+               const {
+                    title,
+                    type,
+                    amenities,
+                    area,
+                    availability,
+                    proof_of_ownership,
+                    bathrooms,
+                    bedrooms,
+                    description,
+                    featured,
+                    furnished,
+                    location,
+                    price,
+                    balcony,
+                    featuredImages,
+                    floor,
+                    images,
+                    parking,
+               } = data;
 
-               if (!title || !type || !area || !availability || !bathrooms || !bedrooms || !description || !featured || !furnished || !location || !price || !balcony) {
+               if (!title || !type || !area || !availability || !bathrooms || !bedrooms || !description || !furnished || !location || !price) {
                     return ResToast({ title: 'All Fields Required', type: 'warning' });
                }
 
@@ -34,7 +53,7 @@ export const useCreateApartmentHandler = () => {
                     if (!uri) return;
                     const imgType = uri.split('.').pop() || 'jpg';
                     formData.append('featuredImages', {
-                         uri,
+                         uri: [uri],
                          type: `image/${imgType}`,
                          name: `featuredImages_${index}.${imgType}`,
                     } as any);
@@ -55,6 +74,16 @@ export const useCreateApartmentHandler = () => {
                     } as any);
                }
 
+               // Append main proof_of_ownership
+               if (proof_of_ownership) {
+                    const imgType = proof_of_ownership.split('.').pop() || 'jpg';
+                    formData.append('proof_of_ownership', {
+                         uri: proof_of_ownership,
+                         type: `image/${imgType}`,
+                         name: `image.${imgType}`,
+                    } as any);
+               }
+
                // Append all text fields
                formData.append('title', String(title));
                formData.append('type', String(type));
@@ -70,8 +99,10 @@ export const useCreateApartmentHandler = () => {
                formData.append('availability', String(availability));
                formData.append('featured', String(featured));
                formData.append('description', String(description));
-
+               console.log(formData, 'formDataformDataformDataformDataformDataformDataformData');
                const res = await CreateApartmentAPI({ userId, formData });
+
+               console.log(res);
 
                if (!res.error) {
                     return ResToast({ title: 'Apartment Created', type: 'success' });

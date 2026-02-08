@@ -217,7 +217,7 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
           gte: rangeFilter.gte,
           lte: rangeFilter.lte,
      });
-
+     console.log(ApartmentsData, 'ApartmentsDataApartmentsDataApartmentsDataApartmentsData');
      const structuredApartment = () => {
           if (ApartmentsData?.apartments.length == 0) return;
           const ApartmentData = ApartmentsData?.apartments?.map((item, i) => ({

@@ -51,9 +51,11 @@ export interface ApartmentsType {
      balcony?: boolean;
      parking?: boolean;
      amenities: string[];
+
      availability: 'Available' | 'Sold' | 'Rented';
      images?: string[];
      featuredImages?: string;
+     proof_of_ownership: string;
      featured: boolean;
      description: string;
 }

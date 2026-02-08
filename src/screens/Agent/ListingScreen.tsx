@@ -25,6 +25,7 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
           availability: 'Available',
           images: [],
           featuredImages: '',
+          proof_of_ownership: '',
           featured: false,
           description: '',
      });
@@ -32,6 +33,7 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
      const [currentAmenity, setCurrentAmenity] = useState('');
      const [currentFeaturedUrl, setCurrentFeaturedUrl] = useState('');
      const [currentGalleryUrl, setCurrentGalleryUrl] = useState('');
+     const [currentProofOfOwnership, setCurrentProofOfOwnership] = useState('');
 
      const apartmentTypes: Array<'Rent' | 'Sale'> = ['Rent', 'Sale'];
 
@@ -119,6 +121,8 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
           } else if (response?.assets && response?.assets[0].uri) {
                if (type === 'featuredImages') {
                     updateField('featuredImages', response.assets[0].uri);
+               } else if (type === 'proof_of_ownership') {
+                    updateField('proof_of_ownership', response.assets[0].uri);
                } else {
                     updateField('images', [...(formData.images || []), response.assets[0].uri]);
                }
@@ -139,6 +143,22 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
 
      const removeFeaturedImage = () => {
           updateField('featuredImages', '');
+     };
+
+     // Handle Proof Of image Image
+     const addProofOfimage = () => {
+          if (currentFeaturedUrl != '') {
+               if (currentFeaturedUrl.trim()) {
+                    updateField('proof_of_ownership', currentFeaturedUrl.trim());
+                    setCurrentProofOfOwnership('');
+               }
+          } else {
+               handleImagePicker('proof_of_ownership');
+          }
+     };
+
+     const removeProofOfimage = () => {
+          updateField('proof_of_ownership', '');
      };
 
      // Handle Gallery Images
@@ -381,6 +401,29 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
                                         </TouchableOpacity>
                                    </View>
                               ))}
+                         </View>
+                    )}
+
+                    {/* proof_of_ownership Image Section */}
+                    <Text style={[styles.label, styles.galleryLabel]}>Proof of Ownership</Text>
+                    <View style={styles.addRow}>
+                         <TextInput
+                              style={[styles.input, styles.flexInput]}
+                              placeholder="https://example.com/proof_of_ownership.jpg"
+                              value={currentProofOfOwnership}
+                              onChangeText={setCurrentProofOfOwnership}
+                         />
+                         <TouchableOpacity style={styles.addButton} onPress={addProofOfimage}>
+                              <Text style={styles.addButtonText}>+</Text>
+                         </TouchableOpacity>
+                    </View>
+
+                    {formData.proof_of_ownership && (
+                         <View style={styles.featuredImageContainer}>
+                              <Image source={{ uri: formData?.proof_of_ownership }} style={styles.featuredImagePreview} />
+                              <TouchableOpacity style={styles.removeImageButton} onPress={removeProofOfimage}>
+                                   <Text style={styles.removeImageText}>✕</Text>
+                              </TouchableOpacity>
                          </View>
                     )}
                </View>
