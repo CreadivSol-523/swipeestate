@@ -43,7 +43,7 @@ const MatchApartments = ({ navigation }: { navigation: Navigation }) => {
 
           const MatchesList: Apartment[] = (GetMatches.data.matches || []).map(item => ({
                id: item?._id ?? '',
-               image: item?.property?.image ? API_BASE_URL + '/' + item.property.image : '',
+               image: item?.property?.image ? item.property.image : '',
                title: item?.property?.title ?? '',
                location: item?.property?.location ?? '',
                price: item?.property?.price?.toString() ?? '',

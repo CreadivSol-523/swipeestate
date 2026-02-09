@@ -43,7 +43,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 }) => {
      const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-     const selectedOption = options.find(option => option.value === value);
+     const selectedOption = options?.find(option => option.value === value);
      const displayText = selectedOption ? selectedOption.label : '';
 
      const handleSelect = (item: DropdownOption) => {

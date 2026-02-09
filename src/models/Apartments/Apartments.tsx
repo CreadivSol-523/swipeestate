@@ -53,7 +53,7 @@ export const useCreateApartmentHandler = () => {
                     if (!uri) return;
                     const imgType = uri.split('.').pop() || 'jpg';
                     formData.append('featuredImages', {
-                         uri: [uri],
+                         uri,
                          type: `image/${imgType}`,
                          name: `featuredImages_${index}.${imgType}`,
                     } as any);

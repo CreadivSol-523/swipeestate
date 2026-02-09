@@ -58,7 +58,7 @@ const ApartmentsScreen = ({ navigation }: { navigation: Navigation }) => {
 
      const renderItem = (item: any) => {
           const apartment = item?.item;
-
+          console.log(apartment);
           return (
                <View key={apartment.id} style={styles.card}>
                     {/* Image Container */}
@@ -120,7 +120,7 @@ const ApartmentsScreen = ({ navigation }: { navigation: Navigation }) => {
 
           const MatchesList: Apartment[] = (GetApartmentData || []).map(item => ({
                id: item?._id,
-               image: API_BASE_URL + '/' + item?.image,
+               image: item?.image,
                title: item?.title,
                location: item?.location,
                price: item?.price,

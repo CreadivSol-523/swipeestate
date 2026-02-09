@@ -108,7 +108,7 @@ const UserSwipeScreen = ({ navigation }: { navigation: Navigation }) => {
                income: '$85,000/year',
                creditScore: '750',
                occupation: 'Software Engineer',
-               avatar: API_BASE_URL + '/' + item?.profilePicture,
+               avatar: item?.profilePicture,
           }));
           return ApartmentData;
      };

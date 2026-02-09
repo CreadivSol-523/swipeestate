@@ -16,11 +16,12 @@ import LimitReachedModal from '../../components/LimitReachModal/LimitReachModal'
 import Navigation from '../../utils/NavigationProps/NavigationProps';
 import Ismessage from '../../components/IsMessage/Ismessage';
 
-type FilterKey = 'price' | 'bedrooms' | 'location' | 'type' | 'rating' | 'area';
+type FilterKey = 'price' | 'bedrooms' | 'location' | 'status';
 type RangeFilter = {
      key?: string;
      gte?: number;
      lte?: number;
+     status?: string;
 };
 
 const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
@@ -30,13 +31,10 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
      const [selectedValue, setSelectedValue] = useState<string | undefined | null>(undefined);
      const [modalVisible, setModalVisible] = useState(false);
      const [modalFeature, setModalFeature] = useState<'featured' | 'listings' | 'swipes' | 'analytics'>('swipes');
-
      const [rangeFilter, setRangeFilter] = useState<RangeFilter>({});
      const [apartmentList, setApartmentList] = useState<any>([]);
      const [disableSwipe, setDisableSwipe] = useState(false);
      const [page, setPage] = useState(1);
-
-     const { userData } = useAuth();
 
      const pageRef = useRef(1);
      const limit = 10;
@@ -50,7 +48,7 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
                          {/* Image Section with Gradient Overlay */}
                          <View style={styles.imageSection}>
                               <View style={styles.imagePlaceholder}>
-                                   <Image source={{ uri: API_BASE_URL + '/' + property?.featuredImage }} style={{ width: '100%', height: '100%' }} />
+                                   <Image source={{ uri: property?.featuredImage }} style={{ width: '100%', height: '100%' }} />
                               </View>
 
                               {/* Gradient Overlay */}
@@ -139,21 +137,9 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
                { label: 'Suburbs', value: 'suburbs' },
                { label: 'City Center', value: 'city_center' },
           ],
-          type: [
-               { label: 'Apartment', value: 'apartment' },
-               { label: 'House', value: 'house' },
-               { label: 'Studio', value: 'studio' },
-               { label: 'Penthouse', value: 'penthouse' },
-          ],
-          rating: [
-               { label: '4.0+', value: '4' },
-               { label: '4.5+', value: '4.5' },
-               { label: 'Any', value: 'any' },
-          ],
-          area: [
-               { label: 'Under 800 sq ft', value: 'under_800' },
-               { label: '800 – 1500 sq ft', value: '800_1500' },
-               { label: '1500+ sq ft', value: '1500_plus' },
+          status: [
+               { label: 'Active', value: 'Active' },
+               { label: 'Inactive', value: 'Inactive' },
           ],
      };
 
@@ -210,14 +196,17 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
      };
 
      // Handle API Get Apartments
-     const { ApartmentsData, ApartmentsLoading, isFetching } = useGetApartmentsHandler({
+     const { ApartmentsData, ApartmentsLoading, isFetching, GetApartments } = useGetApartmentsHandler({
           limit,
           page,
           key: rangeFilter.key,
           gte: rangeFilter.gte,
           lte: rangeFilter.lte,
+          status: selectedValue || '',
      });
-     console.log(ApartmentsData, 'ApartmentsDataApartmentsDataApartmentsDataApartmentsData');
+
+     console.log(GetApartments, 'ApartmentsDataApartmentsDataApartmentsDataApartmentsData');
+
      const structuredApartment = () => {
           if (ApartmentsData?.apartments.length == 0) return;
           const ApartmentData = ApartmentsData?.apartments?.map((item, i) => ({
@@ -276,6 +265,15 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
                          default:
                               return {};
                     }
+               case 'status':
+                    switch (value) {
+                         case '1':
+                              return { key: 'Active' };
+                         case '2':
+                              return { key: 'Inactive' };
+                         default:
+                              return {};
+                    }
                default:
                     return {};
           }
@@ -301,7 +299,7 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
 
                return Array.from(map.values());
           });
-     }, [ApartmentsData]);
+     }, [ApartmentsData, isFetching]);
 
      useEffect(() => {
           if (apartmentList?.length === 1) {
@@ -320,9 +318,7 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
                                    options={[
                                         { label: 'Budget', value: 'price' },
                                         { label: 'Bedrooms', value: 'bedrooms' },
-                                        // { label: 'Location', value: 'location' },
-                                        // { label: 'Property Type', value: 'type' },
-                                        // { label: 'Rating', value: 'rating' },
+                                        { label: 'Status', value: 'status' },
                                         { label: 'Area Size', value: 'area' },
                                    ]}
                                    value={selectedFilter}
@@ -345,7 +341,6 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
                                              setSelectedValue(value);
 
                                              const range = getRangeFromFilter(selectedFilter as string, value);
-
                                              setRangeFilter(range);
 
                                              // RESET DATA WHEN FILTER CHANGES

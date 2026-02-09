@@ -46,12 +46,11 @@ export interface ApartmentsType {
      area: number;
      bedrooms: number;
      bathrooms: number;
-     floor?: number;
+     floor?: number | null;
      furnished: 'Furnished' | 'Semi-Furnished' | 'Unfurnished';
      balcony?: boolean;
      parking?: boolean;
      amenities: string[];
-
      availability: 'Available' | 'Sold' | 'Rented';
      images?: string[];
      featuredImages?: string;

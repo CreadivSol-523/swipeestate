@@ -128,7 +128,7 @@ const Matches = ({ navigation }: { navigation: Navigation }) => {
                phone: item?.buyer?.phone,
                selectedIncome: item?.buyer?.selectedIncome,
                creditScore: item?.buyer?.creditScore,
-               image: API_BASE_URL + '/' + item?.buyer?.profilePicture,
+               image: item?.buyer?.profilePicture,
                status: item?.status,
           }));
 

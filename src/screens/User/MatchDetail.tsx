@@ -48,7 +48,7 @@ const MatchDetail = ({ navigation, route }: Props) => {
                               scrollEventThrottle={16}
                          >
                               {filterApartment?.property?.featuredImages?.map((image, index) => (
-                                   <Image key={index} source={{ uri: API_BASE_URL + '/' + image }} style={styles.apartmentImage} />
+                                   <Image key={index} source={{ uri: image }} style={styles.apartmentImage} />
                               ))}
                          </ScrollView>
 
@@ -184,7 +184,7 @@ const MatchDetail = ({ navigation, route }: Props) => {
                               <View style={styles.section}>
                                    <Text style={styles.sectionTitle}>Contact Buyer</Text>
                                    <View style={styles.agentCard}>
-                                        <Image source={{ uri: API_BASE_URL + '/' + filterApartment?.buyer?.profilePicture }} style={styles.agentImage} />
+                                        <Image source={{ uri: filterApartment?.buyer?.profilePicture }} style={styles.agentImage} />
                                         <View style={styles.agentInfo}>
                                              <Text style={styles.agentName}>{filterApartment?.buyer?.name}</Text>
                                              <View style={styles.agentDetail}>
@@ -204,7 +204,7 @@ const MatchDetail = ({ navigation, route }: Props) => {
                                    <View style={styles.section}>
                                         <Text style={styles.sectionTitle}>Contact Agent</Text>
                                         <View style={styles.agentCard}>
-                                             <Image source={{ uri: API_BASE_URL + '/' + filterApartment?.seller?.profilePicture }} style={styles.agentImage} />
+                                             <Image source={{ uri: filterApartment?.seller?.profilePicture }} style={styles.agentImage} />
                                              <View style={styles.agentInfo}>
                                                   <Text style={styles.agentName}>{filterApartment?.seller?.name}</Text>
                                                   <View style={styles.agentDetail}>

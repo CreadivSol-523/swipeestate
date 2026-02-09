@@ -38,7 +38,7 @@ const SingleApartment = ({ navigation, route }: Props) => {
                               scrollEventThrottle={16}
                          >
                               {filterApartment?.featuredImages?.map((image, index) => (
-                                   <Image key={index} source={{ uri: API_BASE_URL + '/' + image }} style={styles.apartmentImage} />
+                                   <Image key={index} source={{ uri: image }} style={styles.apartmentImage} />
                               ))}
                          </ScrollView>
 

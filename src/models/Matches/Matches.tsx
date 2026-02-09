@@ -11,10 +11,11 @@ import {
 import { useAuth } from '../../utils/Storage/Storage';
 
 // Get Apartment
-export const useGetApartmentsHandler = ({ page, limit, key, gte, lte }: { page?: number; limit?: number; key?: string; gte?: number; lte?: number }) => {
+export const useGetApartmentsHandler = ({ page, limit, key, gte, lte, status }: { page?: number; limit?: number; key?: string; gte?: number; lte?: number; status?: string }) => {
      const { userData } = useAuth();
      const userId = userData?._id;
-     const GetApartments = useGetApartmentsQuery({ userID: userId, limit, page, key, gte, lte });
+     const GetApartments = useGetApartmentsQuery({ userID: userId, limit, page, key, gte, lte, status });
+     console.log(GetApartments);
      const ApartmentsData = GetApartments.data;
      const ApartmentsLoading = GetApartments.isLoading;
      const { isError, error, refetch, isFetching } = GetApartments;

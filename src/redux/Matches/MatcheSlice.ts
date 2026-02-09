@@ -1,39 +1,33 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import API_BASE_URL from '../../utils/Config';
 import { GetApartmentsResponse, GetBuyerResponse, GetMatchsResponse, GetSinglePropertyType } from './MatchType';
+import { URLParams } from '../../utils/URL/URLParams';
 
 const MatcheSlice = createApi({
      reducerPath: 'MatcheSlice',
      baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }),
      tagTypes: ['GetApartments', 'createLike', 'reject', 'accept'],
      endpoints: builder => ({
-          GetApartments: builder.query<
-               GetApartmentsResponse,
-               {
-                    userID?: string;
-                    page?: number;
-                    limit?: number;
-                    key?: string;
-                    gte?: number;
-                    lte?: number;
-               }
-          >({
-               query: ({ userID, page = 1, limit = 10, key, gte, lte }) => {
-                    const params = new URLSearchParams();
-
-                    params.append('page', String(page));
-                    params.append('limit', String(limit));
-
-                    if (key && gte !== undefined) {
-                         params.append(`search[${key}][$gte]`, String(gte));
-                    }
-
-                    if (key && lte !== undefined) {
-                         params.append(`search[${key}][$lte]`, String(lte));
-                    }
+          GetApartments: builder.query<GetApartmentsResponse, { userID?: string; page?: number; limit?: number; key?: string; gte?: number; lte?: number; status?: string }>({
+               query: ({ userID, page = 1, limit = 10, key, gte, lte, status }) => {
+                    const base = `/api/apartments/${userID}/property-listing`;
+                    const params: Record<string, any> = {
+                         page,
+                         limit,
+                         ...(gte !== undefined && {
+                              [`search[${key}][$gte]`]: gte,
+                         }),
+                         ...(lte !== undefined && {
+                              [`search[${key}][$lte]`]: lte,
+                         }),
+                         ...(status && {
+                              'search[status]': status,
+                         }),
+                    };
+                    const url = URLParams(base, params);
 
                     return {
-                         url: `/api/apartments/${userID}/property-listing?${params.toString()}`,
+                         url: url,
                          method: 'GET',
                     };
                },

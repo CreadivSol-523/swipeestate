@@ -117,7 +117,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                     <View style={styles.profileImageContainer}>
                          <TouchableOpacity style={styles.profileImageWrapper} onPress={handleImagePicker} activeOpacity={0.7}>
                               {ProfileData?.profilePicture ? (
-                                   <Image source={{ uri: API_BASE_URL + '/' + ProfileData?.profilePicture }} style={styles.profileImage} />
+                                   <Image source={{ uri: ProfileData?.profilePicture }} style={styles.profileImage} />
                               ) : (
                                    <View style={styles.profileImagePlaceholder}>
                                         <Icon name="user" size={40} color="#9CA3AF" />
