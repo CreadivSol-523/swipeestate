@@ -341,14 +341,13 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                     </TouchableOpacity>
 
                     {/* Divider */}
-                    <View style={styles.divider}>
+                    {/* <View style={styles.divider}>
                          <View style={styles.dividerLine} />
                          <Text style={styles.dividerText}>Or continue with</Text>
                          <View style={styles.dividerLine} />
-                    </View>
+                    </View> */}
 
-                    {/* Social Login Buttons */}
-                    <View style={styles.socialButtons}>
+                    {/* <View style={styles.socialButtons}>
                          <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
                               <View style={[styles.socialIcon, { backgroundColor: '#EA4335' }]}>
                                    <Icon name="google" size={20} color="#FFFFFF" />
@@ -362,7 +361,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                               </View>
                               <Text style={styles.socialButtonText}>Facebook</Text>
                          </TouchableOpacity>
-                    </View>
+                    </View> */}
 
                     {/* Sign Up Link */}
                     <View style={styles.signupContainer}>

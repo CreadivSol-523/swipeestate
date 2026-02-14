@@ -9,8 +9,9 @@ import ResToast from '../../components/ResToast/ResToast';
 import Spinner from '../../components/Loader/Spinner';
 import { useGetPlanHandler } from '../../models/Plan/Plan';
 import { useAuth } from '../../utils/Storage/Storage';
+import Navigation from '../../utils/NavigationProps/NavigationProps';
 
-const SubscriptionManagment = () => {
+const SubscriptionManagment = ({ navigation }: { navigation: Navigation }) => {
      const [isLoading, setIsLoading] = useState(false);
      const [planPrice, setPlanPrice] = useState<number | null>(null);
      // Current active subscription
@@ -162,8 +163,11 @@ const SubscriptionManagment = () => {
                <ScrollView style={styles.container}>
                     {/* Header */}
                     <View style={styles.header}>
+                         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                              <Icon name="arrow-back" size={24} color="#000" />
+                         </TouchableOpacity>
                          <Text style={styles.headerTitle}>Subscription</Text>
-                         <Text style={styles.headerSubtitle}>Manage your subscription plan</Text>
+                         <View style={styles.placeholder} />
                     </View>
 
                     {/* Current Subscription Card */}
@@ -356,6 +360,17 @@ const styles = StyleSheet.create({
           fontSize: 15,
           fontFamily: Font.font400,
           color: '#666',
+     },
+     placeholder: {
+          width: 40,
+     },
+     backButton: {
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: '#F5F5F5',
+          alignItems: 'center',
+          justifyContent: 'center',
      },
      currentPlanCard: {
           backgroundColor: '#fff',

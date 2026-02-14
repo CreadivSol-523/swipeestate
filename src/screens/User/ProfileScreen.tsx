@@ -107,9 +107,9 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                {/* Header */}
                <View style={styles.header}>
                     <Text style={styles.headerTitle}>Profile</Text>
-                    <TouchableOpacity style={styles.settingsButton}>
+                    {/* <TouchableOpacity style={styles.settingsButton}>
                          <Icon name="settings-outline" size={24} color="#000" />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                </View>
 
                {/* Profile Avatar Section */}
@@ -186,7 +186,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                          <Icon name="chevron-forward" size={20} color="#999" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.actionButton}>
+                    {/* <TouchableOpacity style={styles.actionButton}>
                          <View style={styles.actionIconContainer}>
                               <Icon name="shield-checkmark-outline" size={22} color={colors.PrimaryColor} />
                          </View>
@@ -195,7 +195,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                               <Text style={styles.actionSubtitle}>Control your privacy settings</Text>
                          </View>
                          <Icon name="chevron-forward" size={20} color="#999" />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                </View>
 
                {/* Logout Button */}
