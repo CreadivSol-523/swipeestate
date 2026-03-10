@@ -19,7 +19,7 @@ export const useGetApartmentsHandler = ({ page, limit, key, gte, lte, status }: 
      const ApartmentsData = GetApartments.data;
      const ApartmentsLoading = GetApartments.isLoading;
      const { isError, error, refetch, isFetching } = GetApartments;
-
+     console.log(isError, error, '-------');
      if (isError) {
           ResToast({ type: 'danger', title: 'Failed to fetch Apartments' });
      }

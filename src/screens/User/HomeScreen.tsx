@@ -205,8 +205,6 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
           status: selectedValue || '',
      });
 
-     console.log(GetApartments, 'ApartmentsDataApartmentsDataApartmentsDataApartmentsData');
-
      const structuredApartment = () => {
           if (ApartmentsData?.apartments.length == 0) return;
           const ApartmentData = ApartmentsData?.apartments?.map((item, i) => ({

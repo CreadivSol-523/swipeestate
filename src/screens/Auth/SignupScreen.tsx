@@ -213,7 +213,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
 
                     {/* Phone Input */}
                     <View style={styles.inputGroup}>
-                         <Text style={styles.label}>Phone</Text>
+                         <Text style={styles.label}>Phone (Optional)</Text>
                          <View style={styles.inputWrapper}>
                               <View style={styles.inputIconContainer}>
                                    <Icon name="phone" size={18} color="#9CA3AF" />
@@ -238,7 +238,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                               console.log(value);
                               handleData('address', value);
                          }}
-                         label="Address"
+                         label="Address (Optional)"
                          placeholder="Enter your Address"
                          apiKey="AIzaSyClo7scOstr59xuT6Y-sKNPodDQGnrtPhE"
                          iconName="city"
@@ -264,7 +264,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                     {acountType === 'buyer' && (
                          <>
                               <CustomDropdown
-                                   label="Income Range"
+                                   label="Income Range (Optional)"
                                    placeholder="Select your income range"
                                    options={incomeRanges}
                                    value={selectedIncome}
@@ -277,7 +277,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                               />
 
                               <CustomDropdown
-                                   label="Credit Score"
+                                   label="Credit Score (Optional)"
                                    placeholder="Select your credit score"
                                    options={creditScoreRanges}
                                    value={creditScore}

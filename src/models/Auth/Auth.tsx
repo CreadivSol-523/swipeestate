@@ -27,7 +27,10 @@ export const useRegisterHandler = () => {
      const handleRegister = async (credentials: CreateAccResquest & { confirmPassword?: string }) => {
           try {
                const { name, email, phone, address, selectedIncome, creditScore, password, fcmToken, deviceType, deviceName, confirmPassword, profilePicture } = credentials;
-               const hasEmpty = Object.values(credentials).some(v => v === '');
+
+               // Required field validation
+               const requiredFields = { name, email, password, confirmPassword };
+               const hasEmpty = Object.values(requiredFields).some(v => !v);
 
                if (password !== confirmPassword) {
                     return ResToast({
@@ -38,33 +41,42 @@ export const useRegisterHandler = () => {
 
                if (hasEmpty) {
                     return ResToast({
-                         title: 'All fields required.',
+                         title: 'Name, Email and Password are required.',
                          type: 'warning',
                     });
                }
-               // FormData for file upload
+
                const formData = new FormData();
 
-               const proofImgType = profilePicture?.split('.');
-               const imgType = proofImgType?.pop();
+               // Profile Picture (optional)
+               if (profilePicture) {
+                    const proofImgType = profilePicture.split('.');
+                    const imgType = proofImgType.pop();
 
-               const imageBlob = {
-                    uri: profilePicture,
-                    type: `image/${imgType}`,
-                    name: `profilePicture.${imgType}`,
-               } as any;
+                    const imageBlob = {
+                         uri: profilePicture,
+                         type: `image/${imgType}`,
+                         name: `profilePicture.${imgType}`,
+                    } as any;
 
-               formData.append('profilePicture', imageBlob);
+                    formData.append('profilePicture', imageBlob);
+               }
+
+               // Required fields
                formData.append('name', name);
-               formData.append('phone', phone);
-               formData.append('selectedIncome', selectedIncome);
-               formData.append('creditScore', creditScore);
-               formData.append('address', address);
-               formData.append('deviceName', deviceName);
-               formData.append('deviceType', deviceType);
                formData.append('email', email);
                formData.append('password', password);
-               formData.append('fcmToken', fcmToken);
+
+               // Optional fields
+               if (phone) formData.append('phone', phone);
+               if (address) formData.append('address', address);
+               if (selectedIncome) formData.append('selectedIncome', selectedIncome);
+               if (creditScore) formData.append('creditScore', creditScore);
+
+               // Device fields
+               if (deviceName) formData.append('deviceName', deviceName);
+               if (deviceType) formData.append('deviceType', deviceType);
+               if (fcmToken) formData.append('fcmToken', fcmToken);
 
                const res = await register(formData);
 
@@ -73,7 +85,8 @@ export const useRegisterHandler = () => {
                          title: 'Pick a subscription plan to unlock all features.',
                          type: 'success',
                     });
-                    return navigation.navigate('SelectPlanScreen', { user: res?.data });
+
+                    navigation.navigate('SelectPlanScreen', { user: res?.data });
                } else {
                     ResToast({
                          res: res,
@@ -102,7 +115,10 @@ export const useSellerRegisterHandler = () => {
      const handleSellerRegister = async (credentials: CreateAccResquest & { confirmPassword?: string }) => {
           try {
                const { name, email, phone, address, password, fcmToken, deviceType, deviceName, confirmPassword, profilePicture } = credentials;
-               const hasEmpty = Object.values(credentials).some(v => v === '');
+
+               // Required validation
+               const requiredFields = { name, email, password, confirmPassword };
+               const hasEmpty = Object.values(requiredFields).some(v => !v);
 
                if (password !== confirmPassword) {
                     return ResToast({
@@ -113,33 +129,43 @@ export const useSellerRegisterHandler = () => {
 
                if (hasEmpty) {
                     return ResToast({
-                         title: 'All fields required.',
+                         title: 'Name, Email and Password are required.',
                          type: 'warning',
                     });
                }
-               // FormData for file upload
+
                const formData = new FormData();
 
-               const proofImgType = profilePicture?.split('.');
-               const imgType = proofImgType?.pop();
+               // Profile picture (optional)
+               if (profilePicture) {
+                    const proofImgType = profilePicture.split('.');
+                    const imgType = proofImgType.pop();
 
-               const imageBlob = {
-                    uri: profilePicture,
-                    type: `image/${imgType}`,
-                    name: `profilePicture.${imgType}`,
-               } as any;
+                    const imageBlob = {
+                         uri: profilePicture,
+                         type: `image/${imgType}`,
+                         name: `profilePicture.${imgType}`,
+                    } as any;
 
-               formData.append('profilePicture', imageBlob);
+                    formData.append('profilePicture', imageBlob);
+               }
+
+               // Required fields
                formData.append('name', name);
-               formData.append('phone', phone);
-               formData.append('address', address);
-               formData.append('deviceName', deviceName);
-               formData.append('deviceType', deviceType);
                formData.append('email', email);
                formData.append('password', password);
-               formData.append('fcmToken', fcmToken);
+
+               // Optional fields
+               if (phone) formData.append('phone', phone);
+               if (address) formData.append('address', address);
+
+               // Device fields
+               if (deviceName) formData.append('deviceName', deviceName);
+               if (deviceType) formData.append('deviceType', deviceType);
+               if (fcmToken) formData.append('fcmToken', fcmToken);
 
                const res = await sellerRegister(formData);
+
                console.log(res, 'Signup');
 
                if (!res.error) {
@@ -147,7 +173,8 @@ export const useSellerRegisterHandler = () => {
                          title: 'Pick a subscription plan to unlock all features.',
                          type: 'success',
                     });
-                    return navigation.navigate('SelectPlanScreen', { user: res?.data });
+
+                    navigation.navigate('SelectPlanScreen', { user: res?.data });
                } else {
                     ResToast({
                          res: res,
