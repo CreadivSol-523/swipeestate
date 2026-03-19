@@ -1,23 +1,19 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../../redux/store';
-import { logout } from '../../redux/Features/authState';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
-import { useGetProfileHandler } from '../../models/Profile/Profile';
+import { useDeleteAccountHandler, useGetProfileHandler } from '../../models/Profile/Profile';
 import { profileData } from '../../redux/Profile/ProfileTypes';
 import { requestCameraPermission } from '../../utils/Permissions/Permissions';
 import { ImagePickerResponse, launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { useAuth } from '../../utils/Storage/Storage';
 import { useLogoutHandler } from '../../models/Auth/Auth';
-import API_BASE_URL from '../../utils/Config';
 
 const ProfileScreen = ({ navigation }: { navigation: any }) => {
-     const dispatch = useDispatch();
+     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
      const { handleNewPassword, isLoading: LogoutLoading } = useLogoutHandler();
+     const { handleDeleteAccountAPI, isLoading: DeleteLoading } = useDeleteAccountHandler();
 
      const handleLogout = () => {
           handleNewPassword();
@@ -26,8 +22,6 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
      const { ProfileData, ProfileLoading } = useGetProfileHandler();
      const ProfileDetails: profileData | undefined = ProfileData;
      console.log({ ProfileDetails, ProfileLoading });
-
-     const { userData } = useAuth();
 
      console.log(ProfileData);
 
@@ -101,6 +95,11 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                </View>
           </View>
      );
+
+     const handleConfirmDelete = async () => {
+          await handleDeleteAccountAPI();
+          setDeleteModalVisible(false);
+     };
 
      return (
           <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -186,6 +185,17 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                          <Icon name="chevron-forward" size={20} color="#999" />
                     </TouchableOpacity>
 
+                    <TouchableOpacity style={styles.deleteActionButton} onPress={() => setDeleteModalVisible(true)} disabled={DeleteLoading}>
+                         <View style={styles.deleteActionIconContainer}>
+                              <Icon name="trash-outline" size={22} color="#D32F2F" />
+                         </View>
+                         <View style={styles.actionContent}>
+                              <Text style={styles.deleteActionTitle}>Delete Account</Text>
+                              <Text style={styles.actionSubtitle}>Permanently remove your account and related data</Text>
+                         </View>
+                         {DeleteLoading ? <ActivityIndicator color="#D32F2F" /> : <Icon name="chevron-forward" size={20} color="#999" />}
+                    </TouchableOpacity>
+
                     {/* <TouchableOpacity style={styles.actionButton}>
                          <View style={styles.actionIconContainer}>
                               <Icon name="shield-checkmark-outline" size={22} color={colors.PrimaryColor} />
@@ -209,6 +219,28 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                          </>
                     )}
                </TouchableOpacity>
+
+               <Modal visible={deleteModalVisible} transparent animationType="fade" onRequestClose={() => setDeleteModalVisible(false)}>
+                    <View style={styles.modalOverlay}>
+                         <View style={styles.modalCard}>
+                              <View style={styles.modalHeaderIcon}>
+                                   <Icon name="warning-outline" size={24} color="#D32F2F" />
+                              </View>
+                              <Text style={styles.modalTitle}>Delete account?</Text>
+                              <Text style={styles.modalDescription}>
+                                   This action is permanent and cannot be undone. Your profile, subscriptions, listings and matches will be removed.
+                              </Text>
+                              <View style={styles.modalActions}>
+                                   <TouchableOpacity style={styles.modalCancelButton} onPress={() => setDeleteModalVisible(false)} disabled={DeleteLoading}>
+                                        <Text style={styles.modalCancelText}>Cancel</Text>
+                                   </TouchableOpacity>
+                                   <TouchableOpacity style={styles.modalDeleteButton} onPress={handleConfirmDelete} disabled={DeleteLoading}>
+                                        {DeleteLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalDeleteText}>Delete</Text>}
+                                   </TouchableOpacity>
+                              </View>
+                         </View>
+                    </View>
+               </Modal>
 
                <View style={styles.bottomSpacing} />
           </ScrollView>
@@ -375,6 +407,31 @@ const styles = StyleSheet.create({
           shadowRadius: 4,
           elevation: 2,
      },
+     deleteActionButton: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#FFF5F5',
+          padding: 16,
+          borderRadius: 12,
+          marginBottom: 12,
+          borderWidth: 1,
+          borderColor: '#FAD4D4',
+     },
+     deleteActionIconContainer: {
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          backgroundColor: '#FFECEC',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 12,
+     },
+     deleteActionTitle: {
+          fontSize: 16,
+          fontFamily: Font.font500,
+          color: '#D32F2F',
+          marginBottom: 2,
+     },
      actionIconContainer: {
           width: 44,
           height: 44,
@@ -417,5 +474,75 @@ const styles = StyleSheet.create({
      },
      bottomSpacing: {
           height: 100,
+     },
+     modalOverlay: {
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 24,
+     },
+     modalCard: {
+          width: '100%',
+          backgroundColor: '#fff',
+          borderRadius: 16,
+          padding: 20,
+     },
+     modalHeaderIcon: {
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          backgroundColor: '#FFECEC',
+          alignItems: 'center',
+          justifyContent: 'center',
+          alignSelf: 'center',
+          marginBottom: 12,
+     },
+     modalTitle: {
+          fontSize: 20,
+          fontFamily: Font.font500,
+          textAlign: 'center',
+          color: '#111827',
+          marginBottom: 8,
+     },
+     modalDescription: {
+          fontSize: 14,
+          fontFamily: Font.font400,
+          textAlign: 'center',
+          color: '#6B7280',
+          lineHeight: 20,
+          marginBottom: 20,
+     },
+     modalActions: {
+          flexDirection: 'row',
+          gap: 10,
+     },
+     modalCancelButton: {
+          flex: 1,
+          borderWidth: 1,
+          borderColor: '#D1D5DB',
+          borderRadius: 10,
+          paddingVertical: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#fff',
+     },
+     modalCancelText: {
+          fontSize: 15,
+          fontFamily: Font.font500,
+          color: '#374151',
+     },
+     modalDeleteButton: {
+          flex: 1,
+          borderRadius: 10,
+          paddingVertical: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#D32F2F',
+     },
+     modalDeleteText: {
+          fontSize: 15,
+          fontFamily: Font.font500,
+          color: '#fff',
      },
 });

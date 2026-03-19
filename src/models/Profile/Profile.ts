@@ -1,9 +1,9 @@
 import { useDispatch } from 'react-redux';
 import ResToast from '../../components/ResToast/ResToast';
-import { useGetProfileQuery, useUpdatePasswordMutation, useUpdateProfileMutation } from '../../redux/Profile/Profile';
+import { useDeleteAccountMutation, useGetProfileQuery, useUpdatePasswordMutation, useUpdateProfileMutation } from '../../redux/Profile/Profile';
 import { profileData } from '../../redux/Profile/ProfileTypes';
 import { useAuth } from '../../utils/Storage/Storage';
-import { authUser } from '../../redux/Features/authState';
+import { logout } from '../../redux/Features/authState';
 
 // Get Profile
 export const useGetProfileHandler = () => {
@@ -128,4 +128,38 @@ export const useUpdatePasswordHandler = () => {
      };
 
      return { handleUpdatePasswordAPI, isLoading };
+};
+
+// Delete Account
+export const useDeleteAccountHandler = () => {
+     const [DeleteAccountAPI, { isLoading }] = useDeleteAccountMutation();
+     const { userData } = useAuth();
+     const dispatch = useDispatch();
+
+     const handleDeleteAccountAPI = async () => {
+          try {
+               if (!userData?._id) {
+                    return ResToast({
+                         title: 'User not found. Please login again.',
+                         type: 'warning',
+                    });
+               }
+
+               const res = await DeleteAccountAPI({ userId: userData._id });
+               if (!res.error) {
+                    ResToast({ title: res?.data?.message || 'Your account has been deleted successfully', type: 'success' });
+                    dispatch(logout());
+               } else {
+                    return ResToast({
+                         title: (res?.error as any)?.data?.message || 'Failed to delete account. Please try again.',
+                         type: 'danger',
+                    });
+               }
+          } catch (error) {
+               console.error('Delete account failed:', error);
+               ResToast({ title: 'Something went wrong while deleting your account', type: 'danger' });
+          }
+     };
+
+     return { handleDeleteAccountAPI, isLoading };
 };

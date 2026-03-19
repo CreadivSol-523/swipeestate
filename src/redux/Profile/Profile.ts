@@ -30,9 +30,15 @@ const Profile = createApi({
                }),
                invalidatesTags: ['UpdateProfile'],
           }),
+          DeleteAccount: builder.mutation<{ message: string }, { userId: string }>({
+               query: ({ userId }) => ({
+                    url: `/api/${userId}/delete-account`,
+                    method: 'PATCH',
+               }),
+          }),
      }),
 });
 
-export const { useGetProfileQuery, useUpdateProfileMutation, useUpdatePasswordMutation } = Profile;
+export const { useGetProfileQuery, useUpdateProfileMutation, useUpdatePasswordMutation, useDeleteAccountMutation } = Profile;
 
 export default Profile;
