@@ -8,9 +8,12 @@ export interface PlanResponse {
 export interface RequestBuyPlan {
      userId: string;
      planId: string;
-     priceId: string;
-     email: string;
-     token: string;
+     email?: string;
+     /** Base64 App Store receipt; required for paid plans when using Apple billing */
+     receipt?: string;
+     /** Legacy Stripe fields (optional) */
+     priceId?: string;
+     token?: string;
      paymentMethodId?: string;
 }
 
@@ -19,7 +22,8 @@ export interface Plans {
      _id: string;
      title: string;
      description: string;
-     productId: string;
+     /** App Store product id (may be missing while migrating from Stripe) */
+     productId?: string;
      priceId: string;
      amount: number;
      planPoints: [];

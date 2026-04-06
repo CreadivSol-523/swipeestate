@@ -1,19 +1,15 @@
-import { CardField } from '@stripe/stripe-react-native';
-import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback } from 'react-native';
+import React from 'react';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback } from 'react-native';
 
 interface PurchaseModalProps {
      visible: boolean;
      onClose: () => void;
      onBuy: () => void;
      isLoading: boolean;
+     planTitle?: string;
 }
 
-const PurchaseModal: React.FC<PurchaseModalProps> = ({ visible, onClose, onBuy, isLoading }) => {
-     const handleBuy = (): void => {
-          onBuy?.();
-     };
-
+const PurchaseModal: React.FC<PurchaseModalProps> = ({ visible, onClose, onBuy, isLoading, planTitle }) => {
      return (
           <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
                <TouchableWithoutFeedback onPress={onClose}>
@@ -21,33 +17,18 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ visible, onClose, onBuy, 
                          <TouchableWithoutFeedback>
                               <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
                                    <View style={styles.modalContent}>
-                                        {/* Header */}
-                                        <Text style={styles.title}>ENTER DETAILS</Text>
-                                        <Text style={styles.subtitle}>Please enter the required information</Text>
+                                        <Text style={styles.title}>Subscribe with Apple</Text>
+                                        <Text style={styles.subtitle}>
+                                             {planTitle
+                                                  ? `You will confirm payment for "${planTitle}" with your Apple ID. After purchase, we verify your receipt on our server.`
+                                                  : 'You will confirm payment with your Apple ID. After purchase, we verify your receipt on our server.'}
+                                        </Text>
 
-                                        {/* Input Field */}
-                                        <View style={{ width: '100%', marginVertical: 20 }}>
-                                             <Text style={{ marginBottom: 8, fontWeight: 'bold', fontSize: 16 }}>Card Number</Text>
-                                             <CardField
-                                                  postalCodeEnabled={false}
-                                                  style={{ width: '100%', height: 50 }}
-                                                  cardStyle={{ backgroundColor: '#ffffff', textColor: '#000000', borderColor: '#000000', borderWidth: 1, borderRadius: 8 }}
-                                                  onCardChange={cardDetails => {
-                                                       console.log('cardDetails', cardDetails);
-                                                  }}
-                                                  onFocus={focusedField => {
-                                                       console.log('focusField', focusedField);
-                                                  }}
-                                             />
-                                        </View>
-
-                                        {/* Buy Button */}
-                                        <TouchableOpacity style={[styles.buyButton]} onPress={handleBuy}>
-                                             {isLoading ? <Text style={styles.buyButtonText}>Loading...</Text> : <Text style={styles.buyButtonText}>BUY</Text>}
+                                        <TouchableOpacity style={styles.buyButton} onPress={() => onBuy?.()} disabled={isLoading}>
+                                             {isLoading ? <Text style={styles.buyButtonText}>Working…</Text> : <Text style={styles.buyButtonText}>Continue</Text>}
                                         </TouchableOpacity>
 
-                                        {/* Cancel Button */}
-                                        <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+                                        <TouchableOpacity style={styles.cancelButton} onPress={onClose} disabled={isLoading}>
                                              <Text style={styles.cancelButtonText}>Cancel</Text>
                                         </TouchableOpacity>
                                    </View>
@@ -97,18 +78,7 @@ const styles = StyleSheet.create({
           color: '#666666',
           textAlign: 'center',
           marginBottom: 24,
-     },
-     input: {
-          width: '100%',
-          height: 50,
-          backgroundColor: '#F5F5F5',
-          borderRadius: 8,
-          paddingHorizontal: 16,
-          fontSize: 15,
-          color: '#333333',
-          marginBottom: 20,
-          borderWidth: 1,
-          borderColor: '#E0E0E0',
+          lineHeight: 20,
      },
      buyButton: {
           width: '100%',
@@ -118,9 +88,6 @@ const styles = StyleSheet.create({
           justifyContent: 'center',
           alignItems: 'center',
           marginBottom: 12,
-     },
-     buyButtonDisabled: {
-          backgroundColor: '#B0E5ED',
      },
      buyButtonText: {
           color: '#FFFFFF',

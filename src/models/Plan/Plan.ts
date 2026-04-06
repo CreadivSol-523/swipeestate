@@ -42,15 +42,25 @@ export const useBuyPlanHandler = () => {
                const res = await BuyPlanAPI(data?.RequestBuyPlan);
                console.log(res);
                if (!res.error) {
-                    dispatch(authUser({ data: data?.user }));
+                    const payload = res.data as { subscribedPlan?: { subscription: unknown; plan: unknown } } | undefined;
+                    const subscribedPlan = payload?.subscribedPlan;
+                    const nextAuthPayload = subscribedPlan
+                         ? {
+                                ...data.user,
+                                user: {
+                                     ...data.user?.user,
+                                     subscribedPlan,
+                                },
+                           }
+                         : data.user;
+                    dispatch(authUser({ data: nextAuthPayload }));
                     if (data.amount == 0 || data.amount == null || !data.amount) {
                          return ResToast({ title: 'Account Created', type: 'success' });
-                    } else {
-                         return ResToast({ title: 'Payment Comfirmed', type: 'success' });
                     }
-               } else {
-                    return ResToast({ title: 'Payment Failed! please try again', type: 'warning' });
+                    return ResToast({ title: 'Subscription active', type: 'success' });
                }
+               const msg = (res.error as { data?: { message?: string } })?.data?.message;
+               return ResToast({ title: msg || 'Subscription failed. Please try again.', type: 'warning' });
           } catch (error) {
                console.error('Payment failed:', error);
                throw error;
