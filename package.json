@@ -24,6 +24,7 @@
     "react-native-deck-swiper": "^2.0.19",
     "react-native-gesture-handler": "^2.30.0",
     "react-native-google-places-autocomplete": "^2.6.4",
+    "react-native-iap": "^12.16.4",
     "react-native-image-picker": "^8.2.1",
     "react-native-notifier": "^2.0.0",
     "react-native-paper": "^5.14.5",
