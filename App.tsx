@@ -3,10 +3,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { PaperProvider } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { setup } from 'react-native-iap';
 import RootNavigation from './src/navigation/RootNavigation';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
 import { StripeProvider } from '@stripe/stripe-react-native';
+
+/** Pick StoreKit 2 when the device supports it; required for correct native module wiring with RN IAP. */
+setup({ storekitMode: 'STOREKIT_HYBRID_MODE' });
 
 function App() {
      return (
