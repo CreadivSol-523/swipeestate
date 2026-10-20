@@ -1,10 +1,10 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import API_BASE_URL from '../../utils/Config';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import baseQueryWithTimeout from '../baseQuery';
 import { RequestProfile, RequestUpdateProfile, ResponseProfile } from './ProfileTypes';
 
 const Profile = createApi({
      reducerPath: 'Profile',
-     baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }),
+     baseQuery: baseQueryWithTimeout,
      tagTypes: ['UpdateProfile'],
      endpoints: builder => ({
           GetProfile: builder.query<ResponseProfile, RequestProfile>({

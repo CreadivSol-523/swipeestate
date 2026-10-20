@@ -1,10 +1,11 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import API_BASE_URL from '../../utils/Config';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import baseQueryWithTimeout from '../baseQuery';
+import { SubscriptionResponse } from './SubscriptionTypes';
 
 const Subscription = createApi({
      reducerPath: 'Subscription',
-     baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }),
-     tagTypes: ['CreateSubscription'],
+     baseQuery: baseQueryWithTimeout,
+     tagTypes: ['CreateSubscription', "upgradeSubscription"],
      endpoints: builder => ({
           CreateIntend: builder.mutation<{ getPaymentIntent: string; id: string }, { amount: number }>({
                query: amount => ({
@@ -23,7 +24,6 @@ const Subscription = createApi({
 
           DownGradeSubs: builder.mutation<any, { userId: string; downgradeTo: string }>({
                query: ({ userId, downgradeTo }) => {
-                    console.log({ userId, downgradeTo }, 'Redux');
                     return {
                          url: `/api/subscriptions/downgrade-subscription/${userId}`,
                          method: 'POST',
@@ -31,7 +31,20 @@ const Subscription = createApi({
                     };
                },
           }),
+
+          UpGradeSubs: builder.mutation<any, { userId: string; upgradeTo: string; paymentMethodId: string }>({
+               query: ({ userId, upgradeTo, paymentMethodId }) => {
+                    return {
+                         url: `/api/subscriptions/upgrade-subscription/${userId}`,
+                         method: 'POST',
+                         body: { upgradeTo, paymentMethodId },
+                    };
+               },
+               invalidatesTags: ['upgradeSubscription'],
+          }),
+
+
      }),
 });
-export const { useCreateIntendMutation, useGetSubscriptionQuery, useDownGradeSubsMutation } = Subscription;
+export const { useCreateIntendMutation, useGetSubscriptionQuery, useDownGradeSubsMutation, useUpGradeSubsMutation, } = Subscription;
 export default Subscription;

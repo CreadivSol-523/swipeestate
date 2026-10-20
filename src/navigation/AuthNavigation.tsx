@@ -8,6 +8,7 @@ import ForgetPasswordScreen from '../screens/Auth/ForgetPasswordScreen';
 import VerifyOTPScreen from '../screens/Auth/VerifyOTPScreen';
 import ResetPasswordScreen from '../screens/Auth/ResetPasswordScreen';
 import SelectPlan from '../screens/Auth/SelectPlan';
+import SelectIAPPlanScreen from '../screens/Auth/SelectIAPPlanScreen';
 interface AuthProps {
      initRoute: string;
 }
@@ -22,6 +23,7 @@ const AuthNaivgation = ({ initRoute }: AuthProps): JSX.Element => {
                     <Stack.Screen name="ForgetPasswordScreen" component={ForgetPasswordScreen} options={{ title: 'Forget Password' }} />
                     <Stack.Screen name="VerifyOTPScreen" component={VerifyOTPScreen} options={{ title: 'Verify OTP' }} />
                     <Stack.Screen name="ResetPasswordScreen" component={ResetPasswordScreen} options={{ title: 'Reset Password' }} />
+                    <Stack.Screen name="SelectIAPPlanScreen" component={SelectIAPPlanScreen} options={{ title: 'IAP Screen' }} />
                     <Stack.Screen name="SelectPlanScreen" component={SelectPlan} options={{ title: 'Select Plan' }} />
                </Stack.Navigator>
           </NavigationContainer>

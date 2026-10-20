@@ -4,9 +4,10 @@ import { ApartmentsType } from '../../redux/Apartments/ApartmentType';
 import { ImagePickerResponse, launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { requestCameraPermission } from '../../utils/Permissions/Permissions';
 import { useCreateApartmentHandler } from '../../models/Apartments/Apartments';
-import ResToast from '../../components/ResToast/ResToast';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Navigation from '../../utils/NavigationProps/NavigationProps';
+import colors from '../../assests/color/color';
+import Font from '../../assests/fonts/Font';
 
 const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
      const [formData, setFormData] = useState<ApartmentsType>({
@@ -29,16 +30,10 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
           featured: false,
           description: '',
      });
-     console.log(formData);
      const [currentAmenity, setCurrentAmenity] = useState('');
-     const [currentFeaturedUrl, setCurrentFeaturedUrl] = useState('');
-     const [currentGalleryUrl, setCurrentGalleryUrl] = useState('');
-     const [currentProofOfOwnership, setCurrentProofOfOwnership] = useState('');
 
      const apartmentTypes: Array<'Rent' | 'Sale'> = ['Rent', 'Sale'];
-
      const furnishedOptions: Array<'Furnished' | 'Semi-Furnished' | 'Unfurnished'> = ['Furnished', 'Semi-Furnished', 'Unfurnished'];
-
      const commonAmenities = ['Gym', 'Pool', 'Elevator', 'Security', 'Playground', 'Garden', 'Backup Generator'];
      const availability: ('Available' | 'Sold' | 'Rented')[] = ['Available', 'Sold', 'Rented'];
 
@@ -60,275 +55,222 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
           );
      };
 
-     // Handle Camera
-     const handleImagePicker = async (type?: string) => {
-          console.log(type, 'typetypetypetype');
-
+     // Handle Camera / Gallery picker — single entry point for all 3 image slots
+     const handleImagePicker = async (type: 'featuredImages' | 'proof_of_ownership' | 'images') => {
           await requestCameraPermission();
           Alert.alert(
-               'Select Profile Picture',
+               'Add photo',
                'Choose an option',
                [
-                    {
-                         text: 'Take Photo',
-                         onPress: () => openCamera(type),
-                    },
-                    {
-                         text: 'Choose from Gallery',
-                         onPress: () => openGallery(type),
-                    },
-                    {
-                         text: 'Cancel',
-                         style: 'cancel',
-                    },
+                    { text: 'Take photo', onPress: () => openCamera(type) },
+                    { text: 'Choose from gallery', onPress: () => openGallery(type) },
+                    { text: 'Cancel', style: 'cancel' },
                ],
                { cancelable: true },
           );
      };
 
-     const openCamera = (type?: string) => {
-          launchCamera(
-               {
-                    mediaType: 'photo',
-                    cameraType: 'front',
-                    quality: 0.8,
-                    maxWidth: 500,
-                    maxHeight: 500,
-               },
-               response => handleImageResponse({ response, type }),
-          );
+     const openCamera = (type: string) => {
+          launchCamera({ mediaType: 'photo', cameraType: 'back', quality: 0.8, maxWidth: 1200, maxHeight: 1200 }, response => handleImageResponse({ response, type }));
      };
 
-     const openGallery = (type?: string) => {
-          launchImageLibrary(
-               {
-                    mediaType: 'photo',
-                    quality: 0.8,
-                    maxWidth: 500,
-                    maxHeight: 500,
-               },
-               response => handleImageResponse({ response, type }),
-          );
+     const openGallery = (type: string) => {
+          launchImageLibrary({ mediaType: 'photo', quality: 0.8, maxWidth: 1200, maxHeight: 1200 }, response => handleImageResponse({ response, type }));
      };
 
      const handleImageResponse = ({ response, type }: { response?: ImagePickerResponse; type?: string }) => {
-          console.log(type);
-          if (response?.didCancel) {
-               console.log('User cancelled image picker');
-          } else if (response?.errorCode) {
-               console.log('ImagePicker Error: ', response?.errorMessage);
+          if (response?.didCancel) return;
+          if (response?.errorCode) {
                Alert.alert('Error', 'Failed to pick image');
-          } else if (response?.assets && response?.assets[0].uri) {
-               if (type === 'featuredImages') {
-                    updateField('featuredImages', response.assets[0].uri);
-               } else if (type === 'proof_of_ownership') {
-                    updateField('proof_of_ownership', response.assets[0].uri);
-               } else {
-                    updateField('images', [...(formData.images || []), response.assets[0].uri]);
-               }
+               return;
           }
-     };
+          const uri = response?.assets?.[0]?.uri;
+          if (!uri) return;
 
-     // Handle Featured Image
-     const addFeaturedImage = () => {
-          if (currentFeaturedUrl != '') {
-               if (currentFeaturedUrl.trim()) {
-                    updateField('featuredImages', currentFeaturedUrl.trim());
-                    setCurrentFeaturedUrl('');
-               }
+          if (type === 'featuredImages') {
+               updateField('featuredImages', uri);
+          } else if (type === 'proof_of_ownership') {
+               updateField('proof_of_ownership', uri);
           } else {
-               handleImagePicker('featuredImages');
+               updateField('images', [...(formData.images || []), uri]);
           }
      };
 
-     const removeFeaturedImage = () => {
-          updateField('featuredImages', '');
-     };
-
-     // Handle Proof Of image Image
-     const addProofOfimage = () => {
-          if (currentFeaturedUrl != '') {
-               if (currentFeaturedUrl.trim()) {
-                    updateField('proof_of_ownership', currentFeaturedUrl.trim());
-                    setCurrentProofOfOwnership('');
-               }
-          } else {
-               handleImagePicker('proof_of_ownership');
-          }
-     };
-
-     const removeProofOfimage = () => {
-          updateField('proof_of_ownership', '');
-     };
-
-     // Handle Gallery Images
-     const addGalleryImage = () => {
-          if (currentGalleryUrl != '') {
-               if (currentGalleryUrl.trim() && !formData.images?.includes(currentGalleryUrl.trim())) {
-                    updateField('images', [...(formData.images || []), currentGalleryUrl.trim()]);
-                    setCurrentGalleryUrl('');
-               }
-          } else {
-               handleImagePicker('images');
-          }
-     };
-
-     const removeGalleryImage = (url: string) => {
+     const removeFeaturedImage = () => updateField('featuredImages', '');
+     const removeProofOfimage = () => updateField('proof_of_ownership', '');
+     const removeGalleryImage = (url: string) =>
           updateField(
                'images',
                formData.images?.filter(img => img !== url),
           );
-     };
 
      const { handleBuyPlanAPI, isLoading } = useCreateApartmentHandler();
 
      const handleSubmit = () => {
-          handleBuyPlanAPI(formData);
-          console.log('Apartment Listing:', formData);
+          handleBuyPlanAPI(formData, setFormData);
      };
 
      return (
-          <ScrollView style={styles.container}>
+          <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
                <View style={styles.header}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                         <TouchableOpacity onPress={() => navigation.goBack()}>
-                              <Ionicons name="arrow-back" size={24} color="#1F2937" />
+                    <View style={styles.headerTopRow}>
+                         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                              <Ionicons name="arrow-back" size={22} color="#1F2937" />
                          </TouchableOpacity>
-                         <Text style={styles.headerTitle}>Add Apartment Listing</Text>
+                         <Text style={styles.headerTitle}>Add apartment listing</Text>
                     </View>
                     <Text style={styles.headerSubtitle}>Fill in the property details</Text>
                </View>
 
-               {/* Title */}
-               <View style={styles.formGroup}>
-                    <Text style={styles.label}>Property Title *</Text>
-                    <TextInput style={styles.input} placeholder="e.g., Luxury 3BR Apartment" value={formData.title} onChangeText={text => updateField('title', text)} />
-               </View>
+               {/* Basic info */}
+               <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Basic info</Text>
 
-               {/* Type Selection */}
-               <View style={styles.formGroup}>
-                    <Text style={styles.label}>Property Type *</Text>
-                    <View style={styles.chipContainer}>
-                         {apartmentTypes.map(type => (
-                              <TouchableOpacity key={type} style={[styles.chip, formData?.type === type && styles.chipSelected]} onPress={() => updateField('type', type)}>
-                                   <Text style={[styles.chipText, formData?.type === type && styles.chipTextSelected]}>{type}</Text>
-                              </TouchableOpacity>
-                         ))}
+                    <View style={styles.formGroup}>
+                         <Text style={styles.label}>Property title *</Text>
+                         <TextInput style={styles.input} placeholder="e.g., Luxury 3BR Apartment" value={formData.title} onChangeText={text => updateField('title', text)} />
+                    </View>
+
+                    <View style={styles.formGroup}>
+                         <Text style={styles.label}>Property type *</Text>
+                         <View style={styles.chipContainer}>
+                              {apartmentTypes.map(type => (
+                                   <TouchableOpacity key={type} style={[styles.chip, formData?.type === type && styles.chipSelected]} onPress={() => updateField('type', type)}>
+                                        <Text style={[styles.chipText, formData?.type === type && styles.chipTextSelected]}>{type}</Text>
+                                   </TouchableOpacity>
+                              ))}
+                         </View>
+                    </View>
+
+                    <View style={styles.formGroup}>
+                         <Text style={styles.label}>Location *</Text>
+                         <TextInput style={styles.input} placeholder="e.g., Houston, TX" value={formData.location} onChangeText={text => updateField('location', text)} />
                     </View>
                </View>
 
-               {/* Location */}
-               <View style={styles.formGroup}>
-                    <Text style={styles.label}>Location *</Text>
-                    <TextInput style={styles.input} placeholder="e.g., Houston, TX" value={formData.location} onChangeText={text => updateField('location', text)} />
-               </View>
+               {/* Pricing & size */}
+               <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Pricing & size</Text>
 
-               {/* Price and Area */}
-               <View style={styles.row}>
-                    <View style={styles.halfWidth}>
-                         <Text style={styles.label}>Price (USD) *</Text>
-                         <TextInput style={styles.input} placeholder="2500" keyboardType="numeric" value={formData.price.toString()} onChangeText={text => updateField('price', Number(text) || 0)} />
+                    <View style={styles.row}>
+                         <View style={styles.halfWidth}>
+                              <Text style={styles.label}>Price (USD) *</Text>
+                              <TextInput
+                                   style={styles.input}
+                                   placeholder="2500"
+                                   keyboardType="numeric"
+                                   value={formData.price.toString()}
+                                   onChangeText={text => updateField('price', Number(text) || 0)}
+                              />
+                         </View>
+                         <View style={styles.halfWidth}>
+                              <Text style={styles.label}>Area (sq ft) *</Text>
+                              <TextInput
+                                   style={styles.input}
+                                   placeholder="1500"
+                                   keyboardType="numeric"
+                                   value={formData.area.toString()}
+                                   onChangeText={text => updateField('area', Number(text) || 0)}
+                              />
+                         </View>
                     </View>
-                    <View style={styles.halfWidth}>
-                         <Text style={styles.label}>Area (sq ft) *</Text>
-                         <TextInput style={styles.input} placeholder="1500" keyboardType="numeric" value={formData.area.toString()} onChangeText={text => updateField('area', Number(text) || 0)} />
-                    </View>
-               </View>
 
-               {/* Bedrooms and Bathrooms */}
-               <View style={styles.row}>
-                    <View style={styles.halfWidth}>
-                         <Text style={styles.label}>Bedrooms *</Text>
+                    <View style={styles.row}>
+                         <View style={styles.halfWidth}>
+                              <Text style={styles.label}>Bedrooms *</Text>
+                              <TextInput
+                                   style={styles.input}
+                                   placeholder="3"
+                                   keyboardType="numeric"
+                                   value={formData.bedrooms.toString()}
+                                   onChangeText={text => updateField('bedrooms', Number(text) || 0)}
+                              />
+                         </View>
+                         <View style={styles.halfWidth}>
+                              <Text style={styles.label}>Bathrooms *</Text>
+                              <TextInput
+                                   style={styles.input}
+                                   placeholder="2"
+                                   keyboardType="numeric"
+                                   value={formData.bathrooms.toString()}
+                                   onChangeText={text => updateField('bathrooms', Number(text) || 0)}
+                              />
+                         </View>
+                    </View>
+
+                    <View style={styles.formGroup}>
+                         <Text style={styles.label}>Floor</Text>
                          <TextInput
                               style={styles.input}
-                              placeholder="3"
+                              placeholder="e.g., 5"
                               keyboardType="numeric"
-                              value={formData.bedrooms.toString()}
-                              onChangeText={text => updateField('bedrooms', Number(text) || 0)}
-                         />
-                    </View>
-                    <View style={styles.halfWidth}>
-                         <Text style={styles.label}>Bathrooms *</Text>
-                         <TextInput
-                              style={styles.input}
-                              placeholder="2"
-                              keyboardType="numeric"
-                              value={formData.bathrooms.toString()}
-                              onChangeText={text => updateField('bathrooms', Number(text) || 0)}
+                              value={formData.floor?.toString() || ''}
+                              // was `Number(text) || undefined` — typing "0" (ground
+                              // floor) silently became undefined since 0 is falsy.
+                              // Now only an empty field clears it.
+                              onChangeText={text => updateField('floor', text === '' ? undefined : Number(text) || 0)}
                          />
                     </View>
                </View>
 
-               {/* Floor */}
-               <View style={styles.formGroup}>
-                    <Text style={styles.label}>Floor</Text>
-                    <TextInput
-                         style={styles.input}
-                         placeholder="e.g., 5"
-                         keyboardType="numeric"
-                         value={formData.floor?.toString() || ''}
-                         onChangeText={text => updateField('floor', Number(text) || undefined)}
-                    />
-               </View>
+               {/* Status */}
+               <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Status</Text>
 
-               {/* Furnished Status */}
-               <View style={styles.formGroup}>
-                    <Text style={styles.label}>Furnished Status</Text>
-                    <View style={styles.chipContainer}>
-                         {furnishedOptions.map(option => (
-                              <TouchableOpacity key={option} style={[styles.chip, formData.furnished === option && styles.chipSelected]} onPress={() => updateField('furnished', option)}>
-                                   <Text style={[styles.chipText, formData.furnished === option && styles.chipTextSelected]}>{option}</Text>
-                              </TouchableOpacity>
-                         ))}
+                    <View style={styles.formGroup}>
+                         <Text style={styles.label}>Furnished status</Text>
+                         <View style={styles.chipContainer}>
+                              {furnishedOptions.map(option => (
+                                   <TouchableOpacity key={option} style={[styles.chip, formData.furnished === option && styles.chipSelected]} onPress={() => updateField('furnished', option)}>
+                                        <Text style={[styles.chipText, formData.furnished === option && styles.chipTextSelected]}>{option}</Text>
+                                   </TouchableOpacity>
+                              ))}
+                         </View>
                     </View>
-               </View>
 
-               {/* Balcony and Featured */}
-               <View style={styles.switchContainer}>
+                    <View style={styles.formGroup}>
+                         <Text style={styles.label}>Availability</Text>
+                         <View style={styles.chipContainer}>
+                              {availability.map(type => (
+                                   <TouchableOpacity key={type} style={[styles.chip, formData?.availability === type && styles.chipSelected]} onPress={() => updateField('availability', type)}>
+                                        <Text style={[styles.chipText, formData?.availability === type && styles.chipTextSelected]}>{type}</Text>
+                                   </TouchableOpacity>
+                              ))}
+                         </View>
+                    </View>
+
                     <View style={styles.switchRow}>
-                         <Text style={styles.label}>Has Parking</Text>
+                         <Text style={styles.label}>Has parking</Text>
                          <Switch
                               value={formData.parking}
                               onValueChange={value => updateField('parking', value)}
-                              trackColor={{ false: '#E5E7EB', true: '#60A5FA' }}
-                              thumbColor={formData.parking ? '#3B82F6' : '#F3F4F6'}
+                              trackColor={{ false: '#E5E7EB', true: `${colors.PrimaryColor}80` }}
+                              thumbColor={formData.parking ? colors.PrimaryColor : '#F3F4F6'}
                          />
                     </View>
                     <View style={styles.switchRow}>
-                         <Text style={styles.label}>Has Balcony</Text>
+                         <Text style={styles.label}>Has balcony</Text>
                          <Switch
                               value={formData.balcony}
                               onValueChange={value => updateField('balcony', value)}
-                              trackColor={{ false: '#E5E7EB', true: '#60A5FA' }}
-                              thumbColor={formData.balcony ? '#3B82F6' : '#F3F4F6'}
+                              trackColor={{ false: '#E5E7EB', true: `${colors.PrimaryColor}80` }}
+                              thumbColor={formData.balcony ? colors.PrimaryColor : '#F3F4F6'}
                          />
                     </View>
-                    <View style={styles.switchRow}>
-                         <Text style={styles.label}>Featured Listing</Text>
+                    <View style={[styles.switchRow, { marginBottom: 0 }]}>
+                         <Text style={styles.label}>Featured listing</Text>
                          <Switch
                               value={formData.featured}
                               onValueChange={value => updateField('featured', value)}
-                              trackColor={{ false: '#E5E7EB', true: '#60A5FA' }}
-                              thumbColor={formData.featured ? '#3B82F6' : '#F3F4F6'}
+                              trackColor={{ false: '#E5E7EB', true: `${colors.PrimaryColor}80` }}
+                              thumbColor={formData.featured ? colors.PrimaryColor : '#F3F4F6'}
                          />
-                    </View>
-               </View>
-
-               {/* Availability */}
-               <View style={styles.formGroup}>
-                    <Text style={styles.label}>Availability</Text>
-                    <View style={styles.chipContainer}>
-                         {availability.map(type => (
-                              <TouchableOpacity key={type} style={[styles.chip, formData?.availability === type && styles.chipSelected]} onPress={() => updateField('availability', type)}>
-                                   <Text style={[styles.chipText, formData?.availability === type && styles.chipTextSelected]}>{type}</Text>
-                              </TouchableOpacity>
-                         ))}
                     </View>
                </View>
 
                {/* Amenities */}
-               <View style={styles.formGroup}>
-                    <Text style={styles.label}>Amenities</Text>
+               <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Amenities</Text>
                     <View style={styles.chipContainer}>
                          {commonAmenities.map(amenity => (
                               <TouchableOpacity
@@ -343,18 +285,18 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
 
                     <View style={styles.addRow}>
                          <TextInput style={[styles.input, styles.flexInput]} placeholder="Add custom amenity" value={currentAmenity} onChangeText={setCurrentAmenity} />
-                         <TouchableOpacity style={styles.addButton} onPress={() => addAmenity(currentAmenity)}>
-                              <Text style={styles.addButtonText}>+</Text>
+                         <TouchableOpacity style={styles.addButton} onPress={() => addAmenity(currentAmenity)} disabled={!currentAmenity.trim()}>
+                              <Ionicons name="add" size={22} color="#fff" />
                          </TouchableOpacity>
                     </View>
 
-                    {formData.amenities && formData.amenities.length > 0 && (
+                    {!!formData.amenities?.length && (
                          <View style={styles.selectedChipContainer}>
                               {formData.amenities.map(amenity => (
                                    <View key={amenity} style={styles.selectedChip}>
                                         <Text style={styles.selectedChipText}>{amenity}</Text>
-                                        <TouchableOpacity onPress={() => removeAmenity(amenity)}>
-                                             <Text style={styles.removeText}>✕</Text>
+                                        <TouchableOpacity onPress={() => removeAmenity(amenity)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                                             <Ionicons name="close" size={14} color={colors.PrimaryColor} />
                                         </TouchableOpacity>
                                    </View>
                               ))}
@@ -362,78 +304,69 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
                     )}
                </View>
 
-               {/* Images */}
-               <View style={styles.formGroup}>
-                    {/* Featured Image Section */}
-                    <Text style={styles.label}>Featured Image</Text>
-                    <View style={styles.addRow}>
-                         <TextInput style={[styles.input, styles.flexInput]} placeholder="https://example.com/featured.jpg" value={currentFeaturedUrl} onChangeText={setCurrentFeaturedUrl} />
-                         <TouchableOpacity style={styles.addButton} onPress={addFeaturedImage}>
-                              <Text style={styles.addButtonText}>+</Text>
-                         </TouchableOpacity>
-                    </View>
+               {/* Media — URL text inputs removed; "+" opens camera/gallery directly */}
+               <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Photos & documents</Text>
 
-                    {formData.featuredImages && (
+                    <Text style={styles.label}>Featured image</Text>
+                    {formData.featuredImages ? (
                          <View style={styles.featuredImageContainer}>
-                              <Image source={{ uri: formData?.featuredImages }} style={styles.featuredImagePreview} />
+                              <Image source={{ uri: formData.featuredImages }} style={styles.featuredImagePreview} />
                               <TouchableOpacity style={styles.removeImageButton} onPress={removeFeaturedImage}>
-                                   <Text style={styles.removeImageText}>✕</Text>
+                                   <Ionicons name="close" size={14} color="#fff" />
                               </TouchableOpacity>
                          </View>
+                    ) : (
+                         <TouchableOpacity style={styles.uploadBoxWide} onPress={() => handleImagePicker('featuredImages')}>
+                              <View style={styles.uploadIconCircle}>
+                                   <Ionicons name="add" size={22} color={colors.PrimaryColor} />
+                              </View>
+                              <Text style={styles.uploadBoxText}>Add featured image</Text>
+                         </TouchableOpacity>
                     )}
 
-                    {/* Gallery Images Section */}
-                    <Text style={[styles.label, styles.galleryLabel]}>Gallery Images</Text>
-                    <View style={styles.addRow}>
-                         <TextInput style={[styles.input, styles.flexInput]} placeholder="https://example.com/image.jpg" value={currentGalleryUrl} onChangeText={setCurrentGalleryUrl} />
-                         <TouchableOpacity style={styles.addButton} onPress={addGalleryImage}>
-                              <Text style={styles.addButtonText}>+</Text>
+                    <Text style={[styles.label, styles.galleryLabel]}>Gallery images</Text>
+                    <View style={styles.imageGrid}>
+                         {formData.images?.map((url, idx) => (
+                              <View key={idx} style={styles.imageContainer}>
+                                   <Image source={{ uri: url }} style={styles.imagePreview} />
+                                   <TouchableOpacity style={styles.removeImageButton} onPress={() => removeGalleryImage(url)}>
+                                        <Ionicons name="close" size={14} color="#fff" />
+                                   </TouchableOpacity>
+                              </View>
+                         ))}
+                         <TouchableOpacity style={styles.uploadBoxSquare} onPress={() => handleImagePicker('images')}>
+                              <View style={styles.uploadIconCircle}>
+                                   <Ionicons name="add" size={22} color={colors.PrimaryColor} />
+                              </View>
                          </TouchableOpacity>
                     </View>
 
-                    {formData.images && formData.images.length > 0 && (
-                         <View style={styles.imageGrid}>
-                              {formData.images.map((url, idx) => (
-                                   <View key={idx} style={styles.imageContainer}>
-                                        <Image source={{ uri: url }} style={styles.imagePreview} />
-                                        <TouchableOpacity style={styles.removeImageButton} onPress={() => removeGalleryImage(url)}>
-                                             <Text style={styles.removeImageText}>✕</Text>
-                                        </TouchableOpacity>
-                                   </View>
-                              ))}
-                         </View>
-                    )}
-
-                    {/* proof_of_ownership Image Section */}
-                    <Text style={[styles.label, styles.galleryLabel]}>Proof of Ownership</Text>
-                    <View style={styles.addRow}>
-                         <TextInput
-                              style={[styles.input, styles.flexInput]}
-                              placeholder="https://example.com/proof_of_ownership.jpg"
-                              value={currentProofOfOwnership}
-                              onChangeText={setCurrentProofOfOwnership}
-                         />
-                         <TouchableOpacity style={styles.addButton} onPress={addProofOfimage}>
-                              <Text style={styles.addButtonText}>+</Text>
-                         </TouchableOpacity>
-                    </View>
-
-                    {formData.proof_of_ownership && (
+                    <Text style={[styles.label, styles.galleryLabel]}>Proof of ownership</Text>
+                    {formData.proof_of_ownership ? (
                          <View style={styles.featuredImageContainer}>
-                              <Image source={{ uri: formData?.proof_of_ownership }} style={styles.featuredImagePreview} />
+                              <Image source={{ uri: formData.proof_of_ownership }} style={styles.featuredImagePreview} />
                               <TouchableOpacity style={styles.removeImageButton} onPress={removeProofOfimage}>
-                                   <Text style={styles.removeImageText}>✕</Text>
+                                   <Ionicons name="close" size={14} color="#fff" />
                               </TouchableOpacity>
                          </View>
+                    ) : (
+                         <TouchableOpacity style={styles.uploadBoxWide} onPress={() => handleImagePicker('proof_of_ownership')}>
+                              <View style={styles.uploadIconCircle}>
+                                   <Ionicons name="add" size={22} color={colors.PrimaryColor} />
+                              </View>
+                              <Text style={styles.uploadBoxText}>Add proof of ownership</Text>
+                         </TouchableOpacity>
                     )}
                </View>
 
                {/* Description */}
-               <View style={styles.formGroup}>
-                    <Text style={styles.label}>Description</Text>
+               <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Description</Text>
                     <TextInput
                          style={[styles.input, styles.textArea]}
                          placeholder="Provide detailed description..."
+                         placeholderTextColor="#9CA3AF"
                          multiline
                          numberOfLines={4}
                          value={formData.description}
@@ -441,9 +374,8 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
                     />
                </View>
 
-               {/* Submit Button */}
-               <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isLoading}>
-                    {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Submit Listing</Text>}
+               <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isLoading} activeOpacity={0.85}>
+                    {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Submit listing</Text>}
                </TouchableOpacity>
           </ScrollView>
      );
@@ -452,47 +384,82 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
 const styles = StyleSheet.create({
      container: {
           flex: 1,
-          backgroundColor: '#F3F4F6',
+          backgroundColor: '#F8F9FA',
           padding: 16,
      },
      header: {
-          marginBottom: 24,
+          marginBottom: 20,
+          marginTop: 8,
      },
-     headerTitle: {
-          fontSize: 28,
-          fontWeight: 'bold',
-          color: '#1F2937',
+     headerTopRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
           marginBottom: 4,
      },
+     backButton: {
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#fff',
+          borderWidth: 1,
+          borderColor: '#E5E7EB',
+     },
+     headerTitle: {
+          fontSize: 22,
+          fontFamily: Font.font500,
+          color: '#1F2937',
+     },
      headerSubtitle: {
-          fontSize: 14,
+          fontSize: 13,
+          fontFamily: Font.font400,
           color: '#6B7280',
+          marginLeft: 46,
+     },
+     card: {
+          backgroundColor: '#fff',
+          borderRadius: 16,
+          padding: 16,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: '#F0F0F0,',
+     },
+     cardTitle: {
+          fontSize: 15,
+          fontFamily: Font.font500,
+          color: '#1F2937',
+          marginBottom: 14,
      },
      formGroup: {
-          marginBottom: 20,
+          marginBottom: 16,
      },
      label: {
-          fontSize: 14,
-          fontWeight: '600',
+          fontSize: 13,
+          fontFamily: Font.font500,
           color: '#374151',
           marginBottom: 8,
      },
      input: {
-          backgroundColor: '#FFFFFF',
-          borderWidth: 2,
+          backgroundColor: '#F9FAFB',
+          borderWidth: 1,
           borderColor: '#E5E7EB',
           borderRadius: 12,
-          padding: 12,
-          fontSize: 16,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          fontSize: 15,
+          fontFamily: Font.font400,
           color: '#1F2937',
      },
      row: {
           flexDirection: 'row',
           justifyContent: 'space-between',
-          marginBottom: 20,
+          marginBottom: 16,
+          gap: 12,
      },
      halfWidth: {
-          width: '48%',
+          flex: 1,
      },
      chipContainer: {
           flexDirection: 'row',
@@ -502,51 +469,41 @@ const styles = StyleSheet.create({
      chip: {
           backgroundColor: '#F3F4F6',
           paddingHorizontal: 16,
-          paddingVertical: 8,
+          paddingVertical: 9,
           borderRadius: 20,
-          marginRight: 8,
-          marginBottom: 8,
      },
      chipSelected: {
-          backgroundColor: '#3B82F6',
+          backgroundColor: colors.PrimaryColor,
      },
      chipText: {
-          fontSize: 14,
+          fontSize: 13,
+          fontFamily: Font.font500,
           color: '#374151',
-          fontWeight: '500',
      },
      chipTextSelected: {
           color: '#FFFFFF',
-     },
-     switchContainer: {
-          marginBottom: 20,
      },
      switchRow: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 12,
+          marginBottom: 14,
      },
      addRow: {
           flexDirection: 'row',
           gap: 8,
-          marginTop: 8,
+          marginTop: 10,
      },
      flexInput: {
           flex: 1,
      },
      addButton: {
-          backgroundColor: '#3B82F6',
-          width: 48,
-          height: 48,
+          backgroundColor: colors.PrimaryColor,
+          width: 46,
+          height: 46,
           borderRadius: 12,
           justifyContent: 'center',
           alignItems: 'center',
-     },
-     addButtonText: {
-          color: '#FFFFFF',
-          fontSize: 24,
-          fontWeight: 'bold',
      },
      selectedChipContainer: {
           flexDirection: 'row',
@@ -555,90 +512,119 @@ const styles = StyleSheet.create({
           marginTop: 12,
      },
      selectedChip: {
-          backgroundColor: '#DBEAFE',
+          backgroundColor: '#F0F7FF',
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 12,
-          paddingVertical: 6,
+          paddingVertical: 7,
           borderRadius: 16,
           gap: 6,
      },
      selectedChipText: {
-          color: '#1E40AF',
-          fontSize: 14,
-     },
-     removeText: {
-          color: '#1E40AF',
-          fontSize: 16,
-          fontWeight: 'bold',
+          color: colors.PrimaryColor,
+          fontSize: 13,
+          fontFamily: Font.font500,
      },
      imageGrid: {
           flexDirection: 'row',
           flexWrap: 'wrap',
-          gap: 12,
-          marginTop: 12,
+          gap: 10,
+          marginTop: 2,
      },
      galleryLabel: {
-          marginTop: 20,
+          marginTop: 18,
+     },
+     // Single-image upload slot (Featured image / Proof of ownership)
+     uploadBoxWide: {
+          height: 110,
+          borderRadius: 12,
+          borderWidth: 1.5,
+          borderColor: '#E5E7EB',
+          borderStyle: 'dashed',
+          backgroundColor: '#F9FAFB',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+     },
+     // Gallery grid "+" tile — same square size as thumbnails
+     uploadBoxSquare: {
+          width: 92,
+          height: 92,
+          borderRadius: 12,
+          borderWidth: 1.5,
+          borderColor: '#E5E7EB',
+          borderStyle: 'dashed',
+          backgroundColor: '#F9FAFB',
+          alignItems: 'center',
+          justifyContent: 'center',
+     },
+     uploadIconCircle: {
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: '#F0F7FF',
+          alignItems: 'center',
+          justifyContent: 'center',
+     },
+     uploadBoxText: {
+          fontSize: 13,
+          fontFamily: Font.font500,
+          color: '#6B7280',
      },
      featuredImageContainer: {
-          marginTop: 10,
           position: 'relative',
           alignSelf: 'flex-start',
      },
      featuredImagePreview: {
-          width: 200,
-          height: 150,
-          borderRadius: 8,
+          width: 180,
+          height: 130,
+          borderRadius: 12,
           resizeMode: 'cover',
+          backgroundColor: '#F0F0F0',
      },
      imageContainer: {
-          width: 100,
-          height: 100,
+          width: 92,
+          height: 92,
           position: 'relative',
      },
      imagePreview: {
           width: '100%',
           height: '100%',
-          borderRadius: 8,
+          borderRadius: 12,
+          backgroundColor: '#F0F0F0',
      },
      removeImageButton: {
           position: 'absolute',
-          top: 4,
-          right: 4,
-          backgroundColor: '#EF4444',
-          width: 24,
-          height: 24,
-          borderRadius: 12,
+          top: 6,
+          right: 6,
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          width: 22,
+          height: 22,
+          borderRadius: 11,
           justifyContent: 'center',
           alignItems: 'center',
-     },
-     removeImageText: {
-          color: '#FFFFFF',
-          fontSize: 14,
-          fontWeight: 'bold',
      },
      textArea: {
           height: 100,
           textAlignVertical: 'top',
      },
      submitButton: {
-          backgroundColor: '#3B82F6',
-          padding: 16,
-          borderRadius: 12,
+          backgroundColor: colors.PrimaryColor,
+          paddingVertical: 16,
+          borderRadius: 24,
           alignItems: 'center',
-          marginTop: 8,
-          marginBottom: 32,
-          shadowColor: '#3B82F6',
+          marginTop: 4,
+          marginBottom: 24,
+          shadowColor: colors.PrimaryColor,
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
+          shadowOpacity: 0.25,
           shadowRadius: 8,
-          elevation: 8,
+          elevation: 6,
      },
      submitButtonText: {
           color: '#FFFFFF',
-          fontSize: 18,
-          fontWeight: 'bold',
+          fontSize: 16,
+          fontFamily: Font.font500,
      },
 });
 

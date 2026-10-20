@@ -19,7 +19,7 @@ export const useCreateApartmentHandler = () => {
 
      const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-     const handleBuyPlanAPI = async (data: ApartmentsType) => {
+     const handleBuyPlanAPI = async (data: ApartmentsType, setState: any) => {
           try {
                const {
                     title,
@@ -99,13 +99,33 @@ export const useCreateApartmentHandler = () => {
                formData.append('availability', String(availability));
                formData.append('featured', String(featured));
                formData.append('description', String(description));
-               console.log(formData, 'formDataformDataformDataformDataformDataformDataformData');
                const res = await CreateApartmentAPI({ userId, formData });
 
-               console.log(res);
-
                if (!res.error) {
+                    setState({
+                         title: '',
+                         type: 'Rent',
+                         location: '',
+                         price: 0,
+                         area: 0,
+                         bedrooms: 0,
+                         bathrooms: 0,
+                         floor: null,
+                         furnished: 'Unfurnished',
+                         balcony: false,
+                         parking: false,
+                         amenities: [],
+                         availability: 'Available',
+                         images: [],
+                         featuredImages: '',
+                         proof_of_ownership: '',
+                         featured: false,
+                         description: '',
+                    });
+                    navigation.goBack();
                     return ResToast({ title: 'Apartment Created', type: 'success' });
+               } else if ((res.error as any)?.status && typeof (res.error as any).status !== 'string') {
+                    return ResToast({ title: (res.error as any).data.message || 'please try again', type: 'warning' });
                } else {
                     return ResToast({ title: 'please try again', type: 'warning' });
                }

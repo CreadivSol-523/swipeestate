@@ -1,4 +1,4 @@
-// !$*UTF8*$!
+﻿// !$*UTF8*$!
 {
 	archiveVersion = 1;
 	classes = {
@@ -12,6 +12,8 @@
 		4067BE8D96D9FBA075AABE0C /* libPods-swipeestate.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D8396AE71A781D3A5A08E105 /* libPods-swipeestate.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		7EF97B3E6ACF4227AC44BF78 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 13B55A67B65D44829F1EB60E /* BootSplash.storyboard */; };
+		5534D41098D9452388D570E3 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8980148F4C004FED8EE6C214 /* Colors.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +27,8 @@
 		A1E9BEB1CF31ABA31E685D7F /* Pods-swipeestate.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-swipeestate.release.xcconfig"; path = "Target Support Files/Pods-swipeestate/Pods-swipeestate.release.xcconfig"; sourceTree = "<group>"; };
 		D8396AE71A781D3A5A08E105 /* libPods-swipeestate.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-swipeestate.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		13B55A67B65D44829F1EB60E /* BootSplash.storyboard */ = {isa = PBXFileReference; name = "BootSplash.storyboard"; path = "swipeestate/BootSplash.storyboard"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		8980148F4C004FED8EE6C214 /* Colors.xcassets */ = {isa = PBXFileReference; name = "Colors.xcassets"; path = "swipeestate/Colors.xcassets"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = folder.assetcatalog; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +51,8 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				13B55A67B65D44829F1EB60E /* BootSplash.storyboard */,
+				8980148F4C004FED8EE6C214 /* Colors.xcassets */,
 			);
 			name = swipeestate;
 			sourceTree = "<group>";
@@ -161,6 +167,8 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				0A1987C553E13AC5B2B1ECAD /* PrivacyInfo.xcprivacy in Resources */,
+				7EF97B3E6ACF4227AC44BF78 /* BootSplash.storyboard in Resources */,
+				5534D41098D9452388D570E3 /* Colors.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -274,7 +282,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.swipeestate";
 				PRODUCT_NAME = swipeestate;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -302,7 +310,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.swipeestate";
 				PRODUCT_NAME = swipeestate;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -480,3 +488,4 @@
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }
+

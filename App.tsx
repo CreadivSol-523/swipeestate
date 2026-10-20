@@ -7,16 +7,27 @@ import RootNavigation from './src/navigation/RootNavigation';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
 import { StripeProvider } from '@stripe/stripe-react-native';
+import Config from 'react-native-config';
+import { useEffect } from 'react';
+import BootSplash from 'react-native-bootsplash';
+import ErrorBoundary from './src/components/ErrorBoundary/ErrorBoundary';
 
 function App() {
+     useEffect(() => {
+          // Hide splash screen when app is ready
+          BootSplash.hide({ fade: true });
+     }, []);
+
      return (
           <Provider store={store}>
                <SafeAreaProvider>
                     <GestureHandlerRootView>
                          <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-                              <StripeProvider publishableKey="pk_test_51SN0PD6LeihmLmRESnfivV5WX3wlrfaM6MSlXnuDjbsHDtCdKzKEfCdyEqLZm58JuvxzTqzWhWsjaaq4uWDGivIf00Rq5iTgf8">
+                              <StripeProvider publishableKey={Config.STRIPE_PUBLISHABLE_KEY || ''}>
                                    <PaperProvider>
-                                        <RootNavigation />
+                                        <ErrorBoundary>
+                                             <RootNavigation />
+                                        </ErrorBoundary>
                                    </PaperProvider>
                               </StripeProvider>
                          </SafeAreaView>

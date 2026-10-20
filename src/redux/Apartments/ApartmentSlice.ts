@@ -1,10 +1,10 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import API_BASE_URL from '../../utils/Config';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import baseQueryWithTimeout from '../baseQuery';
 import { GetApartmentResponse } from './ApartmentType';
 
 const ApartmentSlice = createApi({
      reducerPath: 'ApartmentSlice',
-     baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }),
+     baseQuery: baseQueryWithTimeout,
      tagTypes: ['GetApartmentAPI'],
      endpoints: builder => ({
           CreateApartment: builder.mutation<{ message: string }, any>({

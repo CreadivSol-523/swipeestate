@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Image, StyleSheet, StatusBar, SafeAreaView, FlatList, RefreshControl } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Apartment } from '../../redux/Matches/MatchType';
 import { useGetMatchesHandler } from '../../models/Matches/Matches';
-import API_BASE_URL from '../../utils/Config';
 import Navigation from '../../utils/NavigationProps/NavigationProps';
-import CustomDropdown from '../../components/CustomDropdown/CustomDropdown';
 import Ismessage from '../../components/IsMessage/Ismessage';
 import PropertyCardSkeleton from '../../components/Skeletons/PropertyCardSkeleton';
-import colors from '../../assests/Colors/Colors';
+import colors from '../../assests/color/color';
+import Font from '../../assests/fonts/Font';
+import { useAuth } from '../../utils/Storage/Storage';
 
 interface UserMatch {
      id: string;
@@ -20,87 +19,52 @@ interface UserMatch {
      creditScore: string;
      image: string;
      status: string;
+     title: string;
 }
 
+type FilterValue = 'All' | 'Requested' | 'Matched' | '';
+
+const FILTER_OPTIONS: { label: string; value: FilterValue }[] = [
+     { label: 'All', value: 'All' },
+     { label: 'Requested', value: 'Requested' },
+     { label: 'Matched', value: 'Matched' },
+];
+
+// Status -> semantic color, consistent with how Home screen uses
+// colors.PrimaryColor for its own "active" accents.
+const getStatusStyle = (status: string) => {
+     switch (status) {
+          case 'Matched':
+               return { bg: '#E7F7EE', text: '#15803D', dot: '#22C55E' };
+          case 'Rejected':
+               return { bg: '#FDECEC', text: '#DC2626', dot: '#EF4444' };
+          case 'Requested':
+          default:
+               return { bg: '#FFF4E5', text: '#B45309', dot: '#F59E0B' };
+     }
+};
+
 const Matches = ({ navigation }: { navigation: Navigation }) => {
-     const [matches, setMatches] = useState<UserMatch[] | undefined>([]);
-     const [matchesDetail, setMatchesDetail] = useState<any>([]);
+     const [matches, setMatches] = useState<UserMatch[]>([]);
+     const [matchesDetail, setMatchesDetail] = useState<any[]>([]);
      const [page, setPage] = useState(1);
      const [loader, setLoader] = useState(false);
-
-     const [filter, setFilter] = useState<'Requested' | 'Matched' | 'Rejected' | 'All' | ''>('');
+     const [filter, setFilter] = useState<FilterValue>('');
+     const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
      const handleNavigate = (id: string) => {
           const filterApartment = matchesDetail?.find((item: any) => item?._id === id);
-          navigation.navigate('AgentMatchDetail', { filterApartment });
+          // console.log({ filterApartment, matchID: filterApartment?._id });
+          navigation.navigate('AgentMatchDetail', { filterApartment, matchID: filterApartment?._id });
      };
 
-     const renderMatchCard = (item: any) => {
-          const match = item?.item;
-          return (
-               <View key={match.apartmentID} style={styles.card}>
-                    {/* Image Section */}
-                    <View style={styles.imageContainer}>
-                         <Image source={{ uri: match.image }} style={styles.image} />
-                         <View style={styles.imageOverlay} />
-                         <View style={styles.verifiedBadge}>
-                              <Text style={styles.verifiedText}>{match.status}</Text>
-                         </View>
-                    </View>
+     const { GetMatches, GetMatchesData, GetMatchesLoading, refetch, isFetching, isError } = useGetMatchesHandler({
+          page,
+          search: filter === 'All' ? '' : filter,
+     });
 
-                    {/* Content Section */}
-                    <View style={styles.cardContent}>
-                         {/* Name */}
-                         <Text style={styles.name}>{match.name}</Text>
-
-                         {/* Address */}
-                         <View style={styles.row}>
-                              <Ionicons name="location" size={16} color="#666" />
-                              <Text style={styles.address}>{match.address}</Text>
-                         </View>
-
-                         {/* Phone */}
-                         <View style={styles.row}>
-                              <Ionicons name="call" size={16} color="#666" />
-                              <Text style={styles.phone}>{match.phone}</Text>
-                         </View>
-
-                         {/* Income & Credit Score */}
-                         <View style={styles.statsContainer}>
-                              <View style={styles.statBox}>
-                                   <View style={styles.statHeader}>
-                                        <Ionicons name="cash-outline" size={18} color="#3B82F6" />
-                                        <Text style={styles.statLabel}>Income</Text>
-                                   </View>
-                                   <Text style={styles.statValue}>{match.selectedIncome}</Text>
-                              </View>
-
-                              <View style={styles.statBox}>
-                                   <View style={styles.statHeader}>
-                                        <Ionicons name="trophy-outline" size={18} color="#8B5CF6" />
-                                        <Text style={styles.statLabel}>Credit Score</Text>
-                                   </View>
-                                   <Text style={styles.statValue}>{match.creditScore}</Text>
-                              </View>
-                         </View>
-
-                         {/* View Profile Button */}
-                         <TouchableOpacity
-                              style={styles.profileButton}
-                              onPress={
-                                   // () => navigation.navigate('MatchDetail', { item })
-                                   () => handleNavigate(match?.apartmentID)
-                              }
-                         >
-                              <Text style={styles.profileButtonText}>View Detail</Text>
-                              <Ionicons name="arrow-forward" size={16} color="#fff" />
-                         </TouchableOpacity>
-                    </View>
-               </View>
-          );
-     };
-
-     const { GetMatches, GetMatchesData, GetMatchesLoading, refetch, isFetching, isError } = useGetMatchesHandler({ page, search: filter === 'All' ? '' : filter });
+     const { userData } = useAuth();
+     const userId = userData?._id;
 
      const onRefresh = () => {
           setLoader(true);
@@ -117,100 +81,158 @@ const Matches = ({ navigation }: { navigation: Navigation }) => {
           setPage(prev => prev + 1);
      };
 
+     const handleSelectFilter = (value: FilterValue) => {
+          setFilter(value);
+          setMatches([]);
+          setMatchesDetail([]);
+          setPage(1);
+          refetch();
+          setFilterMenuOpen(false);
+     };
+     console.log(GetMatches, 'GetMatchesGetMatchesGetMatchesGetMatches');
      const structuredMatches = (): UserMatch[] | undefined => {
           if (!GetMatches?.data?.matches?.length) return;
 
-          const MatchesList: UserMatch[] = (GetMatches.data.matches || []).map(item => ({
-               id: item?.buyer?._id,
+          return (GetMatches.data.matches || []).map((item: any) => ({
+               id: item?.buyer?._id ?? item?.seller?._id,
                apartmentID: item?._id,
-               name: item?.buyer?.name,
-               address: item?.buyer?.address,
-               phone: item?.buyer?.phone,
-               selectedIncome: item?.buyer?.selectedIncome,
-               creditScore: item?.buyer?.creditScore,
-               image: item?.buyer?.profilePicture,
+               name: item?.buyer?.name ?? item?.seller?.name,
+               address: item?.buyer?.address ?? item?.seller?.address,
+               phone: item?.buyer?.phone ?? item?.seller?.phone,
+               selectedIncome: item?.buyer?.selectedIncome ?? item?.seller?.selectedIncome,
+               creditScore: item?.buyer?.creditScore ?? item?.seller?.creditScore,
+               image: item?.buyer?.profilePicture ?? item?.seller?.profilePicture,
                status: item?.status,
+               title: item?.property?.title,
+               rejectedBy: item?.rejectedBy?.buyerId,
+               matchLikedBy: item?.matchLikedBy?.buyerId,
           }));
-
-          return MatchesList;
      };
 
      useEffect(() => {
-          // if (filter) {
-          //      setMatches([]);
-          //      setMatchesDetail([]);
-          // }
           if (GetMatches?.data?.matches?.length == 0 || GetMatchesLoading || isFetching) return;
 
           const newMatches = structuredMatches();
           const newMatchesDetails = GetMatchesData?.matches;
 
-          setMatches((prev: any) => {
+          setMatches(prev => {
                const map = new Map();
-
-               // add old ones
-               prev.forEach((item: any) => {
-                    map.set(item.apartmentID, item);
-               });
-
-               // add new ones (duplicates auto-overwritten)
-               newMatches?.forEach(item => {
-                    map.set(item.apartmentID, item);
-               });
-
+               prev.forEach(item => map.set(item.apartmentID, item));
+               newMatches?.forEach(item => map.set(item.apartmentID, item));
                return Array.from(map.values());
           });
 
-          setMatchesDetail((prev: any) => {
+          setMatchesDetail((prev: any[]) => {
                const map = new Map();
-
-               // add old ones
-               prev.forEach((item: any) => {
-                    map.set(item._id, item);
-               });
-
-               // add new ones (duplicates auto-overwritten)
-               newMatchesDetails?.forEach(item => {
-                    map.set(item._id, item);
-               });
-
+               prev.forEach(item => map.set(item._id, item));
+               newMatchesDetails?.forEach((item: any) => map.set(item._id, item));
                return Array.from(map.values());
           });
      }, [GetMatches, isFetching]);
 
-     console.log(isFetching, 'isFetchingisFetchingisFetching');
+     const activeFilterLabel = useMemo(() => FILTER_OPTIONS.find(f => f.value === filter)?.label, [filter]);
+
+     // console.log((GetMatches?.data?.matches as any)?.rejectedBy?.buyerId == userId);
+     // console.log(GetMatches?.data);
+     // console.log(userId);
+
+     const renderMatchCard = ({ item }: { item: UserMatch }) => {
+          const statusStyle = getStatusStyle(item.status);
+          console.log(item, 'itemitemitem');
+          return (
+               <View style={styles.card}>
+                    {/* Image Section */}
+                    <View style={styles.imageSection}>
+                         <Image source={{ uri: item.image }} style={styles.cardImage} />
+                         <View style={styles.gradientOverlay} />
+
+                         <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+                              <View style={[styles.statusDot, { backgroundColor: statusStyle.dot }]} />
+                              <Text style={[styles.statusText, { color: statusStyle.text }]}>{item.status}</Text>
+                         </View>
+
+                         <Text style={styles.nameOverlayText} numberOfLines={1}>
+                              {item.name}
+                         </Text>
+                    </View>
+
+                    {/* Content Section */}
+                    <View style={styles.cardContent}>
+                         <View style={styles.likedForRow}>
+                              <View style={styles.likedForBadge}>
+                                   <Text style={styles.likedForBadgeText}>Liked for</Text>
+                              </View>
+                              <Text style={styles.likedForValue} numberOfLines={1}>
+                                   {item?.title}
+                              </Text>
+                         </View>
+
+                         {(item as any)?.rejectedBy == userId ? null : (
+                              <View style={styles.detailsGrid}>
+                                   <View style={styles.detailBox}>
+                                        <Ionicons name="cash-outline" size={20} color={colors.PrimaryColor} />
+                                        <Text style={styles.detailValue} numberOfLines={1}>
+                                             {item.selectedIncome}
+                                        </Text>
+                                        <Text style={styles.detailLabel}>Income</Text>
+                                   </View>
+
+                                   <View style={styles.detailDivider} />
+
+                                   <View style={styles.detailBox}>
+                                        <Ionicons name="trophy-outline" size={20} color={colors.PrimaryColor} />
+                                        <Text style={styles.detailValue} numberOfLines={1}>
+                                             {item.creditScore}
+                                        </Text>
+                                        <Text style={styles.detailLabel}>Credit score</Text>
+                                   </View>
+                              </View>
+                         )}
+                         <TouchableOpacity
+                              style={[styles.profileButton, { marginTop: (item as any)?.rejectedBy == userId ? 10 : 0 }]}
+                              activeOpacity={0.85}
+                              onPress={() => handleNavigate(item.apartmentID)}
+                         >
+                              <Text style={styles.profileButtonText}>View detail</Text>
+                              <Ionicons name="arrow-forward" size={16} color="#fff" />
+                         </TouchableOpacity>
+                    </View>
+               </View>
+          );
+     };
 
      return (
-          <>
-               {/* Header */}
-               <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }]}>
-                    <View>
+          <View style={styles.container}>
+               <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10 }}>
+                    {/* Header */}
+                    <View style={styles.header}>
                          <Text style={styles.headerTitle}>Matches</Text>
-                         <Text style={styles.headerSubtitle}>{matches?.length} potential matches</Text>
+                         <Text style={styles.headerSubtitle}>{matches.filter(m => m.status !== 'Rejected').length} potential matches</Text>
                     </View>
-                    <View style={{ width: 150, top: 0, zIndex: 10000 }}>
-                         <CustomDropdown
-                              placeholder="Filter"
-                              options={[
-                                   { label: 'All', value: 'All' },
-                                   { label: 'Requested', value: 'Requested' },
-                                   { label: 'Matched', value: 'Matched' },
-                                   { label: 'Rejected', value: 'Rejected' },
-                              ]}
-                              value={filter}
-                              onValueChange={(value, label) => {
-                                   setFilter(value as '' | 'Requested' | 'Matched' | 'Rejected');
-                                   setMatches([]);
-                                   setMatchesDetail([]);
-                                   refetch();
-                                   // handleData('acountType', value);
-                              }}
-                              iconName="info"
-                              iconSize={18}
-                              iconColor="#9CA3AF"
-                              maxHeight={100}
-                              height={100}
-                         />
+
+                    {/* Filter bar — same chip + overlay pattern as Home */}
+                    <View style={styles.filterWrapper}>
+                         <View style={styles.filterBar}>
+                              <TouchableOpacity style={[styles.filterChip, filterMenuOpen && styles.filterChipActive]} activeOpacity={0.8} onPress={() => setFilterMenuOpen(v => !v)}>
+                                   <Ionicons name="filter" size={15} color={filterMenuOpen ? '#fff' : colors.PrimaryColor} />
+                                   <Text style={[styles.filterChipText, filterMenuOpen && styles.filterChipTextActive]}>{activeFilterLabel || 'Filter'}</Text>
+                                   <Ionicons name={filterMenuOpen ? 'chevron-up' : 'chevron-down'} size={14} color={filterMenuOpen ? '#fff' : '#9CA3AF'} />
+                              </TouchableOpacity>
+                         </View>
+
+                         {filterMenuOpen && (
+                              <>
+                                   <TouchableOpacity style={styles.overlayBackdrop} activeOpacity={1} onPress={() => setFilterMenuOpen(false)} />
+                                   <View style={styles.filterOverlay}>
+                                        {FILTER_OPTIONS.map(opt => (
+                                             <TouchableOpacity key={opt.value} style={styles.overlayRow} onPress={() => handleSelectFilter(opt.value)}>
+                                                  <Text style={styles.overlayRowText}>{opt.label}</Text>
+                                                  {filter === opt.value && <Ionicons name="checkmark" size={16} color={colors.PrimaryColor} />}
+                                             </TouchableOpacity>
+                                        ))}
+                                   </View>
+                              </>
+                         )}
                     </View>
                </View>
 
@@ -219,10 +241,10 @@ const Matches = ({ navigation }: { navigation: Navigation }) => {
                     <Ismessage text="No matches available" />
                ) : (
                     <FlatList
-                         data={matches}
-                         renderItem={item => renderMatchCard(item)}
-                         contentContainerStyle={{ paddingBottom: 100, gap: 20, padding: 16 }}
-                         keyExtractor={item => item?.apartmentID.toString()}
+                         data={matches.filter(m => m.status !== 'Rejected')}
+                         renderItem={renderMatchCard}
+                         contentContainerStyle={styles.listContent}
+                         keyExtractor={item => item?.apartmentID?.toString()}
                          showsVerticalScrollIndicator={false}
                          onEndReached={handleIncreasePage}
                          onEndReachedThreshold={0.5}
@@ -230,7 +252,7 @@ const Matches = ({ navigation }: { navigation: Navigation }) => {
                          ListFooterComponent={
                               !isError && (isFetching || GetMatchesLoading) ? (
                                    <>
-                                        {Array.from({ length: 5 }).map((_, i) => (
+                                        {Array.from({ length: 3 }).map((_, i) => (
                                              <PropertyCardSkeleton key={i + 1} />
                                         ))}
                                    </>
@@ -238,214 +260,247 @@ const Matches = ({ navigation }: { navigation: Navigation }) => {
                          }
                     />
                )}
-          </>
+          </View>
      );
 };
 
 const styles = StyleSheet.create({
      container: {
           flex: 1,
-          backgroundColor: '#F9FAFB',
+          backgroundColor: '#F8F9FA',
      },
      header: {
-          paddingHorizontal: 16,
+          paddingHorizontal: 20,
+          paddingTop: 20,
+          paddingBottom: 4,
      },
      headerTitle: {
           fontSize: 24,
-          fontWeight: 'bold',
-          paddingTop: 25,
-
-          color: '#1F2937',
+          fontFamily: Font.font500,
+          color: '#000',
      },
      headerSubtitle: {
-          fontSize: 14,
-          color: '#6B7280',
-          marginTop: 4,
+          fontSize: 13,
+          fontFamily: Font.font400,
+          color: '#666',
+          marginTop: 2,
      },
-     searchContainer: {
-          backgroundColor: '#fff',
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+     filterWrapper: {
+          zIndex: 20,
      },
-     searchBar: {
+     filterBar: {
+          flexDirection: 'row',
+          paddingHorizontal: 20,
+          paddingTop: 12,
+          paddingBottom: 8,
+     },
+     filterChip: {
+          // unchanged
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: '#F9FAFB',
-          borderRadius: 25,
-          paddingHorizontal: 16,
-          paddingVertical: 10,
+          gap: 6,
+          height: 38,
+          paddingHorizontal: 14,
+          borderRadius: 19,
+          backgroundColor: '#fff',
           borderWidth: 1,
-          borderColor: '#E5E7EB',
+          borderColor: '#E0E0E0',
      },
-     searchInput: {
+     filterChipActive: {
+          backgroundColor: colors.PrimaryColor,
+          borderColor: colors.PrimaryColor,
+     },
+     filterChipText: {
+          fontSize: 13,
+          fontFamily: Font.font500,
+          color: '#333',
+     },
+     filterChipTextActive: {
+          color: '#fff',
+     },
+     likedForRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          marginBottom: 10,
+     },
+     likedForBadge: {
+          backgroundColor: '#F0F7FF',
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: 14,
+     },
+     likedForBadgeText: {
+          fontSize: 12,
+          fontFamily: Font.font500,
+          color: colors.PrimaryColor,
+          textTransform: 'uppercase',
+     },
+     likedForValue: {
           flex: 1,
-          marginLeft: 8,
-          fontSize: 16,
-          color: '#1F2937',
+          fontSize: 15,
+          fontFamily: Font.font400,
+          color: '#111827',
      },
-     scrollView: {
-          flex: 1,
+     overlayBackdrop: {
+          position: 'absolute',
+          top: -1000,
+          left: -1000,
+          right: -1000,
+          bottom: -1000,
+          zIndex: 15,
      },
-     scrollContent: {
-          padding: 16,
-          paddingBottom: 50,
-     },
-     card: {
+     filterOverlay: {
+          // was `top: 102` (a hardcoded guess) — now `top: '100%'` means
+          // "right after the filterBar ends", correct on every screen size
+          position: 'absolute',
+          top: '80%',
+          right: 20,
+          width: 180,
+          marginTop: 0,
           backgroundColor: '#fff',
           borderRadius: 16,
-          marginBottom: 16,
-          overflow: 'hidden',
+          paddingVertical: 6,
+          elevation: 10,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.15,
+          shadowRadius: 16,
+          zIndex: 20,
+     },
+     overlayRow: {
+          // unchanged
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 13,
+     },
+     overlayRowText: {
+          fontSize: 14,
+          fontFamily: Font.font400,
+          color: '#333',
+     },
+     listContent: {
+          paddingBottom: 120,
+          paddingHorizontal: 16,
+          paddingTop: 8,
+          gap: 16,
+     },
+     card: {
+          borderRadius: 20,
+          backgroundColor: '#fff',
+          elevation: 6,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 3,
+          shadowRadius: 10,
+          overflow: 'hidden',
      },
-     imageContainer: {
-          height: 200,
+     imageSection: {
+          height: 170,
           position: 'relative',
+          backgroundColor: '#F0F0F0',
      },
-     image: {
+     cardImage: {
           width: '100%',
           height: '100%',
      },
-     imageOverlay: {
+     gradientOverlay: {
           position: 'absolute',
-          top: 0,
+          bottom: 0,
           left: 0,
           right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.1)',
+          height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.25)',
      },
-     verifiedBadge: {
+     statusBadge: {
           position: 'absolute',
-          top: 12,
-          right: 12,
-          backgroundColor: '#3B82F6',
+          top: 14,
+          right: 14,
           flexDirection: 'row',
           alignItems: 'center',
-          paddingHorizontal: 12,
+          gap: 6,
+          paddingHorizontal: 10,
           paddingVertical: 6,
           borderRadius: 20,
      },
-     verifiedText: {
+     statusDot: {
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+     },
+     statusText: {
+          fontSize: 11,
+          fontFamily: Font.font500,
+     },
+     nameOverlayText: {
+          position: 'absolute',
+          bottom: 14,
+          left: 16,
+          right: 16,
+          fontSize: 19,
+          fontFamily: Font.font500,
           color: '#fff',
-          fontSize: 12,
-          fontWeight: '600',
-          marginLeft: 4,
      },
      cardContent: {
           padding: 16,
      },
-     name: {
-          fontSize: 18,
-          fontWeight: 'bold',
-          color: '#1F2937',
-          marginBottom: 8,
-     },
-     row: {
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          marginBottom: 8,
-     },
-     address: {
-          fontSize: 14,
-          color: '#6B7280',
-          marginLeft: 6,
-          flex: 1,
-     },
-     phone: {
-          fontSize: 14,
-          color: '#6B7280',
-          marginLeft: 6,
-     },
-     statsContainer: {
-          flexDirection: 'row',
-          marginTop: 16,
-          paddingTop: 16,
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          gap: 16,
-     },
-     statBox: {
-          flex: 1,
-          alignItems: 'center',
-     },
-     statHeader: {
+     locationRow: {
           flexDirection: 'row',
           alignItems: 'center',
+          gap: 6,
           marginBottom: 8,
      },
-     statLabel: {
-          fontSize: 12,
-          color: '#6B7280',
-          marginLeft: 4,
+     locationText: {
+          fontSize: 13,
+          fontFamily: Font.font400,
+          color: '#666',
+          flex: 1,
      },
-     statValue: {
-          fontSize: 16,
-          fontWeight: 'bold',
-          color: '#1F2937',
+     detailsGrid: {
+          flexDirection: 'row',
+          backgroundColor: '#F8F9FA',
+          borderRadius: 14,
+          paddingVertical: 14,
+          alignItems: 'center',
+          marginTop: 8,
+          marginBottom: 14,
+     },
+     detailBox: {
+          flex: 1,
+          alignItems: 'center',
+          gap: 4,
+          paddingHorizontal: 4,
+     },
+     detailDivider: {
+          width: 1,
+          height: 36,
+          backgroundColor: '#E0E0E0',
+     },
+     detailValue: {
+          fontSize: 15,
+          fontFamily: Font.font500,
+          color: '#000',
+     },
+     detailLabel: {
+          fontSize: 11,
+          fontFamily: Font.font400,
+          color: '#999',
      },
      profileButton: {
-          backgroundColor: '#3B82F6',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          paddingVertical: 12,
-          borderRadius: 25,
-          marginTop: 16,
+          gap: 8,
+          backgroundColor: colors.PrimaryColor,
+          paddingVertical: 13,
+          borderRadius: 24,
      },
      profileButtonText: {
           color: '#fff',
           fontSize: 14,
-          fontWeight: '600',
-          marginRight: 8,
-     },
-     bottomNav: {
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          flexDirection: 'row',
-          backgroundColor: '#fff',
-          paddingVertical: 8,
-          paddingHorizontal: 16,
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-     },
-     navItem: {
-          alignItems: 'center',
-          justifyContent: 'center',
-     },
-     navItemCenter: {
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: -24,
-     },
-     centerButton: {
-          backgroundColor: '#3B82F6',
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          alignItems: 'center',
-          justifyContent: 'center',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
-     },
-     navText: {
-          fontSize: 10,
-          color: '#999',
-          marginTop: 4,
-     },
-     navTextActive: {
-          color: '#3B82F6',
+          fontFamily: Font.font500,
      },
 });
 

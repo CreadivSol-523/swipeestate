@@ -83,7 +83,11 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
+        resValue "string", "build_config_package", "com.swipeestate"
+        manifestPlaceholders = [
+            appName: "Swipe Estate"
+        ]
     }
     signingConfigs {
         debug {
@@ -91,6 +95,14 @@ android {
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
+        }
+        release {
+            if (project.hasProperty('SWIPEESTATE_RELEASE_STORE_FILE')) {
+                storeFile file(SWIPEESTATE_RELEASE_STORE_FILE)
+                storePassword SWIPEESTATE_RELEASE_STORE_PASSWORD
+                keyAlias SWIPEESTATE_RELEASE_KEY_ALIAS
+                keyPassword SWIPEESTATE_RELEASE_KEY_PASSWORD
+            }
         }
     }
     buildTypes {
@@ -100,9 +112,10 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            shrinkResources false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
 }
@@ -119,3 +132,4 @@ dependencies {
 }
 
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"

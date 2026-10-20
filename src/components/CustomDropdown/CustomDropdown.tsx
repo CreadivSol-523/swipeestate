@@ -227,35 +227,3 @@ const styles = StyleSheet.create({
 });
 
 export default CustomDropdown;
-
-// Example Usage:
-/*
-import CustomDropdown, { DropdownOption } from './CustomDropdown';
-
-const incomeRanges: DropdownOption[] = [
-  { label: 'Under $25,000', value: '0-25000' },
-  { label: '$25,000 - $50,000', value: '25000-50000' },
-  { label: '$50,000 - $75,000', value: '50000-75000' },
-  { label: '$75,000 - $1,00,000', value: '75000-100000' },
-  { label: '$1,00,000 - $1,50,000', value: '100000-150000' },
-  { label: '$1,50,000 - $2,00,000', value: '150000-200000' },
-  { label: '$2,00,000 - $3,00,000', value: '200000-300000' },
-  { label: 'Above $3,00,000', value: '300000+' },
-];
-
-const [selectedIncome, setSelectedIncome] = useState('');
-
-<CustomDropdown
-  label="Income Range"
-  placeholder="Select your income range"
-  options={incomeRanges}
-  value={selectedIncome}
-  onValueChange={(value, label) => {
-    setSelectedIncome(value);
-    console.log('Selected:', value, label);
-  }}
-  iconName="income"
-  iconSize={18}
-  iconColor="#9CA3AF"
-/>
-*/

@@ -78,7 +78,7 @@ const ForgetPasswordScreen = ({ navigation }: { navigation: any }) => {
                </View>
 
                {/* Footer */}
-               <Text style={styles.footer}>© 2026 Swipe Estate. All rights reserved.</Text>
+               <Text style={styles.footer}>© {new Date().getFullYear()} Swipe Estate. All rights reserved.</Text>
           </ScrollView>
      );
 };

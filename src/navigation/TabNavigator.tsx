@@ -2,12 +2,13 @@ import React, { JSX } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { View, StyleSheet, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, Platform, Alert } from 'react-native';
 import colors from '../assests/color/color';
 import ProfileScreen from '../screens/User/ProfileScreen';
 import EditProfileScreen from '../screens/User/EditProfileScreen';
 import ChangePasswordScreen from '../screens/User/ChangePasswordScreen';
 import HomeScreen from '../screens/User/HomeScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicy/PrivacyPolicyScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SubscriptionManagment from '../screens/Subscription/SubscriptionManagment';
@@ -26,6 +27,7 @@ const ProfileStack = (): JSX.Element => {
                <ProfileStackNavigator.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="SubscriptionManagment" component={SubscriptionManagment} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} options={{ headerShown: false }} />
           </ProfileStackNavigator.Navigator>
      );
 };
@@ -48,11 +50,20 @@ const MatchStack = (): JSX.Element => {
      );
 };
 
+// Lightweight placeholder for tabs that are "coming soon" — avoids ever
+// mounting a heavy real screen (with API calls) behind a blocked tab.
+const ComingSoonPlaceholder = (): JSX.Element => (
+     <View style={styles.placeholder}>
+          <Icon name="construct-outline" size={28} color="#C4C4C4" />
+          <Text style={styles.placeholderText}>Coming soon</Text>
+     </View>
+);
+
 // Custom Tab Bar Icon Component with animated background
 const TabBarIcon = ({ name, color, focused }: { name: string; color: string; focused: boolean }) => {
      return (
-          <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-               <Icon name={focused ? name : `${name}-outline`} size={24} color={color} />
+          <View style={[styles.iconContainer]}>
+               <Icon name={focused ? name : `${name}-outline`} size={28} color={color} />
                {focused && <View style={styles.activeDot} />}
           </View>
      );
@@ -69,12 +80,13 @@ const TabNavigation = (): JSX.Element => {
                          tabBarActiveTintColor: colors.PrimaryColor,
                          tabBarInactiveTintColor: '#9CA3AF',
                          tabBarStyle: {
-                              height: 60 + insets.bottom + 4,
+                              height: 60 + insets.bottom + 10,
                               backgroundColor: '#FFFFFF',
                               borderTopWidth: 1,
                               borderTopColor: '#F0F0F0',
                               paddingBottom: 10,
                               paddingTop: 10,
+                              overflow: 'visible',
                               ...Platform.select({
                                    ios: {
                                         shadowColor: '#000',
@@ -88,7 +100,7 @@ const TabNavigation = (): JSX.Element => {
                               }),
                          },
                          tabBarLabelStyle: {
-                              fontSize: 12,
+                              fontSize: 14,
                               fontWeight: '600',
                               marginTop: 4,
                          },
@@ -104,9 +116,9 @@ const TabNavigation = (): JSX.Element => {
                               tabBarIcon: ({ color, focused }) => <TabBarIcon name="home" color={color} focused={focused} />,
                          }}
                     />
-                    <Tab.Screen
+                    {/* <Tab.Screen
                          name="Favorites"
-                         component={HomeScreen}
+                         component={ComingSoonPlaceholder}
                          options={{
                               tabBarIcon: ({ color, focused }) => <TabBarIcon name="heart" color={color} focused={focused} />,
                          }}
@@ -116,40 +128,13 @@ const TabNavigation = (): JSX.Element => {
                                    Alert.alert('Coming Soon', 'Favorites feature is under development');
                               },
                          }}
-                    />
-                    <Tab.Screen
-                         name="Search"
-                         component={HomeScreen}
-                         options={{
-                              tabBarIcon: ({ color, focused }) => (
-                                   <View style={styles.searchIconContainer}>
-                                        <Icon name="search" size={36} color="#FFFFFF" />
-                                   </View>
-                              ),
-                              tabBarLabel: '',
-                         }}
-                         listeners={{
-                              tabPress: e => {
-                                   e.preventDefault();
-                                   Alert.alert('Coming Soon', 'Search feature is under development');
-                              },
-                         }}
-                    />
+                    /> */}
                     <Tab.Screen
                          name="Matches"
                          component={MatchStack}
                          options={{
-                              tabBarIcon: ({ color, focused }) => <TabBarIcon name="home" color={color} focused={focused} />,
-                              tabBarBadgeStyle: {
-                                   backgroundColor: '#EF4444',
-                                   color: '#FFFFFF',
-                                   fontSize: 10,
-                                   fontWeight: 'bold',
-                                   minWidth: 18,
-                                   height: 18,
-                                   borderRadius: 9,
-                                   marginTop: 2,
-                              },
+                              // was "home" — duplicated the Home tab's icon
+                              tabBarIcon: ({ color, focused }) => <TabBarIcon name="chatbubbles" color={color} focused={focused} />,
                          }}
                     />
                     <Tab.Screen
@@ -185,13 +170,13 @@ const styles = StyleSheet.create({
           bottom: -2,
      },
      searchIconContainer: {
-          width: 70,
-          height: 70,
-          borderRadius: 70,
+          width: 60,
+          height: 60,
+          borderRadius: 30,
           backgroundColor: colors.PrimaryColor,
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: -20,
+          marginTop: -18,
           ...Platform.select({
                ios: {
                     shadowColor: colors.PrimaryColor,
@@ -203,6 +188,17 @@ const styles = StyleSheet.create({
                     elevation: 8,
                },
           }),
+     },
+     placeholder: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#F8F9FA',
+          gap: 8,
+     },
+     placeholderText: {
+          fontSize: 14,
+          color: '#9CA3AF',
      },
 });
 

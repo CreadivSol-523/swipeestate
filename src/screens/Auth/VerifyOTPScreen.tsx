@@ -5,10 +5,8 @@ import Font from '../../assests/fonts/Font';
 import CustomLogo from '../../components/CustomLogo/CustomLogo';
 import { useVerifyOTPHandler } from '../../models/Auth/Auth';
 
-const VerifyOTPScreen = ({ navigation, route }: { navigation: any; route: any }) => {
+const VerifyOTPScreen = ({ route }: { route: any }) => {
      const [data, setData] = useState({ otp: ['', '', '', '', '', ''] });
-     const [loading, setLoading] = useState(false);
-     const [error, setError] = useState('');
      const inputRefs = useRef<Array<TextInput | null>>([]);
      const email = route.params?.email || '';
 
@@ -20,7 +18,6 @@ const VerifyOTPScreen = ({ navigation, route }: { navigation: any; route: any })
           const newOtp = [...data.otp];
           newOtp[index] = text;
           setData({ ...data, otp: newOtp });
-          setError('');
 
           if (text && index < 5) {
                inputRefs.current[index + 1]?.focus();
@@ -52,17 +49,12 @@ const VerifyOTPScreen = ({ navigation, route }: { navigation: any; route: any })
 
      const handleResendOTP = () => {
           setData({ ...data, otp: ['', '', '', '', '', ''] });
-          setError('');
      };
 
      const { handleVerifyOTP, isLoading } = useVerifyOTPHandler();
 
      const VerifyOTP = async () => {
           await handleVerifyOTP({
-               identifier: email,
-               otp: data?.otp.join(''),
-          });
-          console.log({
                identifier: email,
                otp: data?.otp.join(''),
           });
@@ -113,7 +105,7 @@ const VerifyOTPScreen = ({ navigation, route }: { navigation: any; route: any })
                </View>
 
                {/* Footer */}
-               <Text style={styles.footer}>© 2026 Swipe Estate. All rights reserved.</Text>
+               <Text style={styles.footer}>© {new Date().getFullYear()} Swipe Estate. All rights reserved.</Text>
           </ScrollView>
      );
 };

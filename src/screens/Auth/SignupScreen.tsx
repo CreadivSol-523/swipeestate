@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Image, Alert } from 'react-native';
-import { useDispatch } from 'react-redux';
 import colors from '../../assests/color/color';
 import { useForm } from '../../utils/UseForm/UseForm';
 import Icon from '../../components/Icons/Icons';
@@ -9,13 +8,12 @@ import AddressAutocomplete from '../../components/AddressAutocomplete/AddressAut
 import { launchImageLibrary, launchCamera, ImagePickerResponse } from 'react-native-image-picker';
 import { requestCameraPermission } from '../../utils/Permissions/Permissions';
 import { useRegisterHandler, useSellerRegisterHandler } from '../../models/Auth/Auth';
-import { CreateAccResquest } from '../../redux/Auth/AuthTypes';
+import useKeyboardStatus from '../../utils/IsKeyboardStatus/useKeyboardStatus';
 
 const SignupScreen = ({ navigation }: { navigation: any }) => {
-     const [loading, setLoading] = useState(false);
-     const [error, setError] = useState('');
      const [showPassword, setShowPassword] = useState(false);
-     const dispatch = useDispatch();
+
+     const KeyboardStatus = useKeyboardStatus();
 
      const incomeRanges: DropdownOption[] = [
           { label: 'Under $25,000', value: '0-25000' },
@@ -40,7 +38,6 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
      const {
           data,
           handleChange: handleData,
-          setData,
      } = useForm({
           initialState: {
                name: '',
@@ -140,11 +137,10 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                     profilePicture: data?.profilePicture,
                } as any);
           }
-          console.log(data);
      };
 
      return (
-          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: KeyboardStatus ? 300 : 0 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                {/* Logo Section */}
                <View style={styles.logoContainer}>
                     <Text style={styles.title}>Swipe Estate</Text>
@@ -235,7 +231,6 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                     <AddressAutocomplete
                          value={address}
                          onChangeText={value => {
-                              console.log(value);
                               handleData('address', value);
                          }}
                          label="Address"
@@ -252,7 +247,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                               { label: 'Agent', value: 'agent' },
                          ]}
                          value={acountType}
-                         onValueChange={(value, label) => {
+                         onValueChange={(value, _label) => {
                               handleData('acountType', value);
                          }}
                          iconName="info"
@@ -268,7 +263,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                                    placeholder="Select your income range"
                                    options={incomeRanges}
                                    value={selectedIncome}
-                                   onValueChange={(value, label) => {
+                                   onValueChange={(value, _label) => {
                                         handleData('selectedIncome', value);
                                    }}
                                    iconName="income"
@@ -281,7 +276,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                                    placeholder="Select your credit score"
                                    options={creditScoreRanges}
                                    value={creditScore}
-                                   onValueChange={(value, label) => {
+                                   onValueChange={(value, _label) => {
                                         handleData('creditScore', value);
                                    }}
                                    iconName="credit"
@@ -341,14 +336,14 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                     </TouchableOpacity>
 
                     {/* Divider */}
-                    <View style={styles.divider}>
+                    {/* <View style={styles.divider}>
                          <View style={styles.dividerLine} />
                          <Text style={styles.dividerText}>Or continue with</Text>
                          <View style={styles.dividerLine} />
-                    </View>
+                    </View> */}
 
                     {/* Social Login Buttons */}
-                    <View style={styles.socialButtons}>
+                    {/* <View style={styles.socialButtons}>
                          <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
                               <View style={[styles.socialIcon, { backgroundColor: '#EA4335' }]}>
                                    <Icon name="google" size={20} color="#FFFFFF" />
@@ -362,7 +357,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                               </View>
                               <Text style={styles.socialButtonText}>Facebook</Text>
                          </TouchableOpacity>
-                    </View>
+                    </View> */}
 
                     {/* Sign Up Link */}
                     <View style={styles.signupContainer}>
@@ -374,7 +369,7 @@ const SignupScreen = ({ navigation }: { navigation: any }) => {
                </View>
 
                {/* Footer */}
-               <Text style={styles.footer}>© 2026 Swipe Estate. All rights reserved.</Text>
+               <Text style={styles.footer}>© {new Date().getFullYear()} Swipe Estate. All rights reserved.</Text>
           </ScrollView>
      );
 };

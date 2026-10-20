@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Navigation from '../../utils/NavigationProps/NavigationProps';
-import { matches } from '../../redux/Matches/MatchType';
-import API_BASE_URL from '../../utils/Config';
 import { GetApartmentType } from '../../redux/Apartments/ApartmentType';
-import { useAcceptPropertyHandler } from '../../models/Matches/Matches';
+import colors from '../../assests/color/color';
+import Font from '../../assests/fonts/Font';
 
 const { width } = Dimensions.get('window');
 
@@ -15,16 +16,24 @@ type Props = {
      navigation: Navigation;
 };
 
+const formatPrice = (value?: number | string) => {
+     if (value === undefined || value === null || value === '') return '—';
+     const num = Number(value);
+     if (Number.isNaN(num)) return String(value);
+     return `$${num.toLocaleString()}`;
+};
+
 const SingleApartment = ({ navigation, route }: Props) => {
      const [currentImageIndex, setCurrentImageIndex] = useState(0);
      const [isFavorite, setIsFavorite] = useState(false);
+     const insets = useSafeAreaInsets();
 
      const { filterApartment } = route.params || {};
-     console.log(filterApartment);
+     const images = filterApartment?.featuredImages ?? [];
 
      return (
-          <>
-               <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.container}>
+               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
                     {/* Image Gallery */}
                     <View style={styles.imageGallery}>
                          <ScrollView
@@ -37,32 +46,34 @@ const SingleApartment = ({ navigation, route }: Props) => {
                               }}
                               scrollEventThrottle={16}
                          >
-                              {filterApartment?.featuredImages?.map((image, index) => (
-                                   <Image key={index} source={{ uri: image }} style={styles.apartmentImage} />
+                              {images.map((image, index) => (
+                                   <FastImage key={index} source={{ uri: image }} style={styles.apartmentImage} resizeMode={FastImage.resizeMode.cover} />
                               ))}
                          </ScrollView>
 
-                         {/* Header Buttons */}
-                         <View style={styles.imageHeader}>
+                         {/* Header Buttons — now respects the notch/status bar */}
+                         <View style={[styles.imageHeader]}>
                               <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
-                                   <Icon name="arrow-left" size={24} color="#fff" />
+                                   <Icon name="arrow-left" size={22} color="#fff" />
                               </TouchableOpacity>
                               <TouchableOpacity style={styles.headerButton} onPress={() => setIsFavorite(!isFavorite)}>
-                                   {isFavorite ? <MaterialIcon name="favorite" size={24} color="#FF5252" /> : <MaterialIcon name="favorite-border" size={24} color="#fff" />}
+                                   {isFavorite ? <MaterialIcon name="favorite" size={22} color="#FF5252" /> : <MaterialIcon name="favorite-border" size={22} color="#fff" />}
                               </TouchableOpacity>
                          </View>
 
-                         {/* Image Indicator */}
-                         <View style={styles.imageIndicator}>
-                              <Text style={styles.imageIndicatorText}>
-                                   {currentImageIndex + 1} / {filterApartment?.featuredImages?.length}
-                              </Text>
-                         </View>
+                         {/* Image dots — visual pagination instead of text-only */}
+                         {images.length > 1 && (
+                              <View style={styles.imageDots}>
+                                   {images.map((_, index) => (
+                                        <View key={index} style={[styles.imageDot, index === currentImageIndex && styles.imageDotActive]} />
+                                   ))}
+                              </View>
+                         )}
 
                          {/* Featured Badge */}
                          {filterApartment?.featured && (
                               <View style={styles.featuredBadge}>
-                                   <Icon name="star" size={16} color="#FFD700" />
+                                   <Icon name="star" size={14} color="#FFD700" />
                                    <Text style={styles.featuredText}>Featured</Text>
                               </View>
                          )}
@@ -73,35 +84,44 @@ const SingleApartment = ({ navigation, route }: Props) => {
                          {/* Title & Price */}
                          <View style={styles.titleSection}>
                               <View style={styles.titleRow}>
-                                   <Text style={styles.title}>{filterApartment?.title}</Text>
-                                   <View style={styles.typeBadge}>
-                                        <Text style={styles.typeText}>{filterApartment?.type}</Text>
-                                   </View>
+                                   <Text style={styles.title} numberOfLines={2}>
+                                        {filterApartment?.title}
+                                   </Text>
+                                   {!!filterApartment?.type && (
+                                        <View style={styles.typeBadge}>
+                                             <Text style={styles.typeText}>{filterApartment?.type}</Text>
+                                        </View>
+                                   )}
                               </View>
                               <View style={styles.locationRow}>
-                                   <Icon name="map-pin" size={16} color="#00BCD4" />
-                                   <Text style={styles.location}>{filterApartment?.location}</Text>
+                                   <Icon name="map-pin" size={15} color={colors.PrimaryColor} />
+                                   <Text style={styles.location} numberOfLines={1}>
+                                        {filterApartment?.location}
+                                   </Text>
                               </View>
-                              <View style={styles.priceRow}>
-                                   <Icon name="dollar-sign" size={28} color="#00BCD4" />
-                                   <Text style={styles.price}>{filterApartment?.price}</Text>
-                              </View>
+                              <Text style={styles.price}>{formatPrice(filterApartment?.price)}</Text>
                          </View>
 
                          {/* Quick Stats */}
                          <View style={styles.statsContainer}>
                               <View style={styles.stat}>
-                                   <Icon name="home" size={24} color="#00BCD4" />
+                                   <Icon name="home" size={20} color={colors.PrimaryColor} />
                                    <Text style={styles.statNumber}>{filterApartment?.bedrooms}</Text>
                                    <Text style={styles.statLabel}>Bedrooms</Text>
                               </View>
+
+                              <View style={styles.statDivider} />
+
                               <View style={styles.stat}>
-                                   <Icon name="droplet" size={24} color="#00BCD4" />
+                                   <Icon name="droplet" size={20} color={colors.PrimaryColor} />
                                    <Text style={styles.statNumber}>{filterApartment?.bathrooms}</Text>
                                    <Text style={styles.statLabel}>Bathrooms</Text>
                               </View>
+
+                              <View style={styles.statDivider} />
+
                               <View style={styles.stat}>
-                                   <Icon name="maximize" size={24} color="#00BCD4" />
+                                   <Icon name="maximize" size={20} color={colors.PrimaryColor} />
                                    <Text style={styles.statNumber}>{filterApartment?.area}</Text>
                                    <Text style={styles.statLabel}>sq ft</Text>
                               </View>
@@ -110,51 +130,51 @@ const SingleApartment = ({ navigation, route }: Props) => {
                          {/* Details Section */}
                          <View style={styles.section}>
                               <Text style={styles.sectionTitle}>Details</Text>
-                              <View style={styles.detailsGrid}>
-                                   {filterApartment?.floor && (
-                                        <View style={styles.detailItem}>
-                                             <Icon name="layers" size={18} color="#666" />
-                                             <Text style={styles.detailText}>Floor {filterApartment?.floor}</Text>
+                              <View style={styles.chipGrid}>
+                                   {!!filterApartment?.floor && (
+                                        <View style={styles.chip}>
+                                             <Icon name="layers" size={16} color="#666" />
+                                             <Text style={styles.chipText}>Floor {filterApartment?.floor}</Text>
                                         </View>
                                    )}
-                                   {filterApartment?.furnished && (
-                                        <View style={styles.detailItem}>
-                                             <Icon name="box" size={18} color="#666" />
-                                             <Text style={styles.detailText}>{filterApartment?.furnished}</Text>
+                                   {!!filterApartment?.furnished && (
+                                        <View style={styles.chip}>
+                                             <Icon name="box" size={16} color="#666" />
+                                             <Text style={styles.chipText}>{filterApartment?.furnished}</Text>
                                         </View>
                                    )}
-                                   {filterApartment?.parking && (
-                                        <View style={styles.detailItem}>
-                                             <Icon name="truck" size={18} color="#666" />
-                                             <Text style={styles.detailText}>{filterApartment?.parking} Parking</Text>
+                                   {!!filterApartment?.parking && (
+                                        <View style={styles.chip}>
+                                             <Icon name="truck" size={16} color="#666" />
+                                             <Text style={styles.chipText}>{filterApartment?.parking} Parking</Text>
                                         </View>
                                    )}
-                                   {filterApartment?.availability && (
-                                        <View style={styles.detailItem}>
-                                             <Icon name="calendar" size={18} color="#666" />
-                                             <Text style={styles.detailText}>{filterApartment?.availability}</Text>
+                                   {!!filterApartment?.availability && (
+                                        <View style={styles.chip}>
+                                             <Icon name="calendar" size={16} color="#666" />
+                                             <Text style={styles.chipText}>{filterApartment?.availability}</Text>
                                         </View>
                                    )}
                               </View>
                          </View>
 
                          {/* Description */}
-                         {filterApartment?.description && (
+                         {!!filterApartment?.description && (
                               <View style={styles.section}>
                                    <Text style={styles.sectionTitle}>Description</Text>
                                    <Text style={styles.description}>{filterApartment?.description}</Text>
                               </View>
                          )}
 
-                         {/* Amenities */}
-                         {filterApartment?.amenities && filterApartment?.amenities?.length > 0 && (
+                         {/* Amenities — same chip-grid treatment as Details, for visual consistency */}
+                         {!!filterApartment?.amenities?.length && (
                               <View style={styles.section}>
                                    <Text style={styles.sectionTitle}>Amenities</Text>
-                                   <View style={styles.amenitiesContainer}>
-                                        {filterApartment?.amenities.map((amenity, index) => (
-                                             <View key={index} style={styles.amenityItem}>
-                                                  <Icon name="check-circle" size={18} color="#4CAF50" />
-                                                  <Text style={styles.amenityText}>{amenity}</Text>
+                                   <View style={styles.chipGrid}>
+                                        {filterApartment.amenities.map((amenity, index) => (
+                                             <View key={index} style={styles.chip}>
+                                                  <Icon name="check-circle" size={16} color="#22C55E" />
+                                                  <Text style={styles.chipText}>{amenity}</Text>
                                              </View>
                                         ))}
                                    </View>
@@ -162,7 +182,7 @@ const SingleApartment = ({ navigation, route }: Props) => {
                          )}
                     </View>
                </ScrollView>
-          </>
+          </View>
      );
 };
 
@@ -174,6 +194,7 @@ const styles = StyleSheet.create({
      imageGallery: {
           position: 'relative',
           height: 300,
+          backgroundColor: '#F0F0F0',
      },
      apartmentImage: {
           width: width,
@@ -181,33 +202,36 @@ const styles = StyleSheet.create({
      },
      imageHeader: {
           position: 'absolute',
-          top: 16,
           left: 16,
           right: 16,
+          top: 16,
           flexDirection: 'row',
           justifyContent: 'space-between',
      },
      headerButton: {
-          width: 40,
-          height: 40,
-          borderRadius: 20,
+          width: 38,
+          height: 38,
+          borderRadius: 19,
           backgroundColor: 'rgba(0,0,0,0.5)',
           justifyContent: 'center',
           alignItems: 'center',
      },
-     imageIndicator: {
+     imageDots: {
           position: 'absolute',
           bottom: 16,
-          right: 16,
-          backgroundColor: 'rgba(0,0,0,0.6)',
-          paddingHorizontal: 12,
-          paddingVertical: 6,
-          borderRadius: 20,
+          alignSelf: 'center',
+          flexDirection: 'row',
+          gap: 6,
      },
-     imageIndicatorText: {
-          color: '#fff',
-          fontSize: 12,
-          fontWeight: '600',
+     imageDot: {
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+          backgroundColor: 'rgba(255,255,255,0.5)',
+     },
+     imageDotActive: {
+          width: 18,
+          backgroundColor: '#fff',
      },
      featuredBadge: {
           position: 'absolute',
@@ -215,8 +239,8 @@ const styles = StyleSheet.create({
           left: '50%',
           transform: [{ translateX: -50 }],
           backgroundColor: 'rgba(0,0,0,0.7)',
-          paddingHorizontal: 16,
-          paddingVertical: 8,
+          paddingHorizontal: 14,
+          paddingVertical: 7,
           borderRadius: 20,
           flexDirection: 'row',
           alignItems: 'center',
@@ -225,37 +249,38 @@ const styles = StyleSheet.create({
      featuredText: {
           color: '#FFD700',
           fontSize: 12,
-          fontWeight: '600',
+          fontFamily: Font.font500,
      },
      content: {
           padding: 16,
-          paddingBottom: 100,
      },
      titleSection: {
-          marginBottom: 20,
+          marginBottom: 18,
      },
      titleRow: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
+          gap: 10,
           marginBottom: 8,
      },
      title: {
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: '#333',
+          fontSize: 22,
+          fontFamily: Font.font500,
+          color: '#000',
           flex: 1,
      },
      typeBadge: {
-          backgroundColor: '#E3F2FD',
+          backgroundColor: '#F0F7FF',
           paddingHorizontal: 12,
-          paddingVertical: 4,
+          paddingVertical: 5,
           borderRadius: 12,
      },
      typeText: {
-          color: '#00BCD4',
+          color: colors.PrimaryColor,
           fontSize: 12,
-          fontWeight: '600',
+          fontFamily: Font.font500,
+          textTransform: 'capitalize',
      },
      locationRow: {
           flexDirection: 'row',
@@ -265,203 +290,77 @@ const styles = StyleSheet.create({
      },
      location: {
           fontSize: 14,
+          fontFamily: Font.font400,
           color: '#666',
-     },
-     priceRow: {
-          flexDirection: 'row',
-          alignItems: 'center',
+          flex: 1,
      },
      price: {
-          fontSize: 32,
-          fontWeight: 'bold',
-          color: '#333',
-     },
-     priceLabel: {
-          fontSize: 14,
-          color: '#999',
-          marginLeft: 6,
+          fontSize: 28,
+          fontFamily: Font.font500,
+          color: colors.PrimaryColor,
      },
      statsContainer: {
           flexDirection: 'row',
-          backgroundColor: '#F5F5F5',
-          borderRadius: 12,
-          padding: 16,
-          marginBottom: 20,
+          backgroundColor: '#F8F9FA',
+          borderRadius: 14,
+          paddingVertical: 16,
+          alignItems: 'center',
+          marginBottom: 24,
      },
      stat: {
           flex: 1,
           alignItems: 'center',
+          gap: 4,
+     },
+     statDivider: {
+          width: 1,
+          height: 36,
+          backgroundColor: '#E0E0E0',
      },
      statNumber: {
-          fontSize: 20,
-          fontWeight: 'bold',
-          color: '#333',
-          marginTop: 8,
+          fontSize: 17,
+          fontFamily: Font.font500,
+          color: '#000',
+          marginTop: 2,
      },
      statLabel: {
-          fontSize: 12,
-          color: '#666',
-          marginTop: 4,
+          fontSize: 11,
+          fontFamily: Font.font400,
+          color: '#999',
      },
      section: {
           marginBottom: 24,
      },
      sectionTitle: {
-          fontSize: 18,
-          fontWeight: 'bold',
-          color: '#333',
+          fontSize: 16,
+          fontFamily: Font.font500,
+          color: '#000',
           marginBottom: 12,
      },
-     detailsGrid: {
+     chipGrid: {
           flexDirection: 'row',
           flexWrap: 'wrap',
-          gap: 12,
+          gap: 10,
      },
-     detailItem: {
+     chip: {
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: '#F5F5F5',
+          backgroundColor: '#F8F9FA',
           paddingHorizontal: 12,
-          paddingVertical: 8,
-          borderRadius: 8,
-          gap: 6,
+          paddingVertical: 9,
+          borderRadius: 10,
+          gap: 7,
      },
-     detailText: {
-          fontSize: 14,
-          color: '#666',
+     chipText: {
+          fontSize: 13,
+          fontFamily: Font.font400,
+          color: '#555',
      },
      description: {
           fontSize: 14,
+          fontFamily: Font.font400,
           color: '#666',
           lineHeight: 22,
-     },
-     amenitiesContainer: {
-          gap: 12,
-     },
-     amenityItem: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-     },
-     amenityText: {
-          fontSize: 14,
-          color: '#666',
-     },
-     agentCard: {
-          flexDirection: 'row',
-          backgroundColor: '#F5F5F5',
-          borderRadius: 12,
-          padding: 16,
-          marginBottom: 12,
-     },
-     agentImage: {
-          width: 60,
-          height: 60,
-          borderRadius: 30,
-          marginRight: 12,
-     },
-     agentInfo: {
-          flex: 1,
-          justifyContent: 'center',
-     },
-     agentName: {
-          fontSize: 16,
-          fontWeight: 'bold',
-          color: '#333',
-          marginBottom: 6,
-     },
-     agentDetail: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          marginBottom: 4,
-     },
-     agentText: {
-          fontSize: 12,
-          color: '#666',
-     },
-     contactButtons: {
-          flexDirection: 'row',
-          gap: 12,
-     },
-     callButton: {
-          flex: 1,
-          backgroundColor: '#00BCD4',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingVertical: 14,
-          borderRadius: 8,
-          gap: 8,
-     },
-     callButtonText: {
-          color: '#fff',
-          fontSize: 16,
-          fontWeight: '600',
-     },
-     messageButton: {
-          flex: 1,
-          backgroundColor: '#fff',
-          borderWidth: 2,
-          borderColor: '#00BCD4',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingVertical: 14,
-          borderRadius: 8,
-          gap: 8,
-     },
-     messageButtonText: {
-          color: '#00BCD4',
-          fontSize: 16,
-          fontWeight: '600',
-     },
-     bottomBar: {
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: '#fff',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          borderTopWidth: 1,
-          borderTopColor: '#E0E0E0',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 10,
-     },
-     bottomPrice: {
-          flexDirection: 'row',
-          alignItems: 'center',
-     },
-     bottomPriceLabel: {
-          fontSize: 12,
-          color: '#999',
-     },
-     bottomPriceValue: {
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: '#333',
-          marginHorizontal: 4,
-     },
-     scheduleButton: {
-          backgroundColor: '#00BCD4',
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 20,
-          paddingVertical: 12,
-          borderRadius: 8,
-          gap: 8,
-     },
-     scheduleButtonText: {
-          color: '#fff',
-          fontSize: 16,
-          fontWeight: '600',
      },
 });
 

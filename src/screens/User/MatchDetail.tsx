@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Dimensions, ActivityIndicator, Image } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import Navigation from '../../utils/NavigationProps/NavigationProps';
 import { matches } from '../../redux/Matches/MatchType';
 import API_BASE_URL from '../../utils/Config';
 import { useAuth } from '../../utils/Storage/Storage';
-import { useAcceptPropertyHandler } from '../../models/Matches/Matches';
+import { useAcceptPropertyHandler, useGetSingleMatchHandler, useUnlockContactHandler } from '../../models/Matches/Matches';
 
 const { width } = Dimensions.get('window');
 
@@ -19,17 +20,97 @@ const MatchDetail = ({ navigation, route }: Props) => {
      const [currentImageIndex, setCurrentImageIndex] = useState(0);
      const [isFavorite, setIsFavorite] = useState(false);
 
-     const { filterApartment } = route.params || {};
-     console.log(filterApartment);
+     const { filterApartment: paramsData } = route.params || {};
 
      const { userData } = useAuth();
-     console.log(userData);
 
-     const { handleRejectPropertyAPI, isLoading } = useAcceptPropertyHandler();
+     const { handleAcceptPropertyAPI, isLoading } = useAcceptPropertyHandler();
+     const { handleUnlockContactAPI, isLoading: UnlockLoading } = useUnlockContactHandler();
+     const { GetSingleMatch, GetSingleMatchLoading } = useGetSingleMatchHandler(paramsData?._id as unknown as string);
+
+     const filterApartment = (GetSingleMatch?.data as any)?.match;
+
+     const isSeller = userData.role === 'Seller';
+     const isBuyer = userData.role === 'Buyer';
+     const status = filterApartment?.status;
 
      const handleAcceptMatches = (matchId: string) => {
-          handleRejectPropertyAPI(matchId);
-          // console.log(matchId);
+          handleAcceptPropertyAPI(matchId);
+     };
+
+     const handleViewContact = (matchId: string) => {
+          handleUnlockContactAPI(matchId);
+     };
+
+     // Ek hi card teeno cases ke liye. locked=true par image blur + text masked (asli data screen par nahi aata)
+     const renderContactCard = (title: string, person: any, locked: boolean = false, footer?: React.ReactNode) => (
+          <View style={styles.section}>
+               <Text style={styles.sectionTitle}>{title}</Text>
+               <View style={styles.agentCard}>
+                    {locked ? (
+                         // FastImage blur support nahi karta, isliye RN Image
+                         <Image source={{ uri: person?.profilePicture }} style={styles.agentImage} resizeMode="cover" blurRadius={10} />
+                    ) : (
+                         <FastImage source={{ uri: person?.profilePicture }} style={styles.agentImage} resizeMode={FastImage.resizeMode.cover} />
+                    )}
+                    <View style={styles.agentInfo}>
+                         <Text style={styles.agentName}>{person?.name}</Text>
+                         <View style={styles.agentDetail}>
+                              <Icon name="phone" size={14} color="#666" />
+                              <Text style={[styles.agentText, locked && styles.lockedText]}>{locked ? '+•• ••• •••••••' : person?.phone}</Text>
+                         </View>
+                         <View style={styles.agentDetail}>
+                              <Icon name="map-pin" size={14} color="#666" />
+                              <Text style={[styles.agentText, locked && styles.lockedText]}>{locked ? '•••••• •••••• ••••' : person?.address}</Text>
+                         </View>
+                    </View>
+               </View>
+               {footer}
+          </View>
+     );
+
+     const renderContactSection = () => {
+          if (isSeller) {
+               if (status === 'Requested') {
+                    return (
+                         <View style={styles.section}>
+                              <View style={styles.contactButtons}>
+                                   <TouchableOpacity disabled={isLoading} activeOpacity={isLoading ? 1 : 0.2} style={styles.callButton} onPress={() => handleAcceptMatches(filterApartment?._id)}>
+                                        {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.callButtonText}>Accept</Text>}
+                                   </TouchableOpacity>
+                              </View>
+                         </View>
+                    );
+               }
+               if (status === 'Matched') return renderContactCard('Contact Buyer', filterApartment?.buyer);
+               if (status === 'Rejected') return null;
+          }
+
+          if ((isBuyer && status === 'Rejected') || status === 'Requested') {
+               return null;
+          }
+
+          if (isBuyer && status === 'Matched') {
+               // showContact true -> seller ka contact khula
+               if (filterApartment?.showContact === true) {
+                    return renderContactCard('Contact Agent', filterApartment?.seller);
+               }
+
+               // showContact false -> blur + View Contact button
+               return renderContactCard(
+                    'Contact Agent',
+                    filterApartment?.seller,
+                    true,
+                    <View style={styles.contactButtons}>
+                         <TouchableOpacity disabled={UnlockLoading} activeOpacity={UnlockLoading ? 1 : 0.2} style={styles.callButton} onPress={() => handleViewContact(filterApartment?._id)}>
+                              {UnlockLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.callButtonText}>View Contact</Text>}
+                         </TouchableOpacity>
+                    </View>,
+               );
+          }
+
+          // Baqi sab cases (pehle wala default)
+          return renderContactCard('Contact Agent', filterApartment?.seller);
      };
 
      return (
@@ -47,8 +128,8 @@ const MatchDetail = ({ navigation, route }: Props) => {
                               }}
                               scrollEventThrottle={16}
                          >
-                              {filterApartment?.property?.featuredImages?.map((image, index) => (
-                                   <Image key={index} source={{ uri: image }} style={styles.apartmentImage} />
+                              {filterApartment?.property?.featuredImages?.map((image: string, index: number) => (
+                                   <FastImage key={index} source={{ uri: image }} style={styles.apartmentImage} resizeMode={FastImage.resizeMode.cover} />
                               ))}
                          </ScrollView>
 
@@ -161,7 +242,7 @@ const MatchDetail = ({ navigation, route }: Props) => {
                               <View style={styles.section}>
                                    <Text style={styles.sectionTitle}>Amenities</Text>
                                    <View style={styles.amenitiesContainer}>
-                                        {filterApartment?.property?.amenities.map((amenity, index) => (
+                                        {filterApartment?.property?.amenities.map((amenity: string, index: number) => (
                                              <View key={index} style={styles.amenityItem}>
                                                   <Icon name="check-circle" size={18} color="#4CAF50" />
                                                   <Text style={styles.amenityText}>{amenity}</Text>
@@ -171,55 +252,8 @@ const MatchDetail = ({ navigation, route }: Props) => {
                               </View>
                          )}
 
-                         {/* Agent Card */}
-                         {userData.role === 'Seller' && filterApartment?.status === 'Requested' ? (
-                              <View style={styles.section}>
-                                   <View style={styles.contactButtons}>
-                                        <TouchableOpacity disabled={isLoading} activeOpacity={isLoading ? 1 : 0.2} style={styles.callButton} onPress={() => handleAcceptMatches(filterApartment?._id)}>
-                                             {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.callButtonText}>Accept</Text>}
-                                        </TouchableOpacity>
-                                   </View>
-                              </View>
-                         ) : userData.role === 'Seller' && filterApartment?.status === 'Matched' ? (
-                              <View style={styles.section}>
-                                   <Text style={styles.sectionTitle}>Contact Buyer</Text>
-                                   <View style={styles.agentCard}>
-                                        <Image source={{ uri: filterApartment?.buyer?.profilePicture }} style={styles.agentImage} />
-                                        <View style={styles.agentInfo}>
-                                             <Text style={styles.agentName}>{filterApartment?.buyer?.name}</Text>
-                                             <View style={styles.agentDetail}>
-                                                  <Icon name="phone" size={14} color="#666" />
-                                                  <Text style={styles.agentText}>{filterApartment?.buyer?.phone}</Text>
-                                             </View>
-                                             <View style={styles.agentDetail}>
-                                                  <Icon name="map-pin" size={14} color="#666" />
-                                                  <Text style={styles.agentText}>{filterApartment?.buyer?.address}</Text>
-                                             </View>
-                                        </View>
-                                   </View>
-                              </View>
-                         ) : (
-                              userData.role === 'Buyer' &&
-                              filterApartment?.status === 'Matched' && (
-                                   <View style={styles.section}>
-                                        <Text style={styles.sectionTitle}>Contact Agent</Text>
-                                        <View style={styles.agentCard}>
-                                             <Image source={{ uri: filterApartment?.seller?.profilePicture }} style={styles.agentImage} />
-                                             <View style={styles.agentInfo}>
-                                                  <Text style={styles.agentName}>{filterApartment?.seller?.name}</Text>
-                                                  <View style={styles.agentDetail}>
-                                                       <Icon name="phone" size={14} color="#666" />
-                                                       <Text style={styles.agentText}>{filterApartment?.seller?.phone}</Text>
-                                                  </View>
-                                                  <View style={styles.agentDetail}>
-                                                       <Icon name="map-pin" size={14} color="#666" />
-                                                       <Text style={styles.agentText}>{filterApartment?.seller?.address}</Text>
-                                                  </View>
-                                             </View>
-                                        </View>
-                                   </View>
-                              )
-                         )}
+                         {/* Agent / Buyer Contact */}
+                         {renderContactSection()}
                     </View>
                </ScrollView>
           </>
@@ -439,6 +473,10 @@ const styles = StyleSheet.create({
      agentText: {
           fontSize: 12,
           color: '#666',
+     },
+     lockedText: {
+          color: '#999',
+          letterSpacing: 1,
      },
      contactButtons: {
           flexDirection: 'row',

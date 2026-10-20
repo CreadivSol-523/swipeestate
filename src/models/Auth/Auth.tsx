@@ -13,6 +13,7 @@ import { CreateAccResquest } from '../../redux/Auth/AuthTypes';
 import { useDispatch } from 'react-redux';
 import { authUser, logout } from '../../redux/Features/authState';
 import { useAuth } from '../../utils/Storage/Storage';
+import { Platform } from 'react-native';
 
 // Create Account
 export const useRegisterHandler = () => {
@@ -140,7 +141,6 @@ export const useSellerRegisterHandler = () => {
                formData.append('fcmToken', fcmToken);
 
                const res = await sellerRegister(formData);
-               console.log(res, 'Signup');
 
                if (!res.error) {
                     ResToast({
@@ -170,6 +170,7 @@ export const useLoginAccountHandler = () => {
 
      type RootStackParamList = {
           SelectPlanScreen: { user: any };
+          SelectIAPPlanScreen: { user: any };
      };
 
      const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -190,21 +191,32 @@ export const useLoginAccountHandler = () => {
                     identifier: email,
                     password: password,
                });
-               console.log(res, 'Login');
 
                if (!res.error) {
-                    if (res?.data?.user?.subscribedPlan === null) {
+                    const loggedInUser = res?.data;
+                    const user = loggedInUser?.user;
+
+                    if (user?.subscribedPlan === null) {
                          ResToast({
                               title: 'Pick a subscription plan to unlock all features.',
                               type: 'success',
                          });
-                         return navigation.navigate('SelectPlanScreen', { user: res?.data });
-                    } else {
-                         dispatch(authUser({ data: res?.data }));
+
+                         // iOS normal users use Apple In-App Purchases.
+                         // Android users and agents keep the existing screen.
+                         // const planScreen = Platform.OS === 'ios' && user?.role !== 'Seller' ? 'SelectIAPPlanScreen' : 'SelectPlanScreen';
+
+                         const planScreen = 'SelectIAPPlanScreen';
+
+                         return navigation.navigate(planScreen, {
+                              user: loggedInUser,
+                         });
                     }
+
+                    dispatch(authUser({ data: loggedInUser }));
                } else {
                     ResToast({
-                         res: res,
+                         res,
                          type: 'warning',
                     });
                }

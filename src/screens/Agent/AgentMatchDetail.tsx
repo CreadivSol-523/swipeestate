@@ -1,40 +1,70 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Navigation from '../../utils/NavigationProps/NavigationProps';
 import { matches } from '../../redux/Matches/MatchType';
-import API_BASE_URL from '../../utils/Config';
 import { useAuth } from '../../utils/Storage/Storage';
-import { useAcceptPropertyHandler, useGetSingleApartmentHandler } from '../../models/Matches/Matches';
+import { useAcceptPropertyHandler, useGetSingleApartmentHandler, useRejectBySellerHandler, useRejectPropertyHandler } from '../../models/Matches/Matches';
+import colors from '../../assests/color/color';
+import Font from '../../assests/fonts/Font';
 
 const { width } = Dimensions.get('window');
 
 type Props = {
-     route: { params?: { filterApartment?: matches } };
-     navigation: Navigation;
+     route?: { params?: { filterApartment?: matches; matchID: string } };
+     navigation?: Navigation;
+};
+
+const formatPrice = (value?: number | string) => {
+     if (value === undefined || value === null || value === '') return '—';
+     const num = Number(value);
+     if (Number.isNaN(num)) return String(value);
+     return `$${num.toLocaleString()}`;
 };
 
 const AgentMatchDetail = ({ navigation, route }: Props) => {
      const [currentImageIndex, setCurrentImageIndex] = useState(0);
      const [isFavorite, setIsFavorite] = useState(false);
+     const insets = useSafeAreaInsets();
 
-     const { filterApartment } = route.params || {};
-
+     const { filterApartment, matchID } = route?.params || {};
      const { userData } = useAuth();
 
-     const { handleRejectPropertyAPI, isLoading } = useAcceptPropertyHandler();
-     const { GetSingleApartment, GetSingleApartmentData, GetBuyersLoading } = useGetSingleApartmentHandler({ propertyId: filterApartment?.property?._id });
-     console.log(GetSingleApartmentData?.apartment?.matches, 'userData.roleuserData.roleuserData.roleuserData.role');
+     const { handleAcceptPropertyAPI, isLoading } = useAcceptPropertyHandler();
+     const { handleRejectBySellerAPI, isLoading: RejectLoading } = useRejectBySellerHandler();
+     const { GetSingleApartmentData } = useGetSingleApartmentHandler({ propertyId: filterApartment?.property?._id });
 
-     const handleAcceptMatches = (matchId: string) => {
-          handleRejectPropertyAPI(matchId);
-          //   console.log(matchId);
+     const apartment = GetSingleApartmentData?.apartment;
+     const images = apartment?.featuredImages ?? [];
+
+     const handleAcceptMatches = async (matchId: string) => {
+          await handleAcceptPropertyAPI(matchId);
+          navigation?.goBack();
      };
 
+     const handleRejectMatches = async () => {
+          await handleRejectBySellerAPI(matchID ?? '');
+          navigation?.goBack();
+          console.log(matchID);
+     };
+
+     // Find the single relevant match entry for the current user's role —
+     // drives both the inline contact card and the sticky bottom CTA.
+     const relevantMatch = apartment?.matches?.find(item => {
+          if (userData.role === 'Seller') return item?.status === 'Requested' || item?.status === 'Matched' || item.status === 'Rejected';
+          return userData.role === 'Buyer' && item?.status === 'Matched';
+     });
+
+     const showAcceptBar = userData.role === 'Seller' && filterApartment?.status === 'Requested';
+
+     // If match is already Rejected or Matched, show status instead of action buttons
+     const showStatusOnly = filterApartment?.status === 'Rejected' || filterApartment?.status === 'Matched';
+
      return (
-          <>
-               <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.container}>
+               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: showAcceptBar ? 130 : 32 }}>
                     {/* Image Gallery */}
                     <View style={styles.imageGallery}>
                          <ScrollView
@@ -47,32 +77,34 @@ const AgentMatchDetail = ({ navigation, route }: Props) => {
                               }}
                               scrollEventThrottle={16}
                          >
-                              {GetSingleApartmentData?.apartment?.featuredImages?.map((image, index) => (
+                              {images.map((image, index) => (
                                    <Image key={index} source={{ uri: image }} style={styles.apartmentImage} />
                               ))}
                          </ScrollView>
 
-                         {/* Header Buttons */}
-                         <View style={styles.imageHeader}>
-                              <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
-                                   <Icon name="arrow-left" size={24} color="#fff" />
+                         {/* Header Buttons — now respects the notch/status bar */}
+                         <View style={[styles.imageHeader]}>
+                              <TouchableOpacity style={styles.headerButton} onPress={() => navigation?.goBack()}>
+                                   <Icon name="arrow-left" size={22} color="#fff" />
                               </TouchableOpacity>
                               <TouchableOpacity style={styles.headerButton} onPress={() => setIsFavorite(!isFavorite)}>
-                                   {isFavorite ? <MaterialIcon name="favorite" size={24} color="#FF5252" /> : <MaterialIcon name="favorite-border" size={24} color="#fff" />}
+                                   {isFavorite ? <MaterialIcon name="favorite" size={22} color="#FF5252" /> : <MaterialIcon name="favorite-border" size={22} color="#fff" />}
                               </TouchableOpacity>
                          </View>
 
-                         {/* Image Indicator */}
-                         <View style={styles.imageIndicator}>
-                              <Text style={styles.imageIndicatorText}>
-                                   {currentImageIndex + 1} / {GetSingleApartmentData?.apartment?.featuredImages?.length}
-                              </Text>
-                         </View>
+                         {/* Image dots — visual pagination instead of text-only */}
+                         {images.length > 1 && (
+                              <View style={styles.imageDots}>
+                                   {images.map((_, index) => (
+                                        <View key={index} style={[styles.imageDot, index === currentImageIndex && styles.imageDotActive]} />
+                                   ))}
+                              </View>
+                         )}
 
                          {/* Featured Badge */}
-                         {GetSingleApartmentData?.apartment?.featured && (
+                         {apartment?.featured && (
                               <View style={styles.featuredBadge}>
-                                   <Icon name="star" size={16} color="#FFD700" />
+                                   <Icon name="star" size={14} color="#FFD700" />
                                    <Text style={styles.featuredText}>Featured</Text>
                               </View>
                          )}
@@ -83,36 +115,45 @@ const AgentMatchDetail = ({ navigation, route }: Props) => {
                          {/* Title & Price */}
                          <View style={styles.titleSection}>
                               <View style={styles.titleRow}>
-                                   <Text style={styles.title}>{GetSingleApartmentData?.apartment?.title}</Text>
-                                   <View style={styles.typeBadge}>
-                                        <Text style={styles.typeText}>{GetSingleApartmentData?.apartment?.type}</Text>
-                                   </View>
+                                   <Text style={styles.title} numberOfLines={2}>
+                                        {apartment?.title}
+                                   </Text>
+                                   {!!apartment?.type && (
+                                        <View style={styles.typeBadge}>
+                                             <Text style={styles.typeText}>{apartment?.type}</Text>
+                                        </View>
+                                   )}
                               </View>
                               <View style={styles.locationRow}>
-                                   <Icon name="map-pin" size={16} color="#00BCD4" />
-                                   <Text style={styles.location}>{GetSingleApartmentData?.apartment?.location}</Text>
+                                   <Icon name="map-pin" size={15} color={colors.PrimaryColor} />
+                                   <Text style={styles.location} numberOfLines={1}>
+                                        {apartment?.location}
+                                   </Text>
                               </View>
-                              <View style={styles.priceRow}>
-                                   <Icon name="dollar-sign" size={28} color="#00BCD4" />
-                                   <Text style={styles.price}>{GetSingleApartmentData?.apartment?.price}</Text>
-                              </View>
+                              <Text style={styles.price}>{formatPrice(apartment?.price)}</Text>
                          </View>
 
                          {/* Quick Stats */}
                          <View style={styles.statsContainer}>
                               <View style={styles.stat}>
-                                   <Icon name="home" size={24} color="#00BCD4" />
-                                   <Text style={styles.statNumber}>{GetSingleApartmentData?.apartment?.bedrooms}</Text>
+                                   <Icon name="home" size={20} color={colors.PrimaryColor} />
+                                   <Text style={styles.statNumber}>{apartment?.bedrooms}</Text>
                                    <Text style={styles.statLabel}>Bedrooms</Text>
                               </View>
+
+                              <View style={styles.statDivider} />
+
                               <View style={styles.stat}>
-                                   <Icon name="droplet" size={24} color="#00BCD4" />
-                                   <Text style={styles.statNumber}>{GetSingleApartmentData?.apartment?.bathrooms}</Text>
+                                   <Icon name="droplet" size={20} color={colors.PrimaryColor} />
+                                   <Text style={styles.statNumber}>{apartment?.bathrooms}</Text>
                                    <Text style={styles.statLabel}>Bathrooms</Text>
                               </View>
+
+                              <View style={styles.statDivider} />
+
                               <View style={styles.stat}>
-                                   <Icon name="maximize" size={24} color="#00BCD4" />
-                                   <Text style={styles.statNumber}>{GetSingleApartmentData?.apartment?.area}</Text>
+                                   <Icon name="maximize" size={20} color={colors.PrimaryColor} />
+                                   <Text style={styles.statNumber}>{apartment?.area}</Text>
                                    <Text style={styles.statLabel}>sq ft</Text>
                               </View>
                          </View>
@@ -120,113 +161,115 @@ const AgentMatchDetail = ({ navigation, route }: Props) => {
                          {/* Details Section */}
                          <View style={styles.section}>
                               <Text style={styles.sectionTitle}>Details</Text>
-                              <View style={styles.detailsGrid}>
-                                   {GetSingleApartmentData?.apartment?.floor && (
-                                        <View style={styles.detailItem}>
-                                             <Icon name="layers" size={18} color="#666" />
-                                             <Text style={styles.detailText}>Floor {GetSingleApartmentData?.apartment?.floor}</Text>
+                              <View style={styles.chipGrid}>
+                                   {!!apartment?.floor && (
+                                        <View style={styles.chip}>
+                                             <Icon name="layers" size={16} color="#666" />
+                                             <Text style={styles.chipText}>Floor {apartment?.floor}</Text>
                                         </View>
                                    )}
-                                   {GetSingleApartmentData?.apartment?.furnished && (
-                                        <View style={styles.detailItem}>
-                                             <Icon name="box" size={18} color="#666" />
-                                             <Text style={styles.detailText}>{GetSingleApartmentData?.apartment?.furnished}</Text>
+                                   {!!apartment?.furnished && (
+                                        <View style={styles.chip}>
+                                             <Icon name="box" size={16} color="#666" />
+                                             <Text style={styles.chipText}>{apartment?.furnished}</Text>
                                         </View>
                                    )}
-                                   {GetSingleApartmentData?.apartment?.parking && (
-                                        <View style={styles.detailItem}>
-                                             <Icon name="truck" size={18} color="#666" />
-                                             <Text style={styles.detailText}>{GetSingleApartmentData?.apartment?.parking} Parking</Text>
+                                   {!!apartment?.parking && (
+                                        <View style={styles.chip}>
+                                             <Icon name="truck" size={16} color="#666" />
+                                             <Text style={styles.chipText}>{apartment?.parking} Parking</Text>
                                         </View>
                                    )}
-                                   {GetSingleApartmentData?.apartment?.availability && (
-                                        <View style={styles.detailItem}>
-                                             <Icon name="calendar" size={18} color="#666" />
-                                             <Text style={styles.detailText}>{GetSingleApartmentData?.apartment?.availability}</Text>
+                                   {!!apartment?.availability && (
+                                        <View style={styles.chip}>
+                                             <Icon name="calendar" size={16} color="#666" />
+                                             <Text style={styles.chipText}>{apartment?.availability}</Text>
                                         </View>
                                    )}
                               </View>
                          </View>
 
                          {/* Description */}
-                         {GetSingleApartmentData?.apartment?.description && (
+                         {!!apartment?.description && (
                               <View style={styles.section}>
                                    <Text style={styles.sectionTitle}>Description</Text>
-                                   <Text style={styles.description}>{GetSingleApartmentData?.apartment?.description}</Text>
+                                   <Text style={styles.description}>{apartment?.description}</Text>
                               </View>
                          )}
 
-                         {/* Amenities */}
-                         {GetSingleApartmentData?.apartment?.amenities && GetSingleApartmentData?.apartment?.amenities?.length > 0 && (
+                         {/* Amenities — now same chip-grid treatment as Details, for visual consistency */}
+                         {!!apartment?.amenities?.length && (
                               <View style={styles.section}>
                                    <Text style={styles.sectionTitle}>Amenities</Text>
-                                   <View style={styles.amenitiesContainer}>
-                                        {GetSingleApartmentData?.apartment?.amenities.map((amenity, index) => (
-                                             <View key={index} style={styles.amenityItem}>
-                                                  <Icon name="check-circle" size={18} color="#4CAF50" />
-                                                  <Text style={styles.amenityText}>{amenity}</Text>
+                                   <View style={styles.chipGrid}>
+                                        {apartment.amenities.map((amenity, index) => (
+                                             <View key={index} style={styles.chip}>
+                                                  <Icon name="check-circle" size={16} color="#22C55E" />
+                                                  <Text style={styles.chipText}>{amenity}</Text>
                                              </View>
                                         ))}
                                    </View>
                               </View>
                          )}
 
-                         {/* Agent Card */}
-                         {GetSingleApartmentData?.apartment?.matches?.map((item, i) => (
-                              <View key={i * 5}>
-                                   {userData.role === 'Seller' && item?.status === 'Requested' ? (
-                                        <View style={styles.section}>
-                                             <View style={styles.contactButtons}>
-                                                  <TouchableOpacity disabled={isLoading} activeOpacity={isLoading ? 1 : 0.2} style={styles.callButton} onPress={() => handleAcceptMatches(item?._id)}>
-                                                       {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.callButtonText}>Accept</Text>}
-                                                  </TouchableOpacity>
+                         {/* Contact card — shown once Matched, for either role */}
+                         {relevantMatch?.status === 'Matched' && (
+                              <View style={styles.section}>
+                                   <Text style={styles.sectionTitle}>{userData.role === 'Seller' ? 'Contact buyer' : 'Contact agent'}</Text>
+                                   <View style={styles.agentCard}>
+                                        <Image
+                                             source={{
+                                                  uri: userData.role === 'Seller' ? relevantMatch?.matchLikedBy?.buyer?.profilePicture : relevantMatch?.matchAcceptedBy?.seller?.profilePicture,
+                                             }}
+                                             style={styles.agentImage}
+                                        />
+                                        <View style={styles.agentInfo}>
+                                             <Text style={styles.agentName} numberOfLines={1}>
+                                                  {userData.role === 'Seller' ? relevantMatch?.matchLikedBy?.buyer?.name : relevantMatch?.matchAcceptedBy?.seller?.name}
+                                             </Text>
+                                             <View style={styles.agentDetail}>
+                                                  <Icon name="phone" size={13} color="#666" />
+                                                  <Text style={styles.agentText}>
+                                                       {userData.role === 'Seller' ? relevantMatch?.matchLikedBy?.buyer?.phone : relevantMatch?.matchAcceptedBy?.seller?.phone}
+                                                  </Text>
+                                             </View>
+                                             <View style={styles.agentDetail}>
+                                                  <Icon name="map-pin" size={13} color="#666" />
+                                                  <Text style={styles.agentText} numberOfLines={1}>
+                                                       {userData.role === 'Seller' ? relevantMatch?.matchLikedBy?.buyer?.address : relevantMatch?.matchAcceptedBy?.seller?.address}
+                                                  </Text>
                                              </View>
                                         </View>
-                                   ) : userData.role === 'Seller' && item?.status === 'Matched' ? (
-                                        <View style={styles.section}>
-                                             <Text style={styles.sectionTitle}>Contact Buyer</Text>
-                                             <View style={styles.agentCard}>
-                                                  <Image source={{ uri: item?.matchLikedBy?.buyer?.profilePicture }} style={styles.agentImage} />
-                                                  <View style={styles.agentInfo}>
-                                                       <Text style={styles.agentName}>{item?.matchLikedBy?.buyer?.name}</Text>
-                                                       <View style={styles.agentDetail}>
-                                                            <Icon name="phone" size={14} color="#666" />
-                                                            <Text style={styles.agentText}>{item?.matchLikedBy?.buyer?.phone}</Text>
-                                                       </View>
-                                                       <View style={styles.agentDetail}>
-                                                            <Icon name="map-pin" size={14} color="#666" />
-                                                            <Text style={styles.agentText}>{item?.matchLikedBy?.buyer?.address}</Text>
-                                                       </View>
-                                                  </View>
-                                             </View>
-                                        </View>
-                                   ) : (
-                                        userData.role === 'Buyer' &&
-                                        item?.status === 'Matched' && (
-                                             <View style={styles.section}>
-                                                  <Text style={styles.sectionTitle}>Contact Agent</Text>
-                                                  <View style={styles.agentCard}>
-                                                       <Image source={{ uri: item?.matchAcceptedBy?.seller?.profilePicture }} style={styles.agentImage} />
-                                                       <View style={styles.agentInfo}>
-                                                            <Text style={styles.agentName}>{item?.matchAcceptedBy?.seller?.name}</Text>
-                                                            <View style={styles.agentDetail}>
-                                                                 <Icon name="phone" size={14} color="#666" />
-                                                                 <Text style={styles.agentText}>{item?.matchAcceptedBy?.seller?.phone}</Text>
-                                                            </View>
-                                                            <View style={styles.agentDetail}>
-                                                                 <Icon name="map-pin" size={14} color="#666" />
-                                                                 <Text style={styles.agentText}>{item?.matchAcceptedBy?.seller?.address}</Text>
-                                                            </View>
-                                                       </View>
-                                                  </View>
-                                             </View>
-                                        )
-                                   )}
+                                   </View>
                               </View>
-                         ))}
+                         )}
                     </View>
                </ScrollView>
-          </>
+
+               {/* Sticky bottom CTA — was previously buried inline inside the
+                   scroll, invisible until the seller scrolled all the way down */}
+               {showAcceptBar && !showStatusOnly ? (
+                    <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12, gap: 15 }]}>
+                         <View>
+                              <Text style={styles.bottomPriceLabel}>Price</Text>
+                              <Text style={styles.bottomPriceValue}>{formatPrice(apartment?.price)}</Text>
+                         </View>
+                         <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center', width: '100%' }}>
+                              <TouchableOpacity
+                                   disabled={isLoading}
+                                   activeOpacity={isLoading ? 1 : 0.85}
+                                   style={styles.acceptButton}
+                                   onPress={() => relevantMatch?._id && handleAcceptMatches(relevantMatch._id)}
+                              >
+                                   {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.acceptButtonText}>Accept</Text>}
+                              </TouchableOpacity>
+                              <TouchableOpacity disabled={RejectLoading} activeOpacity={RejectLoading ? 1 : 0.85} style={styles.rejectButton} onPress={() => matchID && handleRejectMatches()}>
+                                   {RejectLoading ? <ActivityIndicator color="red" /> : <Text style={[styles.acceptButtonText, { color: 'red' }]}>Reject</Text>}
+                              </TouchableOpacity>
+                         </View>
+                    </View>
+               ) : null}
+          </View>
      );
 };
 
@@ -238,6 +281,7 @@ const styles = StyleSheet.create({
      imageGallery: {
           position: 'relative',
           height: 300,
+          backgroundColor: '#F0F0F0',
      },
      apartmentImage: {
           width: width,
@@ -245,33 +289,36 @@ const styles = StyleSheet.create({
      },
      imageHeader: {
           position: 'absolute',
-          top: 16,
           left: 16,
           right: 16,
+          top: 16,
           flexDirection: 'row',
           justifyContent: 'space-between',
      },
      headerButton: {
-          width: 40,
-          height: 40,
-          borderRadius: 20,
+          width: 38,
+          height: 38,
+          borderRadius: 19,
           backgroundColor: 'rgba(0,0,0,0.5)',
           justifyContent: 'center',
           alignItems: 'center',
      },
-     imageIndicator: {
+     imageDots: {
           position: 'absolute',
           bottom: 16,
-          right: 16,
-          backgroundColor: 'rgba(0,0,0,0.6)',
-          paddingHorizontal: 12,
-          paddingVertical: 6,
-          borderRadius: 20,
+          alignSelf: 'center',
+          flexDirection: 'row',
+          gap: 6,
      },
-     imageIndicatorText: {
-          color: '#fff',
-          fontSize: 12,
-          fontWeight: '600',
+     imageDot: {
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+          backgroundColor: 'rgba(255,255,255,0.5)',
+     },
+     imageDotActive: {
+          width: 18,
+          backgroundColor: '#fff',
      },
      featuredBadge: {
           position: 'absolute',
@@ -279,8 +326,8 @@ const styles = StyleSheet.create({
           left: '50%',
           transform: [{ translateX: -50 }],
           backgroundColor: 'rgba(0,0,0,0.7)',
-          paddingHorizontal: 16,
-          paddingVertical: 8,
+          paddingHorizontal: 14,
+          paddingVertical: 7,
           borderRadius: 20,
           flexDirection: 'row',
           alignItems: 'center',
@@ -289,37 +336,38 @@ const styles = StyleSheet.create({
      featuredText: {
           color: '#FFD700',
           fontSize: 12,
-          fontWeight: '600',
+          fontFamily: Font.font500,
      },
      content: {
           padding: 16,
-          paddingBottom: 100,
      },
      titleSection: {
-          marginBottom: 20,
+          marginBottom: 18,
      },
      titleRow: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
+          gap: 10,
           marginBottom: 8,
      },
      title: {
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: '#333',
+          fontSize: 22,
+          fontFamily: Font.font500,
+          color: '#000',
           flex: 1,
      },
      typeBadge: {
-          backgroundColor: '#E3F2FD',
+          backgroundColor: '#F0F7FF',
           paddingHorizontal: 12,
-          paddingVertical: 4,
+          paddingVertical: 5,
           borderRadius: 12,
      },
      typeText: {
-          color: '#00BCD4',
+          color: colors.PrimaryColor,
           fontSize: 12,
-          fontWeight: '600',
+          fontFamily: Font.font500,
+          textTransform: 'capitalize',
      },
      locationRow: {
           flexDirection: 'row',
@@ -329,109 +377,99 @@ const styles = StyleSheet.create({
      },
      location: {
           fontSize: 14,
+          fontFamily: Font.font400,
           color: '#666',
-     },
-     priceRow: {
-          flexDirection: 'row',
-          alignItems: 'center',
+          flex: 1,
      },
      price: {
-          fontSize: 32,
-          fontWeight: 'bold',
-          color: '#333',
-     },
-     priceLabel: {
-          fontSize: 14,
-          color: '#999',
-          marginLeft: 6,
+          fontSize: 28,
+          fontFamily: Font.font500,
+          color: colors.PrimaryColor,
      },
      statsContainer: {
           flexDirection: 'row',
-          backgroundColor: '#F5F5F5',
-          borderRadius: 12,
-          padding: 16,
-          marginBottom: 20,
+          backgroundColor: '#F8F9FA',
+          borderRadius: 14,
+          paddingVertical: 16,
+          alignItems: 'center',
+          marginBottom: 24,
      },
      stat: {
           flex: 1,
           alignItems: 'center',
+          gap: 4,
+     },
+     statDivider: {
+          width: 1,
+          height: 36,
+          backgroundColor: '#E0E0E0',
      },
      statNumber: {
-          fontSize: 20,
-          fontWeight: 'bold',
-          color: '#333',
-          marginTop: 8,
+          fontSize: 17,
+          fontFamily: Font.font500,
+          color: '#000',
+          marginTop: 2,
      },
      statLabel: {
-          fontSize: 12,
-          color: '#666',
-          marginTop: 4,
+          fontSize: 11,
+          fontFamily: Font.font400,
+          color: '#999',
      },
      section: {
           marginBottom: 24,
      },
      sectionTitle: {
-          fontSize: 18,
-          fontWeight: 'bold',
-          color: '#333',
+          fontSize: 16,
+          fontFamily: Font.font500,
+          color: '#000',
           marginBottom: 12,
      },
-     detailsGrid: {
+     chipGrid: {
           flexDirection: 'row',
           flexWrap: 'wrap',
-          gap: 12,
+          gap: 10,
      },
-     detailItem: {
+     chip: {
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: '#F5F5F5',
+          backgroundColor: '#F8F9FA',
           paddingHorizontal: 12,
-          paddingVertical: 8,
-          borderRadius: 8,
-          gap: 6,
+          paddingVertical: 9,
+          borderRadius: 10,
+          gap: 7,
      },
-     detailText: {
-          fontSize: 14,
-          color: '#666',
+     chipText: {
+          fontSize: 13,
+          fontFamily: Font.font400,
+          color: '#555',
      },
      description: {
           fontSize: 14,
+          fontFamily: Font.font400,
           color: '#666',
           lineHeight: 22,
      },
-     amenitiesContainer: {
-          gap: 12,
-     },
-     amenityItem: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-     },
-     amenityText: {
-          fontSize: 14,
-          color: '#666',
-     },
      agentCard: {
           flexDirection: 'row',
-          backgroundColor: '#F5F5F5',
-          borderRadius: 12,
+          backgroundColor: '#F8F9FA',
+          borderRadius: 14,
           padding: 16,
-          marginBottom: 12,
      },
      agentImage: {
-          width: 60,
-          height: 60,
-          borderRadius: 30,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
           marginRight: 12,
+          backgroundColor: '#E0E0E0',
      },
      agentInfo: {
           flex: 1,
           justifyContent: 'center',
      },
      agentName: {
-          fontSize: 16,
-          fontWeight: 'bold',
-          color: '#333',
+          fontSize: 15,
+          fontFamily: Font.font500,
+          color: '#000',
           marginBottom: 6,
      },
      agentDetail: {
@@ -442,43 +480,9 @@ const styles = StyleSheet.create({
      },
      agentText: {
           fontSize: 12,
+          fontFamily: Font.font400,
           color: '#666',
-     },
-     contactButtons: {
-          flexDirection: 'row',
-          gap: 12,
-     },
-     callButton: {
           flex: 1,
-          backgroundColor: '#00BCD4',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingVertical: 14,
-          borderRadius: 8,
-          gap: 8,
-     },
-     callButtonText: {
-          color: '#fff',
-          fontSize: 16,
-          fontWeight: '600',
-     },
-     messageButton: {
-          flex: 1,
-          backgroundColor: '#fff',
-          borderWidth: 2,
-          borderColor: '#00BCD4',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingVertical: 14,
-          borderRadius: 8,
-          gap: 8,
-     },
-     messageButtonText: {
-          color: '#00BCD4',
-          fontSize: 16,
-          fontWeight: '600',
      },
      bottomBar: {
           position: 'absolute',
@@ -486,46 +490,53 @@ const styles = StyleSheet.create({
           left: 0,
           right: 0,
           backgroundColor: '#fff',
-          flexDirection: 'row',
-          alignItems: 'center',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
           justifyContent: 'space-between',
           paddingHorizontal: 16,
-          paddingVertical: 12,
+          paddingTop: 12,
           borderTopWidth: 1,
-          borderTopColor: '#E0E0E0',
+          borderTopColor: '#F0F0F0',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
+          shadowOpacity: 0.08,
           shadowRadius: 8,
           elevation: 10,
      },
-     bottomPrice: {
-          flexDirection: 'row',
-          alignItems: 'center',
-     },
      bottomPriceLabel: {
-          fontSize: 12,
+          fontSize: 11,
+          fontFamily: Font.font400,
           color: '#999',
      },
      bottomPriceValue: {
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: '#333',
-          marginHorizontal: 4,
+          fontSize: 18,
+          fontFamily: Font.font500,
+          color: '#000',
      },
-     scheduleButton: {
-          backgroundColor: '#00BCD4',
-          flexDirection: 'row',
+     acceptButton: {
+          backgroundColor: colors.PrimaryColor,
+          paddingHorizontal: 32,
+          paddingVertical: 14,
+          borderRadius: 24,
+          minWidth: 150,
           alignItems: 'center',
-          paddingHorizontal: 20,
-          paddingVertical: 12,
-          borderRadius: 8,
-          gap: 8,
+          justifyContent: 'center',
      },
-     scheduleButtonText: {
+     rejectButton: {
+          backgroundColor: 'transparent',
+          paddingHorizontal: 32,
+          paddingVertical: 14,
+          borderRadius: 24,
+          minWidth: 150,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 1,
+          borderColor: 'red',
+     },
+     acceptButtonText: {
           color: '#fff',
-          fontSize: 16,
-          fontWeight: '600',
+          fontSize: 15,
+          fontFamily: Font.font500,
      },
 });
 

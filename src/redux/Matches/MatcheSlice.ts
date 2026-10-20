@@ -1,12 +1,13 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import API_BASE_URL from '../../utils/Config';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import baseQueryWithTimeout from '../baseQuery';
 import { GetApartmentsResponse, GetBuyerResponse, GetMatchsResponse, GetSinglePropertyType } from './MatchType';
 import { URLParams } from '../../utils/URL/URLParams';
+import { SubscriptionResponse } from '../Subscription/SubscriptionTypes';
 
 const MatcheSlice = createApi({
      reducerPath: 'MatcheSlice',
-     baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }),
-     tagTypes: ['GetApartments', 'createLike', 'reject', 'accept'],
+     baseQuery: baseQueryWithTimeout,
+     tagTypes: ['GetApartments', 'createLike', 'reject', 'accept', 'upgradeSubscription', 'downgradeSubscription', "rejectBySeller", "unlockContact"],
      endpoints: builder => ({
           GetApartments: builder.query<GetApartmentsResponse, { userID?: string; page?: number; limit?: number; key?: string; gte?: number; lte?: number; status?: string }>({
                query: ({ userID, page = 1, limit = 10, key, gte, lte, status }) => {
@@ -42,12 +43,15 @@ const MatcheSlice = createApi({
                invalidatesTags: ['createLike'],
           }),
 
+          // Note: This mutation affects both the matches list and the apartments listing.
+          // Invalidating GetApartments ensures liked apartments don't re-appear on remount/refresh.
+
           GetMatches: builder.query<GetMatchsResponse, { userId?: string; propertyId?: string; page?: number; limit?: number; search?: string }>({
                query: ({ userId, page, limit, search }) => ({
                     url: `/api/matches/${userId}/get-matches?page=${page}&limit=${limit}&search[status]=${search}`,
                     method: 'GET',
                }),
-               providesTags: ['createLike', 'reject', 'accept'],
+               providesTags: ['reject', 'accept', "rejectBySeller"],
           }),
 
           GetBuyers: builder.query<GetBuyerResponse, { propertyId?: string; page?: number; limit?: number }>({
@@ -70,7 +74,7 @@ const MatcheSlice = createApi({
                     url: `/api/matches/${userId}/accept-matches/${matchId}`,
                     method: 'PATCH',
                }),
-               invalidatesTags: ['accept'],
+               invalidatesTags: ['GetApartments', 'accept'],
           }),
 
           SingleProperty: builder.query<GetSinglePropertyType, { propertyId?: string; sellerId?: string }>({
@@ -78,11 +82,44 @@ const MatcheSlice = createApi({
                     url: `/api/apartments/${sellerId}/seller-property/${propertyId}`,
                     method: 'GET',
                }),
-               providesTags: ['accept'],
+               providesTags: ['accept', 'reject'],
+          }),
+
+          GetSubscriptionDetail: builder.query<SubscriptionResponse, { userId: string }>({
+               query: userId => ({
+                    url: `/api/subscriptions/get-subscribed-plan/${userId}`,
+                    method: 'GET',
+               }),
+               providesTags: ['upgradeSubscription', 'downgradeSubscription', 'reject', 'createLike'],
+          }),
+
+          rejectedBySeller: builder.mutation<{ message: string }, { userId: string; matchId: string }>({
+               query: ({ userId, matchId }) => ({
+                    url: `/api/matches/${userId}/reject-by-seller-matches/${matchId}`,
+                    method: 'PATCH',
+               }),
+               invalidatesTags: ['rejectBySeller'],
+          }),
+
+          unlockContactByBuyer: builder.mutation<{ message: string }, { userId: string; matchId: string }>({
+               query: ({ userId, matchId }) => ({
+                    url: `/api/matches/${userId}/unlock-contact/${matchId}`,
+                    method: 'PATCH',
+               }),
+               invalidatesTags: ['unlockContact'],
+          }),
+
+          getSingleAppartment: builder.query<{ message: string }, { userId: string; matchId: string }>({
+               query: ({ userId, matchId }) => ({
+                    url: `/api/matches/${userId}/unlock-contact/${matchId}`,
+                    method: 'GET',
+               }),
+               providesTags: ['unlockContact'],
           }),
      }),
 });
 
-export const { useGetApartmentsQuery, useCreateLikeMutation, useGetMatchesQuery, useGetBuyersQuery, useRejectMatchMutation, useAcceptMatchMutation, useSinglePropertyQuery } = MatcheSlice;
+export const { useGetApartmentsQuery, useCreateLikeMutation, useGetMatchesQuery, useGetBuyersQuery, useRejectMatchMutation, useAcceptMatchMutation,
+     useSinglePropertyQuery, useGetSubscriptionDetailQuery, useRejectedBySellerMutation, useUnlockContactByBuyerMutation, useGetSingleAppartmentQuery } = MatcheSlice;
 
 export default MatcheSlice;

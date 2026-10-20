@@ -2,13 +2,13 @@ import React, { JSX } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { View, StyleSheet, Platform, Alert } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import colors from '../assests/color/color';
 import ProfileScreen from '../screens/User/ProfileScreen';
 import EditProfileScreen from '../screens/User/EditProfileScreen';
 import ChangePasswordScreen from '../screens/User/ChangePasswordScreen';
 import HomeScreen from '../screens/Agent/HomeScreen';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation, getFocusedRouteNameFromRoute, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ListingScreen from '../screens/Agent/ListingScreen';
 import SubscriptionManagment from '../screens/Subscription/SubscriptionManagment';
@@ -17,12 +17,20 @@ import MatchDetail from '../screens/User/MatchDetail';
 import Matches from '../screens/Agent/Matches';
 import SingleApartment from '../screens/Agent/SingleApartment';
 import AgentMatchDetail from '../screens/Agent/AgentMatchDetail';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicy/PrivacyPolicyScreen';
 
 const Tab = createBottomTabNavigator();
 const ProfileStackNavigator = createStackNavigator();
 const ListStackNavigator = createStackNavigator();
 const HomeStackNavigator = createStackNavigator();
 const MatchesStackNavigator = createStackNavigator();
+
+type HomeStackParamList = {
+     buyerMatch: undefined;
+     AgentMatchDetail: undefined;
+};
+
+type HomeStackRouteProp = RouteProp<{ Home: HomeStackParamList }, 'Home'>;
 
 const HomeStack = (): JSX.Element => {
      return (
@@ -40,6 +48,7 @@ const ProfileStack = (): JSX.Element => {
                <ProfileStackNavigator.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="SubscriptionManagment" component={SubscriptionManagment} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} options={{ headerShown: false }} />
           </ProfileStackNavigator.Navigator>
      );
 };
@@ -64,12 +73,11 @@ const MatchesStack = (): JSX.Element => {
      );
 };
 
-// Custom Tab Bar Icon Component with animated background
+// Custom Tab Bar Icon — now actually applies the active-state background
 const TabBarIcon = ({ name, color, focused }: { name: string; color: string; focused: boolean }) => {
      return (
           <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-               <Icon name={focused ? name : `${name}-outline`} size={24} color={color} />
-               {focused && <View style={styles.activeDot} />}
+               <Icon name={focused ? name : `${name}-outline`} size={22} color={color} />
           </View>
      );
 };
@@ -84,96 +92,142 @@ const AgentTabs = (): JSX.Element => {
                          headerShown: false,
                          tabBarActiveTintColor: colors.PrimaryColor,
                          tabBarInactiveTintColor: '#9CA3AF',
+
                          tabBarStyle: {
-                              height: 60 + insets.bottom + 4,
+                              position: 'absolute',
+                              left: 20,
+                              right: 20,
+                              bottom: insets.bottom + 12,
+                              height: 64,
+                              marginInline: 10,
                               backgroundColor: '#FFFFFF',
-                              borderTopWidth: 1,
-                              borderTopColor: '#F0F0F0',
-                              paddingBottom: 10,
-                              paddingTop: 10,
+                              borderRadius: 32,
+                              borderTopWidth: 0,
+                              paddingHorizontal: 8,
                               ...Platform.select({
                                    ios: {
                                         shadowColor: '#000',
-                                        shadowOffset: { width: 0, height: -2 },
-                                        shadowOpacity: 0.1,
-                                        shadowRadius: 8,
+                                        shadowOffset: { width: 0, height: 6 },
+                                        shadowOpacity: 0.12,
+                                        shadowRadius: 16,
                                    },
                                    android: {
-                                        elevation: 8,
+                                        elevation: 10,
                                    },
                               }),
                          },
                          tabBarLabelStyle: {
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: '600',
-                              marginTop: 4,
+                              marginTop: 2,
                          },
                          tabBarItemStyle: {
-                              paddingVertical: 5,
+                              paddingVertical: 6,
                          },
                     }}
                >
                     <Tab.Screen
                          name="Home"
                          component={HomeStack}
-                         options={{
+                         options={({ route }) => ({
                               tabBarIcon: ({ color, focused }) => <TabBarIcon name="home" color={color} focused={focused} />,
-                         }}
-                    />
-                    <Tab.Screen
-                         name="Chat"
-                         component={MatchesStack}
-                         options={{
-                              tabBarIcon: ({ color, focused }) => <TabBarIcon name="chatbubble" color={color} focused={focused} />,
-                         }}
-                         listeners={{
-                              tabPress: e => {
-                                   e.preventDefault();
-                                   Alert.alert('Coming Soon', 'Chat feature coming soon');
-                              },
-                         }}
-                    />
-                    <Tab.Screen
-                         name="Search"
-                         component={HomeScreen}
-                         options={{
-                              tabBarIcon: ({ color, focused }) => (
-                                   <View style={styles.searchIconContainer}>
-                                        <Icon name="search" size={36} color="#FFFFFF" />
-                                   </View>
-                              ),
-                              tabBarLabel: '',
-                         }}
-                         listeners={{
-                              tabPress: e => {
-                                   e.preventDefault();
-                                   Alert.alert('Coming Soon', 'Search feature is under development');
-                              },
-                         }}
+                              // Hide tab bar when on AgentMatchDetail
+                              tabBarStyle:
+                                   getFocusedRouteNameFromRoute(route) === 'AgentMatchDetail' || getFocusedRouteNameFromRoute(route) === 'ListingScreen'
+                                        ? { display: 'none' }
+                                        : {
+                                               position: 'absolute',
+                                               left: 20,
+                                               right: 20,
+                                               bottom: insets.bottom + 12,
+                                               height: 64,
+                                               marginInline: 10,
+                                               backgroundColor: '#FFFFFF',
+                                               borderRadius: 32,
+                                               borderTopWidth: 0,
+                                               paddingHorizontal: 8,
+                                               ...Platform.select({
+                                                    ios: {
+                                                         shadowColor: '#000',
+                                                         shadowOffset: { width: 0, height: 6 },
+                                                         shadowOpacity: 0.12,
+                                                         shadowRadius: 16,
+                                                    },
+                                                    android: {
+                                                         elevation: 10,
+                                                    },
+                                               }),
+                                          },
+                         })}
                     />
                     <Tab.Screen
                          name="Listing"
                          component={ListStack}
-                         options={{
+                         options={({ route }) => ({
                               tabBarIcon: ({ color, focused }) => <TabBarIcon name="list" color={color} focused={focused} />,
-                              tabBarBadgeStyle: {
-                                   backgroundColor: '#EF4444',
-                                   color: '#FFFFFF',
-                                   fontSize: 10,
-                                   fontWeight: 'bold',
-                                   minWidth: 18,
-                                   height: 18,
-                                   borderRadius: 9,
-                                   marginTop: 2,
-                              },
-                         }}
+                              tabBarStyle:
+                                   getFocusedRouteNameFromRoute(route) === 'ListingScreen' || getFocusedRouteNameFromRoute(route) === 'SingleAprtment'
+                                        ? { display: 'none' }
+                                        : {
+                                               position: 'absolute',
+                                               left: 20,
+                                               right: 20,
+                                               bottom: insets.bottom + 12,
+                                               height: 64,
+                                               marginInline: 10,
+                                               backgroundColor: '#FFFFFF',
+                                               borderRadius: 32,
+                                               borderTopWidth: 0,
+                                               paddingHorizontal: 8,
+                                               ...Platform.select({
+                                                    ios: {
+                                                         shadowColor: '#000',
+                                                         shadowOffset: { width: 0, height: 6 },
+                                                         shadowOpacity: 0.12,
+                                                         shadowRadius: 16,
+                                                    },
+                                                    android: {
+                                                         elevation: 10,
+                                                    },
+                                               }),
+                                          },
+                         })}
                     />
                     <Tab.Screen
                          name="Profile"
                          component={ProfileStack}
-                         options={{
+                         options={({ route }) => ({
                               tabBarIcon: ({ color, focused }) => <TabBarIcon name="person" color={color} focused={focused} />,
-                         }}
+                              tabBarStyle:
+                                   getFocusedRouteNameFromRoute(route) === 'EditProfileScreen' ||
+                                   getFocusedRouteNameFromRoute(route) === 'ChangePasswordScreen' ||
+                                   getFocusedRouteNameFromRoute(route) === 'SubscriptionManagment' ||
+                                   getFocusedRouteNameFromRoute(route) === 'PrivacyPolicyScreen'
+                                        ? { display: 'none' }
+                                        : {
+                                               position: 'absolute',
+                                               left: 20,
+                                               right: 20,
+                                               bottom: insets.bottom + 12,
+                                               height: 64,
+                                               marginInline: 10,
+                                               backgroundColor: '#FFFFFF',
+                                               borderRadius: 32,
+                                               borderTopWidth: 0,
+                                               paddingHorizontal: 8,
+                                               ...Platform.select({
+                                                    ios: {
+                                                         shadowColor: '#000',
+                                                         shadowOffset: { width: 0, height: 6 },
+                                                         shadowOpacity: 0.12,
+                                                         shadowRadius: 16,
+                                                    },
+                                                    android: {
+                                                         elevation: 10,
+                                                    },
+                                               }),
+                                          },
+                         })}
                     />
                </Tab.Navigator>
           </NavigationContainer>
@@ -184,41 +238,12 @@ const styles = StyleSheet.create({
      iconContainer: {
           alignItems: 'center',
           justifyContent: 'center',
-          width: 50,
-          height: 40,
-          borderRadius: 16,
+          width: 44,
+          height: 36,
+          borderRadius: 18,
      },
      iconContainerActive: {
           backgroundColor: `${colors.PrimaryColor}15`,
-     },
-     activeDot: {
-          width: 4,
-          height: 4,
-          borderRadius: 2,
-          backgroundColor: colors.PrimaryColor,
-          marginTop: 4,
-          position: 'absolute',
-          bottom: -2,
-     },
-     searchIconContainer: {
-          width: 70,
-          height: 70,
-          borderRadius: 70,
-          backgroundColor: colors.PrimaryColor,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: -20,
-          ...Platform.select({
-               ios: {
-                    shadowColor: colors.PrimaryColor,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.4,
-                    shadowRadius: 12,
-               },
-               android: {
-                    elevation: 8,
-               },
-          }),
      },
 });
 

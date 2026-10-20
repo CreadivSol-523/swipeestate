@@ -1,35 +1,21 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../../redux/store';
-import { logout } from '../../redux/Features/authState';
 import Icon from 'react-native-vector-icons/Ionicons';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
 import { useGetProfileHandler } from '../../models/Profile/Profile';
-import { profileData } from '../../redux/Profile/ProfileTypes';
 import { requestCameraPermission } from '../../utils/Permissions/Permissions';
 import { ImagePickerResponse, launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { useAuth } from '../../utils/Storage/Storage';
 import { useLogoutHandler } from '../../models/Auth/Auth';
-import API_BASE_URL from '../../utils/Config';
 
 const ProfileScreen = ({ navigation }: { navigation: any }) => {
-     const dispatch = useDispatch();
-
      const { handleNewPassword, isLoading: LogoutLoading } = useLogoutHandler();
 
      const handleLogout = () => {
           handleNewPassword();
      };
 
-     const { ProfileData, ProfileLoading } = useGetProfileHandler();
-     const ProfileDetails: profileData | undefined = ProfileData;
-     console.log({ ProfileDetails, ProfileLoading });
-
-     const { userData } = useAuth();
-
-     console.log(ProfileData);
+     const { ProfileData } = useGetProfileHandler();
 
      const handleImagePicker = async () => {
           await requestCameraPermission();
@@ -107,33 +93,27 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                {/* Header */}
                <View style={styles.header}>
                     <Text style={styles.headerTitle}>Profile</Text>
-                    <TouchableOpacity style={styles.settingsButton}>
+                    <View style={styles.settingsButton}>
                          <Icon name="settings-outline" size={24} color="#000" />
-                    </TouchableOpacity>
+                    </View>
                </View>
 
                {/* Profile Avatar Section */}
                <View style={styles.avatarSection}>
                     <View style={styles.profileImageContainer}>
-                         <TouchableOpacity style={styles.profileImageWrapper} onPress={handleImagePicker} activeOpacity={0.7}>
-                              {ProfileData?.profilePicture ? (
-                                   <Image source={{ uri: ProfileData?.profilePicture }} style={styles.profileImage} />
-                              ) : (
-                                   <View style={styles.profileImagePlaceholder}>
-                                        <Icon name="user" size={40} color="#9CA3AF" />
-                                   </View>
-                              )}
-                              <View style={styles.cameraIconContainer}>
-                                   <Icon name="camera" size={16} color="#FFFFFF" />
+                         {ProfileData?.profilePicture ? (
+                              <Image source={{ uri: ProfileData?.profilePicture }} style={styles.profileImage} />
+                         ) : (
+                              <View style={styles.profileImagePlaceholder}>
+                                   <Icon name="user" size={40} color="#9CA3AF" />
                               </View>
-                         </TouchableOpacity>
-                         <Text style={styles.profileImageText}>Upload Profile Picture</Text>
+                         )}
                     </View>
                     <Text style={styles.userName}>{ProfileData?.name || 'User Name'}</Text>
-                    <View style={styles.verifiedBadge}>
+                    {/* <View style={styles.verifiedBadge}>
                          <Icon name="checkmark-circle" size={16} color="#4CAF50" />
                          <Text style={styles.verifiedText}>Verified Account</Text>
-                    </View>
+                    </View> */}
                </View>
 
                {/* Information Cards */}
@@ -186,13 +166,13 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                          <Icon name="chevron-forward" size={20} color="#999" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('PrivacyPolicyScreen')}>
                          <View style={styles.actionIconContainer}>
                               <Icon name="shield-checkmark-outline" size={22} color={colors.PrimaryColor} />
                          </View>
                          <View style={styles.actionContent}>
-                              <Text style={styles.actionTitle}>Privacy & Security</Text>
-                              <Text style={styles.actionSubtitle}>Control your privacy settings</Text>
+                              <Text style={styles.actionTitle}>Privacy & Policy</Text>
+                              <Text style={styles.actionSubtitle}>Check your Privacy & Policy</Text>
                          </View>
                          <Icon name="chevron-forward" size={20} color="#999" />
                     </TouchableOpacity>

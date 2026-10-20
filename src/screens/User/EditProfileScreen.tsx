@@ -31,8 +31,6 @@ const EditProfileScreen = ({ navigation }: { navigation: any }) => {
      const { ProfileData, ProfileLoading } = useGetProfileHandler();
      const userData: profileData | undefined = ProfileData;
 
-     console.log(ProfileData, 'ProfileDataProfileDataProfileDataProfileData');
-
      const incomeRanges: DropdownOption[] = [
           { label: 'Under $25,000', value: '0-25000' },
           { label: '$25,000 - $50,000', value: '25000-50000' },

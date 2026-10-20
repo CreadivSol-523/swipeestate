@@ -53,12 +53,10 @@ const ApartmentsScreen = ({ navigation }: { navigation: Navigation }) => {
      const handleNavigate = (id: string) => {
           const filterApartment = matchesDetail?.find((item: any) => item?._id === id);
           navigation.navigate('SingleAprtment', { filterApartment });
-          // console.log(filterApartment);
      };
 
      const renderItem = (item: any) => {
           const apartment = item?.item;
-          console.log(apartment);
           return (
                <View key={apartment.id} style={styles.card}>
                     {/* Image Container */}
@@ -193,7 +191,7 @@ const ApartmentsScreen = ({ navigation }: { navigation: Navigation }) => {
                          <FlatList
                               data={matches}
                               showsVerticalScrollIndicator={false}
-                              contentContainerStyle={{ paddingBottom: 100 }}
+                              contentContainerStyle={{ paddingBottom: 170 }}
                               renderItem={item => renderItem(item)}
                               keyExtractor={item => item?.id.toString()}
                               onEndReached={handleIncreasePage}

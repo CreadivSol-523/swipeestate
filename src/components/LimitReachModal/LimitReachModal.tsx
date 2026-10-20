@@ -31,8 +31,8 @@ const LimitReachedModal: React.FC<LimitReachedModalProps> = ({ visible, onClose,
                          icon: 'people-outline',
                          iconColor: '#F59E0B',
                          iconBg: '#FEF3C7',
-                         title: 'Daily Swipe Limit Reached',
-                         message: `You've used all your daily swipes on the ${currentPlan} plan.`,
+                         title: 'Monthly Swipe Limit Reached',
+                         message: `You've used all your swipes on the ${currentPlan} plan.`,
                          suggestion: 'Upgrade for unlimited swipes and never miss a potential tenant.',
                     };
                case 'featured':

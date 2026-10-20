@@ -1,4 +1,5 @@
 import { useDispatch } from 'react-redux';
+import { useEffect, useRef } from 'react';
 import ResToast from '../../components/ResToast/ResToast';
 import { useGetProfileQuery, useUpdatePasswordMutation, useUpdateProfileMutation } from '../../redux/Profile/Profile';
 import { profileData } from '../../redux/Profile/ProfileTypes';
@@ -14,10 +15,16 @@ export const useGetProfileHandler = () => {
      const ProfileData = Profile?.data?.user;
      const ProfileLoading = Profile.isLoading;
      const { isError, error, refetch } = Profile;
+     const hasShownError = useRef(false);
 
-     if (isError) {
-          ResToast({ type: 'danger', title: 'Failed to fetch Profile Details' });
-     }
+     useEffect(() => {
+          if (isError && !hasShownError.current) {
+               hasShownError.current = true;
+               ResToast({ type: 'danger', title: 'Failed to fetch Profile Details' });
+          } else if (!isError) {
+               hasShownError.current = false;
+          }
+     }, [isError]);
 
      return { ProfileData, ProfileLoading, isError, error, refetch };
 };
@@ -31,7 +38,6 @@ export const useUpdateProfileHandler = () => {
      const handleUpdateProfileAPI = async (data: any) => {
           try {
                const { name, email, address, profilePicture, creditScore, phone, selectedIncome } = data;
-               console.log(data);
                if (!name || !email || !address || !profilePicture || !creditScore || !phone || !selectedIncome) {
                     return ResToast({
                          title: 'All Field Required',
@@ -41,7 +47,6 @@ export const useUpdateProfileHandler = () => {
                const isImage = profilePicture?.split('/')?.includes('uploads');
 
                const formData = new FormData();
-               console.log(formData);
                const proofImgType = profilePicture?.split('.');
                const imgType = proofImgType?.pop();
                const imageBlob = {
@@ -63,7 +68,7 @@ export const useUpdateProfileHandler = () => {
                     data: formData,
                });
 
-               console.log(res, 'UpdateProfileUpdateProfileUpdateProfile');
+               console.log(res)
 
                if (!res.error) {
                     // dispatch(authUser({ data: data }));
@@ -86,7 +91,6 @@ export const useUpdatePasswordHandler = () => {
      const handleUpdatePasswordAPI = async ({ data }: { data: { previousPass: string; password: string; newPass: string } }) => {
           try {
                const { newPass, password, previousPass } = data;
-               console.log({ newPass, password, previousPass });
                if (!newPass || !password) {
                     return ResToast({
                          title: 'All Field Required',

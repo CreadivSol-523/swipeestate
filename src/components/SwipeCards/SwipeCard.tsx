@@ -1,7 +1,7 @@
-import { Text, View, StyleSheet } from 'react-native';
+// SwipeCard.tsx
+import { Text, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, runOnJS } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { windowHeight } from '../../utils/Dimension/Dimension';
 import colors from '../../assests/Colors/Colors';
 
 const SWIPE_THRESHOLD = 120;
@@ -41,7 +41,6 @@ const SwipeCard = ({ index, onSwipeLeft, onSwipeRight, children, disableRightSwi
           transform: [{ translateX: translateX.value }, { rotate: `${rotate.value}deg` }],
      }));
 
-     // Overlay Labels
      const leftOpacity = useAnimatedStyle(() => ({
           opacity: translateX.value < -SWIPE_THRESHOLD / 2 ? 1 : 0,
      }));
@@ -55,12 +54,10 @@ const SwipeCard = ({ index, onSwipeLeft, onSwipeRight, children, disableRightSwi
                <Animated.View style={[styles.card, animatedStyle]}>
                     {children}
 
-                    {/* LEFT LABEL */}
                     <Animated.View style={[styles.leftLabel, leftOpacity]}>
                          <Text style={styles.labelText}>PASS</Text>
                     </Animated.View>
 
-                    {/* RIGHT LABEL */}
                     <Animated.View style={[styles.rightLabel, rightOpacity]}>
                          <Text style={styles.labelText}>LIKE</Text>
                     </Animated.View>
@@ -74,12 +71,14 @@ export default SwipeCard;
 const styles = StyleSheet.create({
      card: {
           position: 'absolute',
-          width: '100%',
-          height: windowHeight * 0.95,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
      },
      leftLabel: {
           position: 'absolute',
-          top: 20,
+          top: '25%',
           right: 30,
           padding: 8,
           borderRadius: 8,
@@ -87,11 +86,11 @@ const styles = StyleSheet.create({
      },
      rightLabel: {
           position: 'absolute',
-          top: 20,
+          top: '25%',
           left: 30,
           padding: 8,
           borderRadius: 8,
-          backgroundColor: colors.PrimaryColor, // ya tumhare colors.PrimaryColor
+          backgroundColor: colors.PrimaryColor,
      },
      labelText: {
           color: '#fff',

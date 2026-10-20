@@ -1,22 +1,20 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
-import Swiper from 'react-native-deck-swiper';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, RefreshControl, ScrollView } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Ionicons';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
-import Field from '../../components/Field/Field';
-import CustomDropdown from '../../components/CustomDropdown/CustomDropdown';
-import { windowHeight, windowWidth } from '../../utils/Dimension/Dimension';
-import { useAuth } from '../../utils/Storage/Storage';
+import { windowHeight } from '../../utils/Dimension/Dimension';
 import { useCreateLikeHandler, useGetApartmentsHandler, useRejectPropertyHandler } from '../../models/Matches/Matches';
 import PropertyCardSkeleton from '../../components/Skeletons/PropertyCardSkeleton';
-import API_BASE_URL from '../../utils/Config';
 import SwipeDeck from '../../components/SwipeCards/SwipeDeck';
 import LimitReachedModal from '../../components/LimitReachModal/LimitReachModal';
 import Navigation from '../../utils/NavigationProps/NavigationProps';
 import Ismessage from '../../components/IsMessage/Ismessage';
+import { useGetSubscribedPlanHandler } from '../../models/Plan/Plan';
+import NoMoreApartmentsCard from '../../components/SwipeCards/NoMoreApartmentsCard';
 
-type FilterKey = 'price' | 'bedrooms' | 'location' | 'status';
+type FilterKey = 'price' | 'bedrooms' | 'location' | 'status' | 'area';
 type RangeFilter = {
      key?: string;
      gte?: number;
@@ -24,179 +22,309 @@ type RangeFilter = {
      status?: string;
 };
 
+type ModalFeature = 'featured' | 'listings' | 'swipes' | 'analytics';
+type SwipeDirection = 'left' | 'right';
+
+interface State {
+     currentIndex: number;
+     likedProperties: number[];
+     selectedFilter?: FilterKey | string;
+     selectedValue?: string | null;
+     modalVisible: boolean;
+     modalFeature: ModalFeature;
+     rangeFilter: RangeFilter;
+     apartmentList: any[];
+     disableSwipe: boolean;
+     page: number;
+}
+
+const initialState: State = {
+     currentIndex: 0,
+     likedProperties: [],
+     selectedFilter: undefined,
+     selectedValue: undefined,
+     modalVisible: false,
+     modalFeature: 'swipes',
+     rangeFilter: {},
+     apartmentList: [],
+     disableSwipe: false,
+     page: 1,
+};
+
+type Action =
+     | { type: 'SET_INDEX'; payload: number }
+     | { type: 'TOGGLE_LIKE'; payload: number }
+     | { type: 'SET_FILTER'; payload?: FilterKey | string }
+     | { type: 'SET_VALUE'; payload?: string | null }
+     | { type: 'SET_RANGE'; payload: RangeFilter }
+     | { type: 'SET_APARTMENTS'; payload: any[] }
+     | { type: 'APPEND_APARTMENTS'; payload: any[] }
+     | { type: 'SET_DISABLE_SWIPE'; payload: boolean }
+     | { type: 'SET_PAGE'; payload: number }
+     | { type: 'SET_MODAL'; payload: { visible: boolean; feature?: ModalFeature } };
+
+function reducer(state: State, action: Action): State {
+     switch (action.type) {
+          case 'SET_INDEX':
+               return { ...state, currentIndex: action.payload };
+
+          case 'TOGGLE_LIKE':
+               return {
+                    ...state,
+                    likedProperties: state.likedProperties.includes(action.payload) ? state.likedProperties.filter(id => id !== action.payload) : [...state.likedProperties, action.payload],
+               };
+
+          case 'SET_FILTER':
+               return {
+                    ...state,
+                    selectedFilter: action.payload,
+                    selectedValue: undefined,
+                    page: 1,
+               };
+
+          case 'SET_VALUE':
+               return { ...state, selectedValue: action.payload };
+
+          case 'SET_RANGE':
+               return { ...state, rangeFilter: action.payload };
+
+          case 'SET_APARTMENTS':
+               return { ...state, apartmentList: action.payload };
+
+          case 'APPEND_APARTMENTS': {
+               const map = new Map();
+               state.apartmentList.forEach(i => map.set(i.id, i));
+               action.payload.forEach(i => map.set(i.id, i));
+               return { ...state, apartmentList: Array.from(map.values()) };
+          }
+
+          case 'SET_DISABLE_SWIPE':
+               return { ...state, disableSwipe: action.payload };
+
+          case 'SET_PAGE':
+               return { ...state, page: action.payload };
+
+          case 'SET_MODAL':
+               return {
+                    ...state,
+                    modalVisible: action.payload.visible,
+                    modalFeature: action.payload.feature ?? state.modalFeature,
+               };
+
+          default:
+               return state;
+     }
+}
+
+const formatPrice = (value?: number) => {
+     if (value === undefined || value === null) return '—';
+     return `$${Number(value).toLocaleString()}`;
+};
+
+const FILTER_CATEGORIES: { label: string; value: FilterKey }[] = [
+     { label: 'Budget', value: 'price' },
+     { label: 'Bedrooms', value: 'bedrooms' },
+     { label: 'Status', value: 'status' },
+     { label: 'Area Size', value: 'area' },
+];
+
+const FILTER_CONFIG: Record<FilterKey, { label: string; value: string }[]> = {
+     price: [
+          { label: 'Under $300k', value: 'under_300' },
+          { label: '$300k – $500k', value: '300_500' },
+          { label: '$500k – $800k', value: '500_800' },
+          { label: '$800k+', value: '800_plus' },
+     ],
+     bedrooms: [
+          { label: '1 Bedroom', value: '1' },
+          { label: '2 Bedrooms', value: '2' },
+          { label: '3+ Bedrooms', value: '3_plus' },
+     ],
+     location: [
+          { label: 'Downtown', value: 'downtown' },
+          { label: 'Suburbs', value: 'suburbs' },
+          { label: 'City Center', value: 'city_center' },
+     ],
+     status: [
+          { label: 'Active', value: 'Active' },
+          { label: 'Inactive', value: 'Inactive' },
+     ],
+     area: [
+          { label: 'Under 800 sq ft', value: 'under_800' },
+          { label: '800 – 1500 sq ft', value: '800_1500' },
+          { label: '1500+ sq ft', value: '1500_plus' },
+     ],
+};
+
 const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
-     const [currentIndex, setCurrentIndex] = useState(0);
-     const [likedProperties, setLikedProperties] = useState<number[]>([]);
-     const [selectedFilter, setSelectedFilter] = useState<FilterKey | string | undefined>(undefined);
-     const [selectedValue, setSelectedValue] = useState<string | undefined | null>(undefined);
-     const [modalVisible, setModalVisible] = useState(false);
-     const [modalFeature, setModalFeature] = useState<'featured' | 'listings' | 'swipes' | 'analytics'>('swipes');
-     const [rangeFilter, setRangeFilter] = useState<RangeFilter>({});
-     const [apartmentList, setApartmentList] = useState<any>([]);
-     const [disableSwipe, setDisableSwipe] = useState(false);
-     const [page, setPage] = useState(1);
+     const [state, dispatch] = React.useReducer(reducer, initialState);
+
+     const { currentIndex, likedProperties, selectedFilter, selectedValue, modalVisible, modalFeature, rangeFilter, apartmentList, disableSwipe, page } = state;
 
      const pageRef = useRef(1);
      const limit = 10;
 
-     const renderCard = useCallback(
-          (property: any) => {
-               if (!property) return null;
+     // Tracks the last removed card so the Undo button can restore it.
+     const lastRemovedRef = useRef<{ item: any; direction: SwipeDirection } | null>(null);
+     const [canUndo, setCanUndo] = useState(false);
+     const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+     const [isRefreshing, setIsRefreshing] = useState(false);
 
-               return (
-                    <View style={styles.card}>
-                         {/* Image Section with Gradient Overlay */}
-                         <View style={styles.imageSection}>
-                              <View style={styles.imagePlaceholder}>
-                                   <Image source={{ uri: property?.featuredImage }} style={{ width: '100%', height: '100%' }} />
-                              </View>
+     const renderCard = useCallback((property: any) => {
+          if (!property) return null;
+          return (
+               <View style={styles.card}>
+                    {/* Image Section */}
+                    <View style={styles.imageSection}>
+                         <FastImage source={{ uri: property?.featuredImage }} style={styles.cardImage} resizeMode={FastImage.resizeMode.cover} />
+                         <View style={styles.gradientOverlay} />
 
-                              {/* Gradient Overlay */}
-                              <View style={styles.gradientOverlay} />
-
-                              {/* Top Badges */}
-                              <View style={styles.topBadges}>
-                                   {property.featured && (
-                                        <View style={styles.featuredBadge}>
-                                             <Icon name="star" size={12} color="#FFD700" />
-                                             <Text style={styles.featuredText}>Featured</Text>
-                                        </View>
-                                   )}
+                         {/* Top badges */}
+                         <View style={styles.topBadges}>
+                              {property.featured && (
+                                   <View style={styles.featuredBadge}>
+                                        <Icon name="star" size={12} color="#FFD700" />
+                                        <Text style={styles.featuredText}>Featured</Text>
+                                   </View>
+                              )}
+                              {!!property.type && (
                                    <View style={styles.typeTag}>
                                         <Text style={styles.typeText}>{property.type}</Text>
                                    </View>
+                              )}
+                         </View>
+
+                         {/* Bookmark */}
+                         <TouchableOpacity style={styles.bookmarkButton} activeOpacity={0.7}>
+                              <Icon name="bookmark-outline" size={18} color="#fff" />
+                         </TouchableOpacity>
+
+                         {/* Price overlay */}
+                         <Text style={styles.priceOverlayText}>{formatPrice(property.price)}</Text>
+                    </View>
+
+                    {/* Content Section */}
+                    <View style={styles.cardContent}>
+                         <View style={styles.titleRow}>
+                              <Text style={styles.propertyTitle} numberOfLines={1}>
+                                   {property.title}
+                              </Text>
+                              <View style={styles.ratingBadge}>
+                                   <Icon name="star" size={13} color="#FFD700" />
+                                   <Text style={styles.ratingText}>{property.rating}</Text>
                               </View>
                          </View>
 
-                         {/* Content Section */}
-                         <View style={styles.cardContent}>
-                              {/* Title & Rating */}
-                              <View style={styles.titleRow}>
-                                   <Text style={styles.propertyTitle} numberOfLines={1}>
-                                        {property.title}
-                                   </Text>
-                                   <View style={styles.ratingBadge}>
-                                        <Icon name="star" size={14} color="#FFD700" />
-                                        <Text style={styles.ratingText}>{property.rating}</Text>
-                                   </View>
+                         <View style={styles.locationRow}>
+                              <Icon name="location" size={15} color={colors.PrimaryColor} />
+                              <Text style={styles.locationText} numberOfLines={1}>
+                                   {property.location}
+                              </Text>
+                         </View>
+
+                         <View style={styles.detailsGrid}>
+                              <View style={styles.detailBox}>
+                                   <Icon name="bed-outline" size={20} color={colors.PrimaryColor} />
+                                   <Text style={styles.detailValue}>{property.bedrooms}</Text>
+                                   <Text style={styles.detailLabel}>Beds</Text>
                               </View>
 
-                              {/* Location */}
-                              <View style={styles.locationRow}>
-                                   <Icon name="location" size={16} color={colors.PrimaryColor} />
-                                   <Text style={styles.locationText} numberOfLines={1}>
-                                        {property.location}
-                                   </Text>
+                              <View style={styles.detailDivider} />
+
+                              <View style={styles.detailBox}>
+                                   <Icon name="water-outline" size={20} color={colors.PrimaryColor} />
+                                   <Text style={styles.detailValue}>{property.bathrooms}</Text>
+                                   <Text style={styles.detailLabel}>Baths</Text>
                               </View>
 
-                              {/* Details Grid */}
-                              <View style={styles.detailsGrid}>
-                                   <View style={styles.detailBox}>
-                                        <Icon name="bed-outline" size={22} color={colors.PrimaryColor} />
-                                        <Text style={styles.detailValue}>{property.bedrooms}</Text>
-                                        <Text style={styles.detailLabel}>Beds</Text>
-                                   </View>
+                              <View style={styles.detailDivider} />
 
-                                   <View style={styles.detailDivider} />
-
-                                   <View style={styles.detailBox}>
-                                        <Icon name="water-outline" size={22} color={colors.PrimaryColor} />
-                                        <Text style={styles.detailValue}>{property.bathrooms}</Text>
-                                        <Text style={styles.detailLabel}>Baths</Text>
-                                   </View>
-
-                                   <View style={styles.detailDivider} />
-
-                                   <View style={styles.detailBox}>
-                                        <Icon name="resize-outline" size={22} color={colors.PrimaryColor} />
-                                        <Text style={styles.detailValue}>{property.area}</Text>
-                                        <Text style={styles.detailLabel}>sq ft</Text>
-                                   </View>
+                              <View style={styles.detailBox}>
+                                   <Icon name="resize-outline" size={20} color={colors.PrimaryColor} />
+                                   <Text style={styles.detailValue}>{property.area}</Text>
+                                   <Text style={styles.detailLabel}>sq ft</Text>
                               </View>
                          </View>
                     </View>
-               );
-          },
-          [currentIndex],
-     );
-
-     const FILTER_CONFIG: Record<FilterKey, { label: string; value: string }[]> = {
-          price: [
-               { label: 'Under $300k', value: 'under_300' },
-               { label: '$300k – $500k', value: '300_500' },
-               { label: '$500k – $800k', value: '500_800' },
-               { label: '$800k+', value: '800_plus' },
-          ],
-          bedrooms: [
-               { label: '1 Bedroom', value: '1' },
-               { label: '2 Bedrooms', value: '2' },
-               { label: '3+ Bedrooms', value: '3_plus' },
-          ],
-          location: [
-               { label: 'Downtown', value: 'downtown' },
-               { label: 'Suburbs', value: 'suburbs' },
-               { label: 'City Center', value: 'city_center' },
-          ],
-          status: [
-               { label: 'Active', value: 'Active' },
-               { label: 'Inactive', value: 'Inactive' },
-          ],
-     };
-
-     const isLastCard = apartmentList.length === 1;
+               </View>
+          );
+     }, []);
 
      const { handleCreateLikeAPI, isLoading } = useCreateLikeHandler();
      const { handleRejectPropertyAPI, isLoading: rejectPropertyLoading } = useRejectPropertyHandler();
+     const { GetSubscribedPlanData, refetch: planRefetch } = useGetSubscribedPlanHandler();
 
-     const handleSwipeLeft = async (index: number, item?: any) => {
-          if (isLastCard) {
-               return setModalVisible(true);
+     const numberOfSwipes = (GetSubscribedPlanData as any)?.plan?.planRestrictions?.numberOfSwipes;
+
+     console.log(apartmentList, 'apartmentListapartmentList');
+
+     const maybeLoadMore = () => {
+          if (apartmentList.length <= 2) {
+               // pageRef.current += 1;
+               // dispatch({ type: 'SET_PAGE', payload: pageRef.current });
+               refetch();
+          }
+     };
+
+     const handleSwipeLeft = async (_: number, item?: any) => {
+          if (numberOfSwipes == 0) {
+               dispatch({ type: 'SET_MODAL', payload: { visible: true } });
+               return;
           }
 
-          setDisableSwipe(true);
+          dispatch({ type: 'SET_DISABLE_SWIPE', payload: true });
           await handleRejectPropertyAPI(item?.id);
-          setDisableSwipe(false);
-
-          if (apartmentList.length <= 5) {
-               pageRef.current += 1;
-               setPage(prev => prev + 1);
-          }
-
-          if (apartmentList?.length === 1) {
-               setDisableSwipe(true);
-          }
-
-          if (index === apartmentList?.length - 1) {
-               setCurrentIndex(apartmentList?.length);
-          }
+          dispatch({ type: 'SET_DISABLE_SWIPE', payload: false });
+          maybeLoadMore();
      };
 
-     const handleSwipeRight = async (index: number, item?: any) => {
-          if (isLastCard) {
-               return setModalVisible(true);
+     const handleSwipeRight = async (_: number, item?: any) => {
+          if (numberOfSwipes == 0) {
+               dispatch({ type: 'SET_MODAL', payload: { visible: true } });
+               return;
           }
-          setDisableSwipe(true);
+
+          dispatch({ type: 'SET_DISABLE_SWIPE', payload: true });
           await handleCreateLikeAPI(item?.id);
-          setDisableSwipe(false);
-
-          setLikedProperties([...likedProperties, apartmentList[index].id]);
-
-          if (apartmentList?.length === 1) {
-               setDisableSwipe(true);
-          }
-
-          if (apartmentList.length <= 5) {
-               pageRef.current += 1;
-               setPage(prev => prev + 1);
-          }
-
-          if (index === apartmentList?.length - 1) {
-               setCurrentIndex(apartmentList?.length);
-          }
+          dispatch({ type: 'SET_DISABLE_SWIPE', payload: false });
+          dispatch({ type: 'TOGGLE_LIKE', payload: item.id });
+          maybeLoadMore();
      };
 
-     // Handle API Get Apartments
-     const { ApartmentsData, ApartmentsLoading, isFetching, GetApartments } = useGetApartmentsHandler({
+     // Manual action-button handlers (Pass / Like) — mirrors swipe gestures
+     const handlePassPress = () => {
+          if (apartmentList.length === 0 || disableSwipe) return;
+          const item = apartmentList[0];
+          lastRemovedRef.current = { item, direction: 'left' };
+          setCanUndo(true);
+          dispatch({ type: 'SET_APARTMENTS', payload: apartmentList.slice(1) });
+          handleSwipeLeft(0, item);
+     };
+
+     const handleLikePress = () => {
+          if (apartmentList.length === 0 || disableSwipe) return;
+          const item = apartmentList[0];
+          lastRemovedRef.current = { item, direction: 'right' };
+          setCanUndo(true);
+          handleSwipeRight(0, item);
+          dispatch({ type: 'SET_APARTMENTS', payload: apartmentList.slice(1) });
+     };
+
+     const handleUndoPress = () => {
+          if (!lastRemovedRef.current) return;
+          const { item, direction } = lastRemovedRef.current;
+
+          dispatch({ type: 'SET_APARTMENTS', payload: [item, ...apartmentList] });
+
+          if (direction === 'right') {
+               dispatch({ type: 'TOGGLE_LIKE', payload: item.id });
+          }
+
+          lastRemovedRef.current = null;
+          setCanUndo(false);
+     };
+
+     const { ApartmentsData, ApartmentsLoading, isFetching, GetApartments, isError, refetch } = useGetApartmentsHandler({
           limit,
           page,
           key: rangeFilter.key,
@@ -205,11 +333,11 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
           status: selectedValue || '',
      });
 
-     console.log(GetApartments, 'ApartmentsDataApartmentsDataApartmentsDataApartmentsData');
+     console.log(ApartmentsData);
 
      const structuredApartment = () => {
           if (ApartmentsData?.apartments.length == 0) return;
-          const ApartmentData = ApartmentsData?.apartments?.map((item, i) => ({
+          return ApartmentsData?.apartments?.map((item: any) => ({
                id: item?._id,
                title: item?.title,
                location: item?.location,
@@ -222,7 +350,6 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
                featured: item?.featured,
                featuredImage: item?.image,
           }));
-          return ApartmentData;
      };
 
      const getRangeFromFilter = (filterKey?: string, value?: string | null): RangeFilter => {
@@ -279,122 +406,197 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
           }
      };
 
-     useEffect(() => {
-          if (ApartmentsLoading || !ApartmentsData?.apartments?.length) return;
+     // --- Filter overlay logic (replaces the old dual-CustomDropdown UX) ---
+     const selectedValueLabel = useMemo(() => {
+          if (!selectedFilter || !selectedValue) return null;
+          const opts = (FILTER_CONFIG as any)[selectedFilter] ?? [];
+          return opts.find((o: any) => o.value === selectedValue)?.label ?? selectedValue;
+     }, [selectedFilter, selectedValue]);
 
-          const newApartments = structuredApartment();
+     const handleSelectCategory = (key: FilterKey) => {
+          dispatch({ type: 'SET_FILTER', payload: key });
+          // overlay stays open — now shows this category's values
+     };
 
-          setApartmentList((prev: any) => {
-               const map = new Map();
-
-               // add old ones
-               prev.forEach((item: any) => {
-                    map.set(item.id, item);
-               });
-
-               // add new ones (duplicates auto-overwritten)
-               newApartments?.forEach(item => {
-                    map.set(item.id, item);
-               });
-
-               return Array.from(map.values());
+     const handleSelectValue = (value: string) => {
+          dispatch({ type: 'SET_VALUE', payload: value });
+          dispatch({
+               type: 'SET_RANGE',
+               payload: getRangeFromFilter(selectedFilter as string, value),
           });
+          pageRef.current = 1;
+          setFilterMenuOpen(false); // auto-close on selection
+     };
+
+     const handleClearFilter = () => {
+          dispatch({ type: 'SET_FILTER', payload: undefined });
+          dispatch({ type: 'SET_VALUE', payload: undefined });
+          dispatch({ type: 'SET_RANGE', payload: {} });
+          pageRef.current = 1;
+     };
+
+     const handleBackToCategories = () => {
+          dispatch({ type: 'SET_FILTER', payload: undefined });
+     };
+
+     const handleRefresh = async () => {
+          setIsRefreshing(true);
+          try {
+               // Reset to page 1 to fetch fresh data from the beginning
+               pageRef.current = 1;
+               dispatch({ type: 'SET_PAGE', payload: 1 });
+               // Trigger refetch with current filters
+               await refetch();
+               await planRefetch();
+          } finally {
+               setIsRefreshing(false);
+          }
+     };
+
+     useEffect(() => {
+          if (ApartmentsLoading) return;
+
+          const incoming = structuredApartment() ?? [];
+
+          // On page 1 (initial load or filter change), replace the list so
+          // apartments the backend no longer returns don't linger on screen.
+          // Later pages are appended for infinite scroll.
+          if (page === 1) {
+               dispatch({ type: 'SET_APARTMENTS', payload: incoming });
+          } else if (incoming.length) {
+               dispatch({ type: 'APPEND_APARTMENTS', payload: incoming });
+          }
      }, [ApartmentsData, isFetching]);
 
      useEffect(() => {
-          if (apartmentList?.length === 1) {
-               return setModalVisible(true);
+          if (numberOfSwipes == 0) {
+               dispatch({ type: 'SET_MODAL', payload: { visible: true } });
           }
      }, [apartmentList]);
 
      return (
           <>
-               <View style={styles.container}>
-                    {/* Enhanced Header */}
-                    <View style={{ paddingBottom: 100 }}>
-                         <View style={{ paddingInline: 20, flexDirection: 'row', width: '100%', justifyContent: 'space-between', position: 'absolute' }}>
-                              <CustomDropdown
-                                   placeholder="Filter By"
-                                   options={[
-                                        { label: 'Budget', value: 'price' },
-                                        { label: 'Bedrooms', value: 'bedrooms' },
-                                        { label: 'Status', value: 'status' },
-                                        { label: 'Area Size', value: 'area' },
-                                   ]}
-                                   value={selectedFilter}
-                                   onValueChange={value => {
-                                        setSelectedFilter(value);
-                                        setSelectedValue(null); // reset second dropdown
-                                   }}
-                                   iconName="filter"
-                                   iconSize={18}
-                                   iconColor="#9CA3AF"
-                                   maxHeight={150}
-                                   dropdownStyle={{ width: windowWidth / 2 - 40 }}
-                              />
-                              {selectedFilter && (
-                                   <CustomDropdown
-                                        placeholder={`Select ${selectedFilter}`}
-                                        options={(FILTER_CONFIG as any)[selectedFilter]}
-                                        value={selectedValue ?? undefined}
-                                        onValueChange={value => {
-                                             setSelectedValue(value);
+               <ScrollView
+                    style={styles.scrollContainer}
+                    scrollEnabled={false}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.PrimaryColor} colors={[colors.PrimaryColor]} />}
+               >
+                    <View style={styles.container}>
+                         <View style={styles.filterBar}>
+                              <TouchableOpacity style={[styles.filterChip, filterMenuOpen && styles.filterChipActive]} activeOpacity={0.8} onPress={() => setFilterMenuOpen(v => !v)}>
+                                   <Icon name="filter" size={15} color={filterMenuOpen ? '#fff' : colors.PrimaryColor} />
+                                   <Text style={[styles.filterChipText, filterMenuOpen && styles.filterChipTextActive]}>
+                                        {selectedFilter ? FILTER_CATEGORIES.find(c => c.value === selectedFilter)?.label : 'Filter by'}
+                                   </Text>
+                                   <Icon name={filterMenuOpen ? 'chevron-up' : 'chevron-down'} size={14} color={filterMenuOpen ? '#fff' : '#9CA3AF'} />
+                              </TouchableOpacity>
 
-                                             const range = getRangeFromFilter(selectedFilter as string, value);
-                                             setRangeFilter(range);
+                              {selectedValueLabel && !filterMenuOpen && (
+                                   <TouchableOpacity style={styles.appliedChip} activeOpacity={0.8} onPress={handleClearFilter}>
+                                        <Text style={styles.appliedChipText} numberOfLines={1}>
+                                             {selectedValueLabel}
+                                        </Text>
+                                        <Icon name="close" size={14} color={colors.PrimaryColor} />
+                                   </TouchableOpacity>
+                              )}
+                         </View>
 
-                                             // RESET DATA WHEN FILTER CHANGES
-                                             setApartmentList([]);
-                                             setPage(1);
-                                             pageRef.current = 1;
+                         {filterMenuOpen && (
+                              <>
+                                   <TouchableOpacity style={styles.overlayBackdrop} activeOpacity={1} onPress={() => setFilterMenuOpen(false)} />
+                                   <View style={styles.filterOverlay}>
+                                        {!selectedFilter ? (
+                                             FILTER_CATEGORIES.map(cat => (
+                                                  <TouchableOpacity key={cat.value} style={styles.overlayRow} onPress={() => handleSelectCategory(cat.value)}>
+                                                       <Text style={styles.overlayRowText}>{cat.label}</Text>
+                                                       <Icon name="chevron-forward" size={16} color="#ccc" />
+                                                  </TouchableOpacity>
+                                             ))
+                                        ) : (
+                                             <>
+                                                  <TouchableOpacity style={styles.overlayBackRow} onPress={handleBackToCategories}>
+                                                       <Icon name="chevron-back" size={16} color={colors.PrimaryColor} />
+                                                       <Text style={styles.overlayBackText}>{FILTER_CATEGORIES.find(c => c.value === selectedFilter)?.label}</Text>
+                                                  </TouchableOpacity>
+                                                  {(FILTER_CONFIG as any)[selectedFilter]?.map((opt: any) => (
+                                                       <TouchableOpacity key={opt.value} style={styles.overlayRow} onPress={() => handleSelectValue(opt.value)}>
+                                                            <Text style={styles.overlayRowText}>{opt.label}</Text>
+                                                            {selectedValue === opt.value && <Icon name="checkmark" size={16} color={colors.PrimaryColor} />}
+                                                       </TouchableOpacity>
+                                                  ))}
+                                             </>
+                                        )}
+                                   </View>
+                              </>
+                         )}
+
+                         <View style={styles.swiperContainer}>
+                              {apartmentList.length == 0 && !ApartmentsLoading && !isFetching ? (
+                                   isError ? (
+                                        <Ismessage text="Failed to load apartments" height={windowHeight - 340} onRetry={() => refetch()} />
+                                   ) : (
+                                        // <Ismessage text="No Apartments Available" height={windowHeight - 340} />
+                                        <NoMoreApartmentsCard />
+                                   )
+                              ) : ApartmentsLoading || isFetching ? (
+                                   <PropertyCardSkeleton />
+                              ) : (
+                                   <SwipeDeck
+                                        data={apartmentList}
+                                        renderCard={renderCard}
+                                        disableLeftSwipe={numberOfSwipes == 0 || isFetching}
+                                        disableRightSwipe={numberOfSwipes == 0 || isFetching}
+                                        onSwipeLeft={(item, index) => {
+                                             lastRemovedRef.current = { item, direction: 'left' };
+                                             setCanUndo(true);
+                                             dispatch({ type: 'SET_APARTMENTS', payload: apartmentList.slice(1) });
+                                             handleSwipeLeft(index, item);
                                         }}
-                                        iconName="options"
-                                        iconSize={18}
-                                        iconColor="#9CA3AF"
-                                        maxHeight={150}
-                                        dropdownStyle={{ width: windowWidth / 2 - 40 }}
+                                        onSwipeRight={(item, index) => {
+                                             lastRemovedRef.current = { item, direction: 'right' };
+                                             setCanUndo(true);
+                                             handleSwipeRight(index, item);
+                                             dispatch({ type: 'SET_APARTMENTS', payload: apartmentList.slice(1) });
+                                        }}
                                    />
                               )}
                          </View>
-                    </View>
-                    {/* Swiper Container */}
-                    <View style={styles.swiperContainer}>
-                         {apartmentList.length == 0 && !ApartmentsLoading && !isFetching ? (
-                              <Ismessage text="No Apartments Available" height={windowHeight - 300} />
-                         ) : ApartmentsLoading || isFetching ? (
-                              <PropertyCardSkeleton />
-                         ) : (
-                              <SwipeDeck
-                                   data={apartmentList}
-                                   renderCard={renderCard}
-                                   disableLeftSwipe={disableSwipe || apartmentList?.length === 1 || isFetching}
-                                   disableRightSwipe={disableSwipe || apartmentList?.length === 1 || isFetching}
-                                   onSwipeLeft={(item, index) => {
-                                        setApartmentList((prev: any) => prev.slice(1));
-                                        handleSwipeLeft(index, item);
-                                   }}
-                                   onSwipeRight={(item, index) => {
-                                        handleSwipeRight(index, item);
-                                        setApartmentList((prev: any) => prev.slice(1));
-                                   }}
-                              />
+
+                         {apartmentList.length > 0 && !ApartmentsLoading && !isFetching && (
+                              <View style={styles.actionsContainer}>
+                                   <TouchableOpacity style={[styles.actionButton, styles.passButton]} activeOpacity={0.8} onPress={handlePassPress} disabled={disableSwipe}>
+                                        <Icon name="close" size={26} color="#FF3B30" />
+                                   </TouchableOpacity>
+
+                                   <TouchableOpacity
+                                        style={[styles.actionButton, styles.undoButton, !canUndo && styles.disabledButton]}
+                                        activeOpacity={0.8}
+                                        onPress={handleUndoPress}
+                                        disabled={!canUndo}
+                                   >
+                                        <Icon name="arrow-undo" size={20} color={canUndo ? '#666' : '#ccc'} />
+                                   </TouchableOpacity>
+
+                                   <TouchableOpacity style={[styles.actionButton, styles.likeButton]} activeOpacity={0.8} onPress={handleLikePress} disabled={disableSwipe}>
+                                        <Icon name="heart" size={26} color={colors.PrimaryColor} />
+                                   </TouchableOpacity>
+                              </View>
                          )}
                     </View>
-               </View>
-               <LimitReachedModal
-                    visible={modalVisible}
-                    onClose={() => {
-                         setModalVisible(false), setModalFeature('swipes');
-                    }}
-                    onUpgrade={() => {
-                         setModalVisible(false);
-                         setModalFeature('swipes');
-                         navigation.navigate('SubscriptionManagment');
-                    }}
-                    limitType={modalFeature}
-                    currentLimit={5}
-                    currentPlan="Basic"
-               />
+
+                    <LimitReachedModal
+                         visible={modalVisible}
+                         onClose={() => dispatch({ type: 'SET_MODAL', payload: { visible: false } })}
+                         onUpgrade={() => {
+                              dispatch({ type: 'SET_MODAL', payload: { visible: false } });
+                              navigation.navigate('SubscriptionManagment');
+                         }}
+                         limitType={modalFeature}
+                         currentLimit={2}
+                         currentPlan="Basic"
+                    />
+               </ScrollView>
           </>
      );
 };
@@ -402,99 +604,148 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
 export default HomeScreen;
 
 const styles = StyleSheet.create({
+     scrollContainer: {
+          flex: 1,
+          flexGrow: 1,
+          backgroundColor: '#F8F9FA',
+     },
      container: {
           flex: 1,
           backgroundColor: '#F8F9FA',
      },
-     header: {
-          paddingHorizontal: 24,
-          paddingTop: 60,
-          paddingBottom: 16,
-          backgroundColor: '#fff',
-          borderBottomLeftRadius: 24,
-          borderBottomRightRadius: 24,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
-          elevation: 3,
-     },
-     headerTop: {
+     filterBar: {
           flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: 16,
-     },
-     headerGreeting: {
-          fontSize: 32,
-          fontFamily: Font.font500,
-          color: '#000',
-     },
-     headerSubtitle: {
-          fontSize: 15,
-          fontFamily: Font.font400,
-          color: '#666',
-          marginTop: 4,
-     },
-     filterButton: {
-          width: 44,
-          height: 44,
-          borderRadius: 22,
-          backgroundColor: '#F5F5F5',
           alignItems: 'center',
-          justifyContent: 'center',
+          paddingHorizontal: 20,
+          paddingTop: 16,
+          paddingBottom: 8,
+          gap: 10,
+          zIndex: 20,
      },
-     progressBar: {
-          height: 4,
-          backgroundColor: '#E0E0E0',
-          borderRadius: 2,
-          overflow: 'hidden',
-          marginBottom: 8,
+     filterChip: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          height: 38,
+          paddingHorizontal: 14,
+          borderRadius: 19,
+          backgroundColor: '#fff',
+          borderWidth: 1,
+          borderColor: '#E0E0E0',
      },
-     progressFill: {
-          height: '100%',
+     filterChipActive: {
           backgroundColor: colors.PrimaryColor,
-          borderRadius: 2,
+          borderColor: colors.PrimaryColor,
      },
-     progressText: {
+     filterChipText: {
           fontSize: 13,
           fontFamily: Font.font500,
-          color: '#999',
-          textAlign: 'center',
+          color: '#333',
+     },
+     filterChipTextActive: {
+          color: '#fff',
+     },
+     appliedChip: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          height: 38,
+          paddingHorizontal: 12,
+          borderRadius: 19,
+          backgroundColor: '#F0F7FF',
+          maxWidth: 140,
+     },
+     appliedChipText: {
+          fontSize: 12,
+          fontFamily: Font.font500,
+          color: colors.PrimaryColor,
+          flexShrink: 1,
+     },
+     searchIconBtn: {
+          width: 38,
+          height: 38,
+          borderRadius: 19,
+          backgroundColor: '#fff',
+          borderWidth: 1,
+          borderColor: '#E0E0E0',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginLeft: 'auto',
+     },
+     overlayBackdrop: {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: -1000,
+          zIndex: 15,
+     },
+     filterOverlay: {
+          position: 'absolute',
+          top: 62,
+          left: 20,
+          right: 20,
+          backgroundColor: '#fff',
+          borderRadius: 16,
+          paddingVertical: 6,
+          elevation: 10,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.15,
+          shadowRadius: 16,
+          zIndex: 20,
+     },
+     overlayRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 13,
+     },
+     overlayRowText: {
+          fontSize: 14,
+          fontFamily: Font.font400,
+          color: '#333',
+     },
+     overlayBackRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderBottomWidth: 1,
+          borderBottomColor: '#F0F0F0',
+          marginBottom: 4,
+     },
+     overlayBackText: {
+          fontSize: 13,
+          fontFamily: Font.font500,
+          color: colors.PrimaryColor,
      },
      swiperContainer: {
           flex: 1,
-          marginTop: 20,
-     },
-     cardContainer: {
-          width: '100%',
-          flex: 1,
-     },
-     cardStyle: {
-          width: '100%',
-          top: 0,
-          left: 0,
      },
      card: {
-          borderRadius: 24,
+          flex: 1,
+          borderRadius: 20,
           backgroundColor: '#fff',
           marginHorizontal: 16,
-          elevation: 8,
+          marginVertical: 10,
+          elevation: 6,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.12,
-          shadowRadius: 12,
+          shadowOpacity: 0.1,
+          shadowRadius: 10,
           overflow: 'hidden',
      },
      imageSection: {
-          height: '55%',
+          height: '50%',
           position: 'relative',
-     },
-     imagePlaceholder: {
-          height: '100%',
           backgroundColor: '#F0F0F0',
-          alignItems: 'center',
-          justifyContent: 'center',
+     },
+     cardImage: {
+          width: '100%',
+          height: '100%',
      },
      gradientOverlay: {
           position: 'absolute',
@@ -502,12 +753,12 @@ const styles = StyleSheet.create({
           left: 0,
           right: 0,
           height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.3)',
+          backgroundColor: 'rgba(0,0,0,0.35)',
      },
      topBadges: {
           position: 'absolute',
-          top: 16,
-          left: 16,
+          top: 14,
+          left: 14,
           flexDirection: 'row',
           gap: 8,
      },
@@ -540,31 +791,39 @@ const styles = StyleSheet.create({
      },
      bookmarkButton: {
           position: 'absolute',
-          top: 16,
-          right: 16,
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: 'rgba(0,0,0,0.6)',
+          top: 14,
+          right: 14,
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: 'rgba(0,0,0,0.55)',
           alignItems: 'center',
           justifyContent: 'center',
      },
+     priceOverlayText: {
+          position: 'absolute',
+          bottom: 14,
+          left: 16,
+          fontSize: 22,
+          fontFamily: Font.font500,
+          color: '#fff',
+     },
      cardContent: {
           flex: 1,
-          padding: 20,
+          padding: 18,
      },
      titleRow: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          marginBottom: 8,
+          gap: 8,
+          marginBottom: 6,
      },
      propertyTitle: {
-          fontSize: 22,
+          fontSize: 20,
           fontFamily: Font.font500,
           color: '#000',
           flex: 1,
-          marginRight: 8,
      },
      ratingBadge: {
           flexDirection: 'row',
@@ -595,9 +854,8 @@ const styles = StyleSheet.create({
      detailsGrid: {
           flexDirection: 'row',
           backgroundColor: '#F8F9FA',
-          borderRadius: 16,
-          padding: 16,
-          marginBottom: 16,
+          borderRadius: 14,
+          paddingVertical: 14,
           alignItems: 'center',
      },
      detailBox: {
@@ -607,64 +865,34 @@ const styles = StyleSheet.create({
      },
      detailDivider: {
           width: 1,
-          height: 40,
+          height: 36,
           backgroundColor: '#E0E0E0',
      },
      detailValue: {
-          fontSize: 18,
+          fontSize: 16,
           fontFamily: Font.font500,
           color: '#000',
      },
      detailLabel: {
-          fontSize: 12,
+          fontSize: 11,
           fontFamily: Font.font400,
           color: '#999',
-     },
-     priceSection: {
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-     },
-     priceLabel: {
-          fontSize: 12,
-          fontFamily: Font.font400,
-          color: '#999',
-          marginBottom: 4,
-     },
-     priceText: {
-          fontSize: 26,
-          fontFamily: Font.font500,
-          color: colors.PrimaryColor,
-     },
-     viewDetailsButton: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: '#F0F7FF',
-          paddingHorizontal: 16,
-          paddingVertical: 10,
-          borderRadius: 20,
-          gap: 4,
-     },
-     viewDetailsText: {
-          fontSize: 14,
-          fontFamily: Font.font500,
-          color: colors.PrimaryColor,
      },
      actionsContainer: {
           flexDirection: 'row',
           justifyContent: 'center',
           alignItems: 'center',
           paddingHorizontal: 32,
-          paddingBottom: 32,
-          gap: 16,
-          zIndex: 1000,
+          paddingVertical: 20,
+          gap: 20,
      },
      actionButton: {
-          width: 64,
-          height: 64,
-          borderRadius: 32,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
           alignItems: 'center',
           justifyContent: 'center',
+          backgroundColor: '#fff',
           elevation: 4,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 2 },
@@ -672,57 +900,21 @@ const styles = StyleSheet.create({
           shadowRadius: 8,
      },
      passButton: {
-          backgroundColor: '#fff',
           borderWidth: 2,
           borderColor: '#FF3B30',
      },
-     undoButton: {
-          width: 52,
-          height: 52,
-          borderRadius: 26,
-          backgroundColor: '#fff',
-          borderWidth: 2,
-          borderColor: '#E0E0E0',
-     },
      likeButton: {
-          backgroundColor: '#fff',
           borderWidth: 2,
           borderColor: colors.PrimaryColor,
      },
-     noMoreCards: {
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 40,
+     undoButton: {
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          borderWidth: 2,
+          borderColor: '#E0E0E0',
      },
-     noMoreCardsIcon: {
-          marginBottom: 20,
-     },
-     noMoreCardsText: {
-          fontSize: 26,
-          fontFamily: Font.font500,
-          color: '#000',
-          marginBottom: 8,
-     },
-     noMoreCardsSubtext: {
-          fontSize: 15,
-          fontFamily: Font.font400,
-          color: '#666',
-          textAlign: 'center',
-          marginBottom: 24,
-     },
-     refreshButton: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: colors.PrimaryColor,
-          paddingHorizontal: 24,
-          paddingVertical: 14,
-          borderRadius: 24,
-          gap: 8,
-     },
-     refreshButtonText: {
-          fontSize: 16,
-          fontFamily: Font.font500,
-          color: '#fff',
+     disabledButton: {
+          opacity: 0.5,
      },
 });

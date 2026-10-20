@@ -1,10 +1,10 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import API_BASE_URL from '../../utils/Config';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import baseQueryWithTimeout from '../baseQuery';
 import { CreateAccResponse, CreateAccResquest, LoginResponse, LoginResquest } from './AuthTypes';
 
 const Auth = createApi({
      reducerPath: 'Auth',
-     baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }),
+     baseQuery: baseQueryWithTimeout,
      tagTypes: ['auth'],
      endpoints: builder => ({
           createAccount: builder.mutation<CreateAccResponse, FormData>({

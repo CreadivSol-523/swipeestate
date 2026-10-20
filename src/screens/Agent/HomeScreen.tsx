@@ -13,6 +13,7 @@ import SwipeDeck from '../../components/SwipeCards/SwipeDeck';
 import { useGetBuyersHandler } from '../../models/Matches/Matches';
 import API_BASE_URL from '../../utils/Config';
 import { useAuth } from '../../utils/Storage/Storage';
+import Ismessage from '../../components/IsMessage/Ismessage';
 
 type FilterKey = 'income' | 'creditScore' | 'location' | 'age' | 'verified';
 
@@ -95,7 +96,7 @@ const UserSwipeScreen = ({ navigation }: { navigation: Navigation }) => {
 
      const isLastCard = Buyers.length === 1;
 
-     const { GetBuyers, GetBuyersData, GetBuyersLoading } = useGetBuyersHandler({});
+     const { GetBuyers, GetBuyersData, GetBuyersLoading, isError, refetch, isFetching } = useGetBuyersHandler({});
 
      const structuredApartment = () => {
           if (GetBuyersData?.users.length == 0) return;
@@ -136,7 +137,6 @@ const UserSwipeScreen = ({ navigation }: { navigation: Navigation }) => {
      }, [GetBuyers]);
 
      const handleSwipeLeft = (index: number) => {
-          console.log('Rejected:', Buyers[index].name);
           if (isLastCard) {
                return setModalVisible(true);
           }
@@ -146,7 +146,6 @@ const UserSwipeScreen = ({ navigation }: { navigation: Navigation }) => {
           if (isLastCard) {
                return setModalVisible(true);
           }
-          console.log('Accepted:', Buyers[index].name);
      };
 
      useEffect(() => {
@@ -157,23 +156,30 @@ const UserSwipeScreen = ({ navigation }: { navigation: Navigation }) => {
 
      return (
           <>
-               <View style={styles.container}>
-                    {/* Swiper Container */}
+               {/* <View style={styles.container}>
                     <View style={styles.swiperContainer}>
-                         <SwipeDeck
-                              data={Buyers}
-                              renderCard={renderCard}
-                              disableLeftSwipe={Buyers?.length === 1}
-                              disableRightSwipe={Buyers?.length === 1}
-                              onSwipeLeft={(item, index) => {
-                                   setBuyers((prev: any) => prev.slice(1));
-                                   handleSwipeLeft(index);
-                              }}
-                              onSwipeRight={(item, index) => {
-                                   handleSwipeRight(index);
-                                   setBuyers((prev: any) => prev.slice(1));
-                              }}
-                         />
+                         {Buyers.length === 0 && !GetBuyersLoading && !isFetching ? (
+                              isError ? (
+                                   <Ismessage text="Failed to load buyers" height={windowHeight - 200} onRetry={() => refetch()} />
+                              ) : (
+                                   <Ismessage text="No Buyers Available" height={windowHeight - 200} />
+                              )
+                         ) : (
+                              <SwipeDeck
+                                   data={Buyers}
+                                   renderCard={renderCard}
+                                   disableLeftSwipe={Buyers?.length === 1}
+                                   disableRightSwipe={Buyers?.length === 1}
+                                   onSwipeLeft={(item, index) => {
+                                        setBuyers((prev: any) => prev.slice(1));
+                                        handleSwipeLeft(index);
+                                   }}
+                                   onSwipeRight={(item, index) => {
+                                        handleSwipeRight(index);
+                                        setBuyers((prev: any) => prev.slice(1));
+                                   }}
+                              />
+                         )}
                     </View>
                </View>
                <LimitReachedModal
@@ -189,7 +195,10 @@ const UserSwipeScreen = ({ navigation }: { navigation: Navigation }) => {
                     limitType={modalFeature}
                     currentLimit={5}
                     currentPlan="Basic"
-               />
+               /> */}
+               <View>
+                    <Text>test</Text>
+               </View>
           </>
      );
 };

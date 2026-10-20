@@ -19,16 +19,14 @@ const SelectPlan = ({ route }: { route?: { params: { user: any; plan: any } } | 
      });
      const { user } = route.params || {};
      const dispatch = useDispatch();
-
-     console.log(user, 'useruseruseruseruseruseruseruser');
-
+     console.log(user?.user?.role);
      const [isPaymentSheetReady, setIsPaymentSheetReady] = useState(false);
      const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
      const { createPaymentMethod } = useStripe();
 
      // Get Plans
-     const { PlanData, PlanLoading, isFetching } = useGetPlanHandler({ interval: 'month' });
+     const { PlanData, PlanLoading, isFetching } = useGetPlanHandler({ interval: 'month', type: user?.user?.role === 'Seller' ? 'agent' : 'user' });
      const plans = PlanData?.plans;
 
      // API
@@ -48,7 +46,6 @@ const SelectPlan = ({ route }: { route?: { params: { user: any; plan: any } } | 
                          billingDetails,
                     },
                });
-               console.log(paymentMethod?.id);
                if (error) {
                     setIsLoading(false);
                     return ResToast({ title: error.message, type: 'danger' });

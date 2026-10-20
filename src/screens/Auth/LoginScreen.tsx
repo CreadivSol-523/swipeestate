@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { authUser } from '../../redux/Features/authState';
 import colors from '../../assests/color/color';
-import Font from '../../assests/fonts/Font';
 import CustomLogo from '../../components/CustomLogo/CustomLogo';
 import { useForm } from '../../utils/UseForm/UseForm';
 import Icon from '../../components/Icons/Icons';
 import { useLoginAccountHandler } from '../../models/Auth/Auth';
+import useKeyboardStatus from '../../utils/IsKeyboardStatus/useKeyboardStatus';
 
 const LoginScreen = ({ navigation }: { navigation: any }) => {
      const [showPassword, setShowPassword] = useState(false);
@@ -17,12 +15,14 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
      const { data, handleChange: handleData } = useForm({ initialState: { email: '', password: '' } });
      const { email, password } = data;
 
+     const KeyboardStatus = useKeyboardStatus();
+
      const handleLoginData = () => {
           handleLogin(data);
      };
 
      return (
-          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: KeyboardStatus ? 300 : 0 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                {/* Logo Section */}
                <View style={styles.logoContainer}>
                     <CustomLogo />
@@ -87,14 +87,14 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
                     </TouchableOpacity>
 
                     {/* Divider */}
-                    <View style={styles.divider}>
+                    {/* <View style={styles.divider}>
                          <View style={styles.dividerLine} />
                          <Text style={styles.dividerText}>Or continue with</Text>
                          <View style={styles.dividerLine} />
-                    </View>
+                    </View> */}
 
                     {/* Social Login Buttons */}
-                    <View style={styles.socialButtons}>
+                    {/* <View style={styles.socialButtons}>
                          <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
                               <View style={[styles.socialIcon, { backgroundColor: '#EA4335' }]}>
                                    <Icon name="google" size={20} color="#FFFFFF" />
@@ -108,7 +108,7 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
                               </View>
                               <Text style={styles.socialButtonText}>Facebook</Text>
                          </TouchableOpacity>
-                    </View>
+                    </View> */}
 
                     {/* Sign Up Link */}
                     <View style={styles.signupContainer}>
@@ -120,7 +120,7 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
                </View>
 
                {/* Footer */}
-               <Text style={styles.footer}>© 2026 Swipe Estate. All rights reserved.</Text>
+               <Text style={styles.footer}>© {new Date().getFullYear()} Swipe Estate. All rights reserved.</Text>
           </ScrollView>
      );
 };

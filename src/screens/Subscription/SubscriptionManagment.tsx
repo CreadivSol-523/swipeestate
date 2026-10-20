@@ -1,129 +1,43 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
-import { useCreateIntendHandler, useDownGradePlanHandler, useGetSubscriptionHandler } from '../../models/Subscription/Subscription';
+import { useDownGradePlanHandler, useUpGradePlanHandler } from '../../models/Subscription/Subscription';
 import { useStripe } from '@stripe/stripe-react-native';
 import ResToast from '../../components/ResToast/ResToast';
 import Spinner from '../../components/Loader/Spinner';
-import { useGetPlanHandler } from '../../models/Plan/Plan';
+import { useGetPlanHandler, useGetSubscribedPlanHandler } from '../../models/Plan/Plan';
 import { useAuth } from '../../utils/Storage/Storage';
+import colors from '../../assests/Colors/Colors';
+import { Switch } from 'react-native-paper';
+import PurchaseModal from '../../components/PurchaseModal/Purchasemodal';
+import { useNavigation } from '@react-navigation/native';
 
 const SubscriptionManagment = () => {
+     const navigation = useNavigation();
      const [isLoading, setIsLoading] = useState(false);
+     const [isUpgrade, setIsUpgrade] = useState(false);
      const [planPrice, setPlanPrice] = useState<number | null>(null);
      // Current active subscription
-     const [currentPlan, setCurrentPlan] = useState<string>('basic');
+     const [filter, setFilter] = useState('month');
+     const [isSwitchOn, setIsSwitchOn] = useState(false);
+     const [currentPlan] = useState<string>('basic');
      const [selectedPlan, setSelectedPlan] = useState<string>('');
 
      const { userData } = useAuth();
+     console.log(userData?.role === 'Buyer' ? 'user' : 'agent');
+     const { createPaymentMethod } = useStripe();
 
-     const { GetSubscription, GetSubscriptionData } = useGetSubscriptionHandler();
-
-     // Mock current subscription data
-     const currentSubscription = {
-          plan: currentPlan,
-          startDate: '2025-01-01',
-          endDate: '2025-02-01',
-          listingsUsed: 3,
-          listingsTotal: 5,
-          autoRenew: true,
-     };
-
-     const handleUpgrade = () => {
-          if (selectedPlan === currentPlan) {
-               Alert.alert('Info', 'This is your current plan');
-               return;
-          }
-
-          Alert.alert('Confirm Upgrade', `Are you sure you want to upgrade to ${SUBSCRIPTION_PLANS?.find(p => p.id === selectedPlan)?.name} plan?`, [
-               { text: 'Cancel', style: 'cancel' },
-               {
-                    text: 'Confirm',
-                    onPress: () => {
-                         setCurrentPlan(selectedPlan);
-                         Alert.alert('Success', 'Your subscription has been updated!');
-                    },
-               },
-          ]);
-     };
-
-     const handleCancelSubscription = () => {
-          Alert.alert('Cancel Subscription', 'Are you sure you want to cancel your subscription? You will lose access to premium features.', [
-               { text: 'No', style: 'cancel' },
-               {
-                    text: 'Yes, Cancel',
-                    style: 'destructive',
-                    onPress: () => {
-                         Alert.alert('Cancelled', 'Your subscription will end on ' + currentSubscription.endDate);
-                    },
-               },
-          ]);
-     };
-
-     const { initPaymentSheet, presentPaymentSheet } = useStripe();
-
-     const { handleCreateIntendAPI } = useCreateIntendHandler();
-
-     const openPaymentSheet = async () => {
-          const { error } = await presentPaymentSheet();
-
-          if (error) {
-               console.error('Payment failed:', error);
-               return;
-          }
-
-          // dispatch(
-          //      authUser({
-          //           data: {
-          //                email,
-          //                password,
-          //                name,
-          //                city,
-          //                confirmPassword,
-          //                phone,
-          //                selectedIncome,
-          //                role: acountType,
-          //                craditScore,
-          //           },
-          //      }),
-          // );
-          ResToast({ title: 'Your monthly subscription updated successfully', type: 'success' });
-     };
-
-     const initializePaymentSheet = async () => {
-          try {
-               setIsLoading(true);
-               const paymentRes = await handleCreateIntendAPI(Number(planPrice));
-
-               if (!paymentRes?.paymentIntend) return;
-
-               const { error } = await initPaymentSheet({
-                    merchantDisplayName: 'ABC, Inc.',
-                    paymentIntentClientSecret: paymentRes.paymentIntend,
-                    allowsDelayedPaymentMethods: true,
-               });
-
-               if (error) {
-                    setIsLoading(false);
-                    console.error('Init Sheet Error:', error);
-                    return;
-               } else {
-                    setIsLoading(false);
-               }
-               openPaymentSheet();
-          } catch (err) {
-               console.error(err);
-          }
-     };
+     // Get Subscription Data
+     const { GetSubscribedPlanData, refetch } = useGetSubscribedPlanHandler();
+     const SubsDetail = GetSubscribedPlanData as any;
 
      // Get All Plans
-     const { PlanData, PlanLoading, isFetching } = useGetPlanHandler({ interval: 'month' });
-     const plans = PlanData?.plans;
+     const { PlanData } = useGetPlanHandler({ interval: filter, type: userData?.role === 'Buyer' ? 'user' : 'agent' });
+     const plan = PlanData?.plans;
 
      const structuredPlan = () => {
-          const GetPlans = plans?.map((item, i) => {
+          const GetPlans = plan?.map((item, i) => {
                return {
                     id: item?._id,
                     name: item?.title,
@@ -137,22 +51,64 @@ const SubscriptionManagment = () => {
           });
           return GetPlans;
      };
-     const SUBSCRIPTION_PLANS = structuredPlan();
-     const filterPlans = structuredPlan()?.filter(v => v.id !== userData?.subscribedPlan?.plan?._id);
 
-     const currentPlanData = SUBSCRIPTION_PLANS?.find(p => p.id === userData?.subscribedPlan?.plan?._id);
-     const daysRemaining = Math.ceil((new Date(currentSubscription.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+     const filterPlans = structuredPlan()?.filter(v => v.id !== SubsDetail?.planId);
+     console.log(plan);
+     const startDateRaw = SubsDetail?.plan?.startDate;
+     const startDate = startDateRaw ? new Date(startDateRaw) : null;
+     const endDate = startDate && !isNaN(startDate.getTime()) ? new Date(startDate) : null;
+
+     if (endDate) {
+          endDate.setMonth(endDate.getMonth() + 1);
+     }
+
+     const daysRemaining = endDate ? Math.max(0, Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0;
+
+     const renewalDate = endDate ? endDate.toISOString().split('T')[0] : 'N/A';
 
      // Downgrade Plan
      const { handleDownGradePlanAPI, isLoading: downgradeLoading } = useDownGradePlanHandler();
+     // Upgrade Plan
+     const { handleUpGradePlanAPI, isLoading: upgradeLoading } = useUpGradePlanHandler();
+
+     const openPaymentSheet = async () => {
+          try {
+               setIsLoading(true);
+               const billingDetails = {
+                    email: userData?.email || '',
+                    name: userData?.username || '',
+               };
+               const { paymentMethod, error } = await createPaymentMethod({
+                    paymentMethodType: 'Card',
+                    paymentMethodData: {
+                         billingDetails,
+                    },
+               });
+               if (error) {
+                    setIsLoading(false);
+                    return ResToast({ title: error.message, type: 'danger' });
+               }
+               if (!error) {
+                    await handleUpGradePlanAPI({
+                         upgradeTo: selectedPlan,
+                         paymentMethodId: paymentMethod?.id,
+                    });
+                    refetch();
+                    setIsLoading(false);
+                    setIsUpgrade(false);
+               }
+          } catch (err) {
+               console.error(err);
+          }
+     };
 
      const handleChangePlan = () => {
           if (planPrice === null || planPrice === undefined) return ResToast({ title: 'Please select plan', type: 'warning' });
-          if ((currentPlanData as any)?.price < planPrice) {
-               console.log('Up');
+          if (SubsDetail?.planDetail?.amount < planPrice) {
+               setIsUpgrade(true);
           } else {
-               console.log('Down');
                handleDownGradePlanAPI(selectedPlan);
+               refetch();
           }
      };
 
@@ -160,31 +116,32 @@ const SubscriptionManagment = () => {
           <>
                <Spinner visible={isLoading} color={colors.textBlue} />
                <ScrollView style={styles.container}>
-                    {/* Header */}
                     <View style={styles.header}>
+                         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.8}>
+                              <Icon name="chevron-back" size={22} color="#000" />
+                         </TouchableOpacity>
                          <Text style={styles.headerTitle}>Subscription</Text>
-                         <Text style={styles.headerSubtitle}>Manage your subscription plan</Text>
+                         <View style={styles.headerSpacer} />
                     </View>
+                    <Text style={styles.headerSubtitle}>Manage your subscription plan</Text>
 
-                    {/* Current Subscription Card */}
                     <View style={[styles.currentPlanCard, { borderColor: '#9CA3AF' }]}>
                          <View style={styles.currentPlanHeader}>
                               <View>
                                    <Text style={styles.currentPlanLabel}>Current Plan</Text>
-                                   <Text style={styles.currentPlanName}>{currentPlanData?.name}</Text>
+                                   <Text style={styles.currentPlanName}>{SubsDetail?.planDetail?.title}</Text>
                               </View>
-                              <View style={[styles.planBadge, { backgroundColor: '#9CA3AF' }]}>
-                                   <Text style={styles.planBadgeText}>Active</Text>
+                              <View style={[styles.planBadge, { backgroundColor: SubsDetail?.plan?.status == 'active' ? '#22C55E' : '#9CA3AF' }]}>
+                                   <Text style={styles.planBadgeText}>{SubsDetail?.plan?.status}</Text>
                               </View>
                          </View>
 
-                         {/* Usage Stats */}
                          <View style={styles.usageSection}>
                               <View style={styles.usageItem}>
                                    <Icon name="cash-outline" size={24} color={colors.PrimaryColor} />
                                    <View style={styles.usageInfo}>
                                         <Text style={styles.usageLabel}>Price</Text>
-                                        <Text style={styles.usageValue}>{currentPlanData?.price}</Text>
+                                        <Text style={styles.usageValue}>${SubsDetail?.planDetail?.amount}</Text>
                                    </View>
                               </View>
 
@@ -199,34 +156,29 @@ const SubscriptionManagment = () => {
                               </View>
                          </View>
 
-                         {/* Progress Bar */}
-                         <View style={styles.progressSection}>
-                              <Text style={styles.progressLabel}>Usage Progress</Text>
-                              <View style={styles.progressBar}>
-                                   <View
-                                        style={[
-                                             styles.progressFill,
-                                             {
-                                                  width: `${(currentSubscription.listingsUsed / currentSubscription.listingsTotal) * 100}%`,
-                                                  backgroundColor: '#9CA3AF',
-                                             },
-                                        ]}
-                                   />
-                              </View>
-                         </View>
-
-                         {/* Renewal Info */}
                          <View style={styles.renewalInfo}>
-                              <Icon name={currentSubscription.autoRenew ? 'sync' : 'close-circle'} size={18} color={currentSubscription.autoRenew ? '#10B981' : '#EF4444'} />
-                              <Text style={styles.renewalText}>{currentSubscription.autoRenew ? `Updated-At ${GetSubscriptionData?.updatedAt?.split('T')[0]}` : 'Auto-renewal is off'}</Text>
+                              <Icon name={'sync'} size={18} color={'#10B981'} />
+                              <Text style={styles.renewalText}>{`Updated-At ${renewalDate}`}</Text>
                          </View>
                     </View>
 
-                    {/* Available Plans */}
                     <View style={styles.plansSection}>
                          <Text style={styles.sectionTitle}>Available Plans</Text>
                          <Text style={styles.sectionSubtitle}>Choose the plan that fits your needs</Text>
 
+                         <View className="flex-row items-center gap-1 pb-5 justify-center">
+                              <Text className={`text-lg text-text-muted font-figtree500`}>Monthly</Text>
+                              <Switch
+                                   value={isSwitchOn}
+                                   onValueChange={(value: boolean) => {
+                                        setIsSwitchOn(value);
+                                        setFilter(value ? 'year' : 'month');
+                                   }}
+                                   color={colors.textBlue}
+                                   focusable
+                              />
+                              <Text className="text-lg text-text-muted font-figtree500">Yearly</Text>
+                         </View>
                          {filterPlans?.map(plan => {
                               return (
                                    <TouchableOpacity
@@ -265,13 +217,11 @@ const SubscriptionManagment = () => {
                                              )}
                                         </View>
 
-                                        {/* Listings Info */}
                                         <View style={[styles.listingsTag, { backgroundColor: `${plan.color}15` }]}>
                                              <Icon name="document-text-outline" size={16} color={plan.color} />
                                              <Text style={[styles.listingsText, { color: plan.color }]}>{plan.listings === 'Unlimited' ? 'Unlimited' : `${plan.listings}`} Listings</Text>
                                         </View>
 
-                                        {/* Features List */}
                                         <View style={styles.featuresContainer}>
                                              {plan.features.map((feature, index) => (
                                                   <View key={index} style={styles.featureItem}>
@@ -291,7 +241,6 @@ const SubscriptionManagment = () => {
                          })}
                     </View>
 
-                    {/* Action Buttons */}
                     <View style={styles.actionsSection}>
                          <TouchableOpacity
                               style={[styles.upgradeButton, { backgroundColor: colors.PrimaryColor }]}
@@ -310,13 +259,8 @@ const SubscriptionManagment = () => {
                                    </>
                               )}
                          </TouchableOpacity>
-
-                         <TouchableOpacity style={styles.cancelButton} onPress={handleCancelSubscription} disabled={downgradeLoading}>
-                              <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
-                         </TouchableOpacity>
                     </View>
 
-                    {/* Additional Info */}
                     <View style={styles.infoSection}>
                          <View style={styles.infoCard}>
                               <Icon name="information-circle-outline" size={24} color={colors.PrimaryColor} />
@@ -329,6 +273,7 @@ const SubscriptionManagment = () => {
                          </View>
                     </View>
                </ScrollView>
+               <PurchaseModal visible={isUpgrade} isLoading={upgradeLoading} onClose={() => setIsUpgrade(false)} onBuy={openPaymentSheet} />
           </>
      );
 };
@@ -341,21 +286,37 @@ const styles = StyleSheet.create({
           backgroundColor: '#F8F9FA',
      },
      header: {
-          paddingHorizontal: 24,
-          paddingTop: 60,
-          paddingBottom: 24,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 12,
           backgroundColor: '#fff',
      },
+     backButton: {
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: '#F5F5F5',
+          alignItems: 'center',
+          justifyContent: 'center',
+     },
      headerTitle: {
-          fontSize: 32,
+          fontSize: 20,
           fontFamily: Font.font500,
           color: '#000',
-          marginBottom: 4,
+     },
+     headerSpacer: {
+          width: 40,
      },
      headerSubtitle: {
           fontSize: 15,
           fontFamily: Font.font400,
           color: '#666',
+          paddingHorizontal: 16,
+          paddingBottom: 16,
+          backgroundColor: '#fff',
      },
      currentPlanCard: {
           backgroundColor: '#fff',

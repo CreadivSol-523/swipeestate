@@ -96,7 +96,7 @@ const ResetPasswordScreen = ({ navigation, route }: { navigation?: any; route?: 
                </View>
 
                {/* Footer */}
-               <Text style={styles.footer}>© 2026 Swipe Estate. All rights reserved.</Text>
+               <Text style={styles.footer}>© {new Date().getFullYear()} Swipe Estate. All rights reserved.</Text>
           </ScrollView>
      );
 };
