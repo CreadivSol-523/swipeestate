@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
@@ -7,6 +7,7 @@ import { useGetProfileHandler } from '../../models/Profile/Profile';
 import { requestCameraPermission } from '../../utils/Permissions/Permissions';
 import { ImagePickerResponse, launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { useLogoutHandler } from '../../models/Auth/Auth';
+import { useAuth } from '../../utils/Storage/Storage';
 
 const ProfileScreen = ({ navigation }: { navigation: any }) => {
      const { handleNewPassword, isLoading: LogoutLoading } = useLogoutHandler();
@@ -14,6 +15,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
      const handleLogout = () => {
           handleNewPassword();
      };
+     const { userData } = useAuth();
 
      const { ProfileData } = useGetProfileHandler();
 
@@ -155,7 +157,9 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                          <Icon name="chevron-forward" size={20} color="#999" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('SubscriptionManagment')}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate(Platform.OS === 'ios' && userData?.role === 'Buyer' ? 'ManageIAPSubs' : 'SubscriptionManagment')}>
+                         {/* // onPress={() => navigation.navigate(userData?.role === 'Buyer' ? 'ManageIAPSubs' : 'SubscriptionManagment')} */}
+                         {/* > */}
                          <View style={styles.actionIconContainer}>
                               <Icon name="card-outline" size={22} color={colors.PrimaryColor} />
                          </View>

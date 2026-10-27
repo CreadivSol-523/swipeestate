@@ -204,9 +204,10 @@ export const useLoginAccountHandler = () => {
 
                          // iOS normal users use Apple In-App Purchases.
                          // Android users and agents keep the existing screen.
-                         // const planScreen = Platform.OS === 'ios' && user?.role !== 'Seller' ? 'SelectIAPPlanScreen' : 'SelectPlanScreen';
+                         const planScreen = Platform.OS === 'ios' && user?.role !== 'Buyer' ? 'SelectIAPPlanScreen' : 'SelectPlanScreen';
+                         // const planScreen = user?.role !== 'Seller' ? 'SelectIAPPlanScreen' : 'SelectPlanScreen';
 
-                         const planScreen = 'SelectIAPPlanScreen';
+                         // const planScreen = 'SelectIAPPlanScreen';
 
                          return navigation.navigate(planScreen, {
                               user: loggedInUser,
