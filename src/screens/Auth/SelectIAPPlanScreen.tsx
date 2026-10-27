@@ -27,7 +27,7 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
           interval: 'month',
           type: 'user',
      });
-
+     console.log(PlanData);
      const plans: Plans[] = PlanData?.plans || [];
 
      // Existing backend API, used here for the free plan only

@@ -14,6 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SubscriptionManagment from '../screens/Subscription/SubscriptionManagment';
 import MatchApartments from '../screens/User/MatchApartments';
 import MatchDetail from '../screens/User/MatchDetail';
+import SelectIAPPlanScreen from '../screens/Auth/SelectIAPPlanScreen';
+import ManageIAPSubs from '../screens/User/ManageIAPPlanScreen';
 
 const Tab = createBottomTabNavigator();
 const ProfileStackNavigator = createStackNavigator();
@@ -28,6 +30,8 @@ const ProfileStack = (): JSX.Element => {
                <ProfileStackNavigator.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="SubscriptionManagment" component={SubscriptionManagment} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="ManageIAPSubs" component={ManageIAPSubs} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="SelectIAPPlanScreen" component={SelectIAPPlanScreen} options={{ headerShown: false }} />
           </ProfileStackNavigator.Navigator>
      );
 };
