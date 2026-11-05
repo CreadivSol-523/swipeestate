@@ -39,6 +39,7 @@ gradle.properties
 # node.js
 #
 node_modules/
+temp_auto_push.bat
 npm-debug.log
 yarn-error.log
 
@@ -76,8 +77,10 @@ yarn-error.log
 !.yarn/versions
 
 # Environment variables
-# .env
-# .env.development
-# .env.production
-# .env.local
-# .env*.local
+.env
+.env.development
+.env.production
+.env.local
+.env*.local
+.gitignore
+branch_structure.json
