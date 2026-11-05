@@ -7,6 +7,7 @@ import colors from '../../assests/Colors/Colors';
 import ResToast from '../../components/ResToast/ResToast';
 import Spinner from '../../components/Loader/Spinner';
 import { useGetSubscribedPlanHandler } from '../../models/Plan/Plan';
+import { useAuth } from '../../utils/Storage/Storage';
 
 // Apple ki subscriptions settings: cancel / manage yahin se hota hai
 const APPLE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions';
@@ -24,7 +25,7 @@ const toValidDate = (value: any): Date | null => {
      return isNaN(parsed.getTime()) ? null : parsed;
 };
 
-// Free / Stripe subscription me end date save nahi hoti, to start date + interval (month / year) se nikalte hain
+// Free subscription me end date save nahi hoti, to start date + interval (month / year) se nikalte hain
 const addInterval = (start: Date, interval?: string) => {
      const end = new Date(start);
      if (interval === 'year') {
@@ -38,12 +39,12 @@ const addInterval = (start: Date, interval?: string) => {
 const ManageIAPSubs = () => {
      const navigation = useNavigation();
 
-     // Current subscription data (same hook jo Stripe wali screen use karti hai)
+     // Current subscription data (same hook jo  wali screen use karti hai)
      const { GetSubscribedPlanData, GetSubscribedPlanLoading, isFetching, refetch } = useGetSubscribedPlanHandler();
      const SubsDetail = GetSubscribedPlanData as any;
      const subscription = SubsDetail?.plan;
      const planDetail = SubsDetail?.planDetail;
-
+     const { userData, accessToken, refreshToken } = useAuth();
      // Plans screen se purchase karke wapas aane par data fresh ho jaye
      const refetchRef = useRef(refetch);
      refetchRef.current = refetch;
@@ -75,7 +76,7 @@ const ManageIAPSubs = () => {
      const displayStatus = isExpired ? 'expired' : rawStatus;
      const isActive = displayStatus === 'active';
 
-     // Stripe se kharidi hui active paid subscription ke upar IAP na kharide (double billing se bachne ke liye)
+     // se kharidi hui active paid subscription ke upar IAP na kharide (double billing se bachne ke liye)
      const boughtOutsideAppStore = hasPlan && !isApple && isActive && isPaid;
      const canChangePlan = !boughtOutsideAppStore;
 
@@ -90,9 +91,11 @@ const ManageIAPSubs = () => {
      };
 
      const goToPlans = () => {
-          navigation.navigate(IAP_PLANS_ROUTE as never);
+          (navigation as any).navigate(IAP_PLANS_ROUTE, {
+               user: { user: userData, accessToken, refreshToken },
+               planType: 'Buyer', // Seller ke liye 'Seller'
+          });
      };
-
      return (
           <>
                <Spinner visible={GetSubscribedPlanLoading} color={colors.textBlue} />

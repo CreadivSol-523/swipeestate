@@ -16,7 +16,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
           handleNewPassword();
      };
      const { userData } = useAuth();
-
+     console.log(userData);
      const { ProfileData } = useGetProfileHandler();
 
      const handleImagePicker = async () => {
@@ -157,7 +157,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                          <Icon name="chevron-forward" size={20} color="#999" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate(Platform.OS === 'ios' && userData?.role === 'Buyer' ? 'ManageIAPSubs' : 'SubscriptionManagment')}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('ManageIAPSubs')}>
                          {/* // onPress={() => navigation.navigate(userData?.role === 'Buyer' ? 'ManageIAPSubs' : 'SubscriptionManagment')} */}
                          {/* > */}
                          <View style={styles.actionIconContainer}>

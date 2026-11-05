@@ -102,7 +102,7 @@ export const useVerifyApplePurchaseHandler = () => {
                const res = await VerifyApplePurchaseAPI({ userId, planId, transactionId });
 
                if (!res.error) {
-                    // Existing Stripe flow ki tarah user ko app ke andar bhejo
+                    // Existing  flow ki tarah user ko app ke andar bhejo
                     dispatch(authUser({ data: user }));
                     ResToast({ title: 'Subscription activated', type: 'success' });
                     return true;

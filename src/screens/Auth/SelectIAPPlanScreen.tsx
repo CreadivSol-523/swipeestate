@@ -7,6 +7,7 @@ import colors from '../../assests/Colors/Colors';
 import { useBuyPlanHandler, useGetPlanHandler, useVerifyApplePurchaseHandler } from '../../models/Plan/Plan';
 import { Plans } from '../../redux/Plan/PlanTypes';
 import ResToast from '../../components/ResToast/ResToast';
+import { useAuth } from '../../utils/Storage/Storage';
 
 // Backend verification endpoint (/api/subscriptions/apple/verify) aur hook ready hain.
 // Agar kabhi backend down ho to isay false kar do, warna Apple payment ho jayegi lekin subscription activate nahi hogi.
@@ -16,18 +17,40 @@ const APPLE_VERIFICATION_READY = true;
 const PRIVACY_POLICY_URL = 'https://swipestate-adminpanel.vercel.app/privacy-policy';
 const TERMS_OF_USE_URL = 'https://swipestate-adminpanel.vercel.app/terms-of-use';
 
-const APPLE_PRODUCT_IDS = ['com.swipeestate.user.bronze', 'com.swipeestate.user.silver', 'com.swipeestate.user.platinum'];
+// App mein role ka naam
+type PlanType = 'Buyer' | 'Seller';
+
+// Backend / admin panel mein plan type ka naam
+type ApiPlanType = 'user' | 'agent';
+
+// Buyer = user plans, Seller = agent plans (API sirf "user" / "agent" samajhti hai)
+const API_TYPE_BY_PLAN_TYPE: Record<PlanType, ApiPlanType> = {
+     Buyer: 'user',
+     Seller: 'agent',
+};
+
+// Har type ke Apple product IDs (App Store Connect wali IDs se bilkul same)
+const APPLE_PRODUCT_IDS_BY_TYPE: Record<PlanType, string[]> = {
+     Buyer: ['com.swipeestate.user.bronze', 'com.swipeestate.user.silver', 'com.swipeestate.user.platinum'],
+     Seller: ['com.swipeestate.agent.bronze', 'com.swipeestate.agent.silver', 'com.swipeestate.agent.platinum'],
+};
 
 const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
      const { user } = route?.params || {};
-     const [isLoading, setIsLoading] = useState(false);
 
-     // Fetch user plans from the backend
+     // route.params.planType === 'Seller' ho to agent plans, warna user (Buyer) plans
+     const planType: PlanType = user?.user?.role === 'Seller' ? 'Seller' : 'Buyer';
+     const apiPlanType: ApiPlanType = API_TYPE_BY_PLAN_TYPE[planType];
+     const APPLE_PRODUCT_IDS = APPLE_PRODUCT_IDS_BY_TYPE[planType];
+
+     const [isLoading, setIsLoading] = useState(false);
+     console.log({ API_TYPE_BY_PLAN_TYPE, apiPlanType, planType, user }, user.email);
+
+     // Fetch plans (user ya agent) from the backend: API ko "user" / "agent" jata hai, Buyer / Seller nahi
      const { PlanData, PlanLoading, isFetching } = useGetPlanHandler({
           interval: 'month',
-          type: 'user',
+          type: apiPlanType,
      });
-     console.log(PlanData);
      const plans: Plans[] = PlanData?.plans || [];
 
      // Existing backend API, used here for the free plan only
@@ -118,7 +141,7 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
           },
      });
 
-     // Load Apple subscription products
+     // Load Apple subscription products (planType ke hisaab se)
      useEffect(() => {
           if (connected) {
                fetchProducts({
@@ -128,7 +151,7 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
                     console.error('Failed to fetch Apple subscriptions:', error);
                });
           }
-     }, [connected, fetchProducts]);
+     }, [connected, fetchProducts, APPLE_PRODUCT_IDS]);
 
      // Match each backend plan with its App Store product
      const getAppleProduct = (plan: Plans) => {
@@ -151,6 +174,17 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
                     user,
                     amount: plan.amount,
                });
+               // console.log({
+               //      RequestBuyPlan: {
+               //           email: user?.user?.email,
+               //           planId: (plan as any)._id,
+               //           token: '',
+               //           userId: user?.user?._id,
+               //           priceId: (plan as any).priceId,
+               //      },
+               //      user,
+               //      amount: plan.amount,
+               // });
           } catch (error) {
                console.error('Free plan activation failed:', error);
           } finally {
@@ -158,7 +192,7 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
           }
      };
 
-     // Start Apple IAP for paid user plans
+     // Start Apple IAP for paid plans
      const handleApplePurchase = async (plan: Plans) => {
           const product = getAppleProduct(plan);
           const productId = (plan as any).appleProductId;
@@ -235,7 +269,7 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
                await restorePurchases();
                const purchases = await getAvailablePurchases();
 
-               // Sirf hamare subscription products, sab se nayi purchase pehle
+               // Sirf is screen (Buyer ya Seller) ke subscription products, sab se nayi purchase pehle
                const candidates = (purchases || []).filter(p => APPLE_PRODUCT_IDS.includes(p.productId)).sort((a, b) => ((b as any).transactionDate ?? 0) - ((a as any).transactionDate ?? 0));
 
                const purchase = candidates[0];
@@ -291,7 +325,7 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
 
                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                     <View style={styles.header}>
-                         <Text style={styles.headerTitle}>SELECT PLAN</Text>
+                         <Text style={styles.headerTitle}>{planType === 'Seller' ? 'SELECT AGENT PLAN' : 'SELECT PLAN'}</Text>
                          <Text style={styles.headerSubtitle}>Choose the subscription that suits your needs.</Text>
                     </View>
 
@@ -345,12 +379,6 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
                     <TouchableOpacity style={styles.restoreButton} disabled={isLoading || !connected} onPress={handleRestorePurchases}>
                          <Text style={[styles.restoreButtonText, (isLoading || !connected) && styles.restoreButtonTextDisabled]}>Restore Purchases</Text>
                     </TouchableOpacity>
-
-                    <Text style={styles.legalText}>
-                         Payment will be charged to your Apple ID account at confirmation of purchase. Subscriptions renew automatically every month unless cancelled at least 24 hours before the end
-                         of the current period. Your account will be charged for renewal within 24 hours before the end of the current period. You can manage or cancel your subscription anytime in
-                         your Apple ID Account Settings after purchase.
-                    </Text>
 
                     <View style={styles.legalLinksRow}>
                          <TouchableOpacity onPress={() => openLink(PRIVACY_POLICY_URL)}>
