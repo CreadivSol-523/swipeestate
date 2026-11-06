@@ -53,15 +53,16 @@ export const useBuyPlanHandler = () => {
      const handleBuyPlanAPI = async (data: data) => {
           try {
                const res = await BuyPlanAPI(data?.RequestBuyPlan);
+               console.log(res, "resresresresresres")
                if (!res.error) {
                     dispatch(authUser({ data: data?.user }));
                     if (data.amount == 0 || data.amount == null || !data.amount) {
-                         return ResToast({ title: 'Account Created', type: 'success' });
+                         return ResToast({ title: 'Subscription Purchased Successfully', type: 'success' });
                     } else {
                          return ResToast({ title: 'Payment Comfirmed', type: 'success' });
                     }
                } else {
-                    return ResToast({ title: 'Payment Failed! please try again', type: 'warning' });
+                    return ResToast({ title: (res.error as any)?.data?.message || 'Payment Failed! please try again', type: 'warning' });
                }
           } catch (error) {
                console.error('Payment failed:', error);
