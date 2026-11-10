@@ -29,7 +29,6 @@ const MatchDetail = ({ navigation, route }: Props) => {
      const { GetSingleMatch, GetSingleMatchLoading } = useGetSingleMatchHandler(paramsData?._id as unknown as string);
 
      const filterApartment = (GetSingleMatch?.data as any)?.match;
-
      const isSeller = userData.role === 'Seller';
      const isBuyer = userData.role === 'Buyer';
      const status = filterApartment?.status;
@@ -112,7 +111,7 @@ const MatchDetail = ({ navigation, route }: Props) => {
           // Baqi sab cases (pehle wala default)
           return renderContactCard('Contact Agent', filterApartment?.seller);
      };
-
+     console.log(filterApartment);
      return (
           <>
                <ScrollView showsVerticalScrollIndicator={false}>
@@ -128,9 +127,10 @@ const MatchDetail = ({ navigation, route }: Props) => {
                               }}
                               scrollEventThrottle={16}
                          >
-                              {filterApartment?.property?.featuredImages?.map((image: string, index: number) => (
-                                   <FastImage key={index} source={{ uri: image }} style={styles.apartmentImage} resizeMode={FastImage.resizeMode.cover} />
-                              ))}
+                              {filterApartment &&
+                                   [filterApartment?.property?.image, ...filterApartment?.property?.featuredImages]?.map((image: string, index: number) => (
+                                        <FastImage key={index} source={{ uri: image }} style={styles.apartmentImage} resizeMode={FastImage.resizeMode.cover} />
+                                   ))}
                          </ScrollView>
 
                          {/* Header Buttons */}
@@ -142,11 +142,11 @@ const MatchDetail = ({ navigation, route }: Props) => {
                                    {isFavorite ? <MaterialIcon name="favorite" size={24} color="#FF5252" /> : <MaterialIcon name="favorite-border" size={24} color="#fff" />}
                               </TouchableOpacity>
                          </View>
-
+                         {/* [...filterApartment?.property?.featuredImages, filterApartment?.property?.image] */}
                          {/* Image Indicator */}
                          <View style={styles.imageIndicator}>
                               <Text style={styles.imageIndicatorText}>
-                                   {currentImageIndex + 1} / {filterApartment?.property?.featuredImages?.length}
+                                   {currentImageIndex + 1} / {filterApartment && [...filterApartment?.property?.featuredImages, filterApartment?.property?.image].length}
                               </Text>
                          </View>
 
