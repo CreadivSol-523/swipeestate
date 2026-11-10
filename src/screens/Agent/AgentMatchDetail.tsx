@@ -47,7 +47,6 @@ const AgentMatchDetail = ({ navigation, route }: Props) => {
      const handleRejectMatches = async () => {
           await handleRejectBySellerAPI(matchID ?? '');
           navigation?.goBack();
-          console.log(matchID);
      };
 
      // Find the single relevant match entry for the current user's role —

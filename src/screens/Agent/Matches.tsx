@@ -54,7 +54,6 @@ const Matches = ({ navigation }: { navigation: Navigation }) => {
 
      const handleNavigate = (id: string) => {
           const filterApartment = matchesDetail?.find((item: any) => item?._id === id);
-          // console.log({ filterApartment, matchID: filterApartment?._id });
           navigation.navigate('AgentMatchDetail', { filterApartment, matchID: filterApartment?._id });
      };
 
@@ -89,7 +88,6 @@ const Matches = ({ navigation }: { navigation: Navigation }) => {
           refetch();
           setFilterMenuOpen(false);
      };
-     console.log(GetMatches, 'GetMatchesGetMatchesGetMatchesGetMatches');
      const structuredMatches = (): UserMatch[] | undefined => {
           if (!GetMatches?.data?.matches?.length) return;
 
@@ -132,13 +130,8 @@ const Matches = ({ navigation }: { navigation: Navigation }) => {
 
      const activeFilterLabel = useMemo(() => FILTER_OPTIONS.find(f => f.value === filter)?.label, [filter]);
 
-     // console.log((GetMatches?.data?.matches as any)?.rejectedBy?.buyerId == userId);
-     // console.log(GetMatches?.data);
-     // console.log(userId);
-
      const renderMatchCard = ({ item }: { item: UserMatch }) => {
           const statusStyle = getStatusStyle(item.status);
-          console.log(item, 'itemitemitem');
           return (
                <View style={styles.card}>
                     {/* Image Section */}

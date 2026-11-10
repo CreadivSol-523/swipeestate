@@ -59,8 +59,6 @@ const MatchApartments = ({ navigation }: { navigation: Navigation }) => {
      const [filterOpen, setFilterOpen] = useState(false);
 
      const { GetMatches, GetMatchesData, GetMatchesLoading, refetch, isFetching, isError } = useGetMatchesHandler({ page, search: filter, limit: 4 });
-     console.log('API matches:', GetMatchesData?.matches);
-     console.log('UI matches:', matches);
      const handleIncreasePage = () => {
           if (GetMatchesData?.meta?.totalPages === page) return;
           if (GetMatches?.data?.matches?.length == 0 || GetMatchesLoading) return;

@@ -14,7 +14,6 @@ const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
           reenterNewPassword: '',
      });
      const [errors, setErrors] = useState<{ [key: string]: string }>({});
-     console.log(errors);
      const validateForm = () => {
           const newErrors: { [key: string]: string } = {};
 

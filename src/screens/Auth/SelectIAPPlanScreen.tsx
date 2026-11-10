@@ -44,7 +44,6 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
      const APPLE_PRODUCT_IDS = APPLE_PRODUCT_IDS_BY_TYPE[planType];
 
      const [isLoading, setIsLoading] = useState(false);
-     console.log({ API_TYPE_BY_PLAN_TYPE, apiPlanType, planType, user }, user.email);
 
      // Fetch plans (user ya agent) from the backend: API ko "user" / "agent" jata hai, Buyer / Seller nahi
      const { PlanData, PlanLoading, isFetching } = useGetPlanHandler({
@@ -95,7 +94,7 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
 
                     if (!plan || !transactionId) {
                          ResToast({
-                              title: 'Purchase match nahi hui. Support se rabta karein.',
+                              title: 'Purchase could not be matched. Please contact support.',
                               type: 'danger',
                          });
                          return;
@@ -115,7 +114,7 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
                } catch (error: any) {
                     console.error('Apple purchase handling failed:', error);
                     ResToast({
-                         title: error?.message || 'Purchase verify nahi ho saki',
+                         title: error?.message || 'Purchase verify Failed',
                          type: 'danger',
                     });
                } finally {
@@ -140,7 +139,6 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
                setIsLoading(false);
           },
      });
-
      // Load Apple subscription products (planType ke hisaab se)
      useEffect(() => {
           if (connected) {
@@ -174,17 +172,6 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
                     user,
                     amount: plan.amount,
                });
-               // console.log({
-               //      RequestBuyPlan: {
-               //           email: user?.user?.email,
-               //           planId: (plan as any)._id,
-               //           token: '',
-               //           userId: user?.user?._id,
-               //           priceId: (plan as any).priceId,
-               //      },
-               //      user,
-               //      amount: plan.amount,
-               // });
           } catch (error) {
                console.error('Free plan activation failed:', error);
           } finally {
@@ -229,6 +216,7 @@ const SelectIAPPlanScreen = ({ route }: { route?: any }) => {
                     },
                     type: 'subs',
                });
+               setIsLoading(false);
           } catch (error: any) {
                setIsLoading(false);
 

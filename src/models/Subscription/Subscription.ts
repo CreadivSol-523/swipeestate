@@ -47,7 +47,6 @@ export const useDownGradePlanHandler = () => {
                     userId: userId,
                     downgradeTo: downgradeTo,
                });
-               console.log(res, "Downgrade Payment Response")
                if (res.error) {
                     return ResToast({ title: (res.error as any)?.data?.message || 'Please try again', type: 'danger' });
                } else {
@@ -100,7 +99,6 @@ export const useUpGradePlanHandler = () => {
                     upgradeTo: upgradeTo,
                     paymentMethodId: paymentMethodId,
                });
-               console.log(res, "Upgrade Payment Response")
 
                if (res.error) {
                     return ResToast({ title: (res.error as any)?.data?.message || 'Please try again', type: 'danger' });

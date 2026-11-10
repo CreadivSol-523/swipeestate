@@ -256,8 +256,6 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
 
      const numberOfSwipes = (GetSubscribedPlanData as any)?.plan?.planRestrictions?.numberOfSwipes;
 
-     console.log(apartmentList, 'apartmentListapartmentList');
-
      const maybeLoadMore = () => {
           if (apartmentList.length <= 2) {
                // pageRef.current += 1;
@@ -332,8 +330,6 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
           lte: rangeFilter.lte,
           status: selectedValue || '',
      });
-
-     console.log(ApartmentsData);
 
      const structuredApartment = () => {
           if (ApartmentsData?.apartments.length == 0) return;

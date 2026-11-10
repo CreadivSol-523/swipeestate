@@ -63,12 +63,9 @@ export const useCreateLikeHandler = () => {
      const { userData } = useAuth();
      const userId = userData?._id;
      const [CreateApartmentAPI, { isLoading }] = useCreateLikeMutation();
-     console.log(userId);
      const handleCreateLikeAPI = async (propertyId: string) => {
           try {
                const res = await CreateApartmentAPI({ propertyId, userID: userId });
-
-               console.log(res);
 
                if (!res.error) {
                     console.log('Property Liked');
@@ -90,13 +87,9 @@ export const useRejectPropertyHandler = () => {
      const userId = userData?._id;
      const [RejectPropertyAPI, { isLoading }] = useRejectMatchMutation();
 
-     console.log(userId, 'Reject API ID');
-
      const handleRejectPropertyAPI = async (propertyId: string) => {
           try {
-               console.log(propertyId);
                const res = await RejectPropertyAPI({ propertyId, userId: userId });
-               console.log(res, 'resresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresres');
                if (!res.error) {
                     console.log('Property Reject');
                } else {
@@ -116,8 +109,6 @@ export const useAcceptPropertyHandler = () => {
      const { userData } = useAuth();
      const userId = userData?._id;
      const [AcceptPropertyAPI, { isLoading }] = useAcceptMatchMutation();
-
-     console.log(userId, 'Accept API ID');
 
      const handleAcceptPropertyAPI = async (matchId: string) => {
           try {
@@ -186,13 +177,9 @@ export const useRejectBySellerHandler = () => {
      const userId = userData?._id;
      const [RejectBySellerAPI, { isLoading }] = useRejectedBySellerMutation();
 
-     console.log(userId, 'Reject API ID');
-
      const handleRejectBySellerAPI = async (matchId: string) => {
           try {
-               console.log(matchId);
                const res = await RejectBySellerAPI({ matchId, userId: userId });
-               console.log(res, 'resresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresres');
                if (!res.error) {
                     console.log('Match Reject');
                } else {
@@ -213,18 +200,13 @@ export const useUnlockContactHandler = () => {
      const userId = userData?._id;
      const [UnlockContactAPI, { isLoading }] = useUnlockContactByBuyerMutation();
 
-     console.log(userId, 'Reject API ID');
-
      const handleUnlockContactAPI = async (matchId: string) => {
           try {
-               console.log(matchId);
                const res = await UnlockContactAPI({ matchId, userId: userId });
-               console.log(res, 'resresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresresres');
                if (!res.error) {
                     console.log('Contact Unlocked');
                } else {
                     ResToast({ res });
-                    console.log(res);
                }
           } catch (error) {
                console.error('Payment failed:', error);

@@ -53,7 +53,6 @@ export const useBuyPlanHandler = () => {
      const handleBuyPlanAPI = async (data: data) => {
           try {
                const res = await BuyPlanAPI(data?.RequestBuyPlan);
-               console.log(res, "resresresresresres")
                if (!res.error) {
                     dispatch(authUser({ data: data?.user }));
                     if (data.amount == 0 || data.amount == null || !data.amount) {

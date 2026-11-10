@@ -68,7 +68,6 @@ export const useUpdateProfileHandler = () => {
                     data: formData,
                });
 
-               console.log(res)
 
                if (!res.error) {
                     // dispatch(authUser({ data: data }));

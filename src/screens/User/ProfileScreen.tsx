@@ -16,7 +16,6 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
           handleNewPassword();
      };
      const { userData } = useAuth();
-     console.log(userData);
      const { ProfileData } = useGetProfileHandler();
 
      const handleImagePicker = async () => {
