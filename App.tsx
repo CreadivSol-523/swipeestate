@@ -6,7 +6,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import RootNavigation from './src/navigation/RootNavigation';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
-import { StripeProvider } from '@stripe/stripe-react-native';
 import Config from 'react-native-config';
 import { useEffect } from 'react';
 import BootSplash from 'react-native-bootsplash';
@@ -23,13 +22,11 @@ function App() {
                <SafeAreaProvider>
                     <GestureHandlerRootView>
                          <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-                              <StripeProvider publishableKey={Config.STRIPE_PUBLISHABLE_KEY || ''}>
-                                   <PaperProvider>
-                                        <ErrorBoundary>
-                                             <RootNavigation />
-                                        </ErrorBoundary>
-                                   </PaperProvider>
-                              </StripeProvider>
+                              <PaperProvider>
+                                   <ErrorBoundary>
+                                        <RootNavigation />
+                                   </ErrorBoundary>
+                              </PaperProvider>
                          </SafeAreaView>
                     </GestureHandlerRootView>
                </SafeAreaProvider>

@@ -11,7 +11,6 @@ import HomeScreen from '../screens/User/HomeScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicy/PrivacyPolicyScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import SubscriptionManagment from '../screens/Subscription/SubscriptionManagment';
 import MatchApartments from '../screens/User/MatchApartments';
 import MatchDetail from '../screens/User/MatchDetail';
 import SelectIAPPlanScreen from '../screens/Auth/SelectIAPPlanScreen';
@@ -28,7 +27,6 @@ const ProfileStack = (): JSX.Element => {
                <ProfileStackNavigator.Screen name="ProfileMain" component={ProfileScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
-               <ProfileStackNavigator.Screen name="SubscriptionManagment" component={SubscriptionManagment} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="ManageIAPSubs" component={ManageIAPSubs} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="SelectIAPPlanScreen" component={SelectIAPPlanScreen} options={{ headerShown: false }} />
@@ -40,7 +38,8 @@ const HomeStack = (): JSX.Element => {
      return (
           <HomeStackNavigator.Navigator screenOptions={{ headerShown: false }}>
                <HomeStackNavigator.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }} />
-               <HomeStackNavigator.Screen name="SubscriptionManagment" component={SubscriptionManagment} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="SubscriptionManagment" component={ManageIAPSubs} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="SelectIAPPlanScreen" component={SelectIAPPlanScreen} options={{ headerShown: false }} />
           </HomeStackNavigator.Navigator>
      );
 };
