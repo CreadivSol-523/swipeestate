@@ -11,13 +11,14 @@ import HomeScreen from '../screens/Agent/HomeScreen';
 import { NavigationContainer, useNavigation, getFocusedRouteNameFromRoute, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ListingScreen from '../screens/Agent/ListingScreen';
-import SubscriptionManagment from '../screens/Subscription/SubscriptionManagment';
 import ApartmentsScreen from '../screens/Agent/ApartmentsScreen';
 import MatchDetail from '../screens/User/MatchDetail';
 import Matches from '../screens/Agent/Matches';
 import SingleApartment from '../screens/Agent/SingleApartment';
 import AgentMatchDetail from '../screens/Agent/AgentMatchDetail';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicy/PrivacyPolicyScreen';
+import ManageIAPSubs from '../screens/User/ManageIAPPlanScreen';
+import SelectIAPPlanScreen from '../screens/Auth/SelectIAPPlanScreen';
 
 const Tab = createBottomTabNavigator();
 const ProfileStackNavigator = createStackNavigator();
@@ -47,8 +48,9 @@ const ProfileStack = (): JSX.Element => {
                <ProfileStackNavigator.Screen name="ProfileMain" component={ProfileScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
-               <ProfileStackNavigator.Screen name="SubscriptionManagment" component={SubscriptionManagment} options={{ headerShown: false }} />
                <ProfileStackNavigator.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="ManageIAPSubs" component={ManageIAPSubs} options={{ headerShown: false }} />
+               <ProfileStackNavigator.Screen name="SelectIAPPlanScreen" component={SelectIAPPlanScreen} options={{ headerShown: false }} />
           </ProfileStackNavigator.Navigator>
      );
 };
