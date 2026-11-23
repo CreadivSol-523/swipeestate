@@ -8,6 +8,19 @@ import { requestCameraPermission } from '../../utils/Permissions/Permissions';
 import { ImagePickerResponse, launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { useLogoutHandler } from '../../models/Auth/Auth';
 import { useAuth } from '../../utils/Storage/Storage';
+import ProfileSkeleton from '../../components/Skeletons/ProfileSkeleton';
+
+const InfoCard = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
+     <View style={styles.infoCard}>
+          <View style={styles.infoIconContainer}>
+               <Icon name={icon} size={20} color={colors.PrimaryColor} />
+          </View>
+          <View style={styles.infoContent}>
+               <Text style={styles.infoLabel}>{label}</Text>
+               <Text style={styles.infoValue}>{value || 'Not provided'}</Text>
+          </View>
+     </View>
+);
 
 const ProfileScreen = ({ navigation }: { navigation: any }) => {
      const { handleNewPassword, isLoading: LogoutLoading } = useLogoutHandler();
@@ -17,7 +30,8 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
      };
      const { userData } = useAuth();
 
-     const { ProfileData } = useGetProfileHandler();
+     // NOTE: agar tumhare hook me loading ka naam different hy to yahan rename kar lena
+     const { ProfileData, ProfileLoading } = useGetProfileHandler();
 
      const handleImagePicker = async () => {
           await requestCameraPermission();
@@ -78,17 +92,10 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
           }
      };
 
-     const InfoCard = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
-          <View style={styles.infoCard}>
-               <View style={styles.infoIconContainer}>
-                    <Icon name={icon} size={20} color={colors.PrimaryColor} />
-               </View>
-               <View style={styles.infoContent}>
-                    <Text style={styles.infoLabel}>{label}</Text>
-                    <Text style={styles.infoValue}>{value || 'Not provided'}</Text>
-               </View>
-          </View>
-     );
+     // Jab tak API data load ho raha hy skeleton dikhao
+     if (ProfileLoading && !ProfileData) {
+          return <ProfileSkeleton />;
+     }
 
      return (
           <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -107,15 +114,11 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                               <Image source={{ uri: ProfileData?.profilePicture }} style={styles.profileImage} />
                          ) : (
                               <View style={styles.profileImagePlaceholder}>
-                                   <Icon name="user" size={40} color="#9CA3AF" />
+                                   <Icon name="person" size={40} color="#9CA3AF" />
                               </View>
                          )}
                     </View>
                     <Text style={styles.userName}>{ProfileData?.name || 'User Name'}</Text>
-                    {/* <View style={styles.verifiedBadge}>
-                         <Icon name="checkmark-circle" size={16} color="#4CAF50" />
-                         <Text style={styles.verifiedText}>Verified Account</Text>
-                    </View> */}
                </View>
 
                {/* Information Cards */}
@@ -157,9 +160,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                          <Icon name="chevron-forward" size={20} color="#999" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate(Platform.OS === 'ios' && userData?.role === 'Buyer' ? 'ManageIAPSubs' : 'SubscriptionManagment')}>
-                         {/* // onPress={() => navigation.navigate(userData?.role === 'Buyer' ? 'ManageIAPSubs' : 'SubscriptionManagment')} */}
-                         {/* > */}
+                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate(Platform.OS === 'ios' && userData?.role === 'Buyer' ? 'ManageIAPSubs' : 'ManageIAPSubs')}>
                          <View style={styles.actionIconContainer}>
                               <Icon name="card-outline" size={22} color={colors.PrimaryColor} />
                          </View>
@@ -238,10 +239,6 @@ const styles = StyleSheet.create({
           alignItems: 'center',
           marginBottom: 24,
      },
-     profileImageWrapper: {
-          position: 'relative',
-          marginBottom: 8,
-     },
      profileImage: {
           width: 100,
           height: 100,
@@ -260,43 +257,11 @@ const styles = StyleSheet.create({
           borderColor: '#E5E7EB',
           borderStyle: 'dashed',
      },
-     cameraIconContainer: {
-          position: 'absolute',
-          bottom: 0,
-          right: 0,
-          backgroundColor: '#0EA5E9',
-          width: 32,
-          height: 32,
-          borderRadius: 16,
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderWidth: 3,
-          borderColor: '#FFFFFF',
-     },
-     profileImageText: {
-          fontSize: 13,
-          color: '#6B7280',
-          fontWeight: '500',
-     },
      userName: {
           fontSize: 24,
           fontFamily: Font.font500,
           color: '#000',
           marginBottom: 8,
-     },
-     verifiedBadge: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: '#E8F5E9',
-          paddingHorizontal: 12,
-          paddingVertical: 6,
-          borderRadius: 20,
-          gap: 4,
-     },
-     verifiedText: {
-          fontSize: 12,
-          fontFamily: Font.font500,
-          color: '#4CAF50',
      },
      section: {
           paddingHorizontal: 24,
@@ -400,6 +365,6 @@ const styles = StyleSheet.create({
           color: '#FF3B30',
      },
      bottomSpacing: {
-          height: 100,
+          height: 120,
      },
 });

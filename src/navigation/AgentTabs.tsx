@@ -33,6 +33,8 @@ type HomeStackParamList = {
 
 type HomeStackRouteProp = RouteProp<{ Home: HomeStackParamList }, 'Home'>;
 
+const TAB_BAR_HEIGHT = 72;
+
 const HomeStack = (): JSX.Element => {
      return (
           <HomeStackNavigator.Navigator screenOptions={{ headerShown: false }}>
@@ -75,7 +77,7 @@ const MatchesStack = (): JSX.Element => {
      );
 };
 
-// Custom Tab Bar Icon — now actually applies the active-state background
+// Custom Tab Bar Icon
 const TabBarIcon = ({ name, color, focused }: { name: string; color: string; focused: boolean }) => {
      return (
           <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
@@ -84,8 +86,43 @@ const TabBarIcon = ({ name, color, focused }: { name: string; color: string; foc
      );
 };
 
+// Ek hi jagah tab bar ka style, taake har screen me copy-paste na ho
+const getTabBarStyle = (bottomInset: number) => ({
+     position: 'absolute' as const,
+     left: 20,
+     right: 20,
+     bottom: bottomInset + 12,
+     height: TAB_BAR_HEIGHT,
+     backgroundColor: '#FFFFFF',
+     borderRadius: 32,
+     borderTopWidth: 0,
+     paddingHorizontal: 8,
+     // iOS par React Navigation by default safe-area paddingBottom lagata hy,
+     // floating bar me isse labels clip ho jate hain, isliye zero karo.
+     paddingTop: 0,
+     paddingBottom: 0,
+     ...Platform.select({
+          ios: {
+               shadowColor: '#000',
+               shadowOffset: { width: 0, height: 6 },
+               shadowOpacity: 0.12,
+               shadowRadius: 16,
+          },
+          android: {
+               elevation: 10,
+          },
+     }),
+});
+
+// Jin child screens par tab bar hide karna hy
+const shouldHideTabBar = (route: any, hiddenRoutes: string[]): boolean => {
+     const routeName = getFocusedRouteNameFromRoute(route);
+     return !!routeName && hiddenRoutes.includes(routeName);
+};
+
 const AgentTabs = (): JSX.Element => {
      const insets = useSafeAreaInsets();
+     const tabBarStyle = getTabBarStyle(insets.bottom);
 
      return (
           <NavigationContainer>
@@ -94,37 +131,20 @@ const AgentTabs = (): JSX.Element => {
                          headerShown: false,
                          tabBarActiveTintColor: colors.PrimaryColor,
                          tabBarInactiveTintColor: '#9CA3AF',
-
-                         tabBarStyle: {
-                              position: 'absolute',
-                              left: 20,
-                              right: 20,
-                              bottom: insets.bottom + 12,
-                              height: 64,
-                              marginInline: 10,
-                              backgroundColor: '#FFFFFF',
-                              borderRadius: 32,
-                              borderTopWidth: 0,
-                              paddingHorizontal: 8,
-                              ...Platform.select({
-                                   ios: {
-                                        shadowColor: '#000',
-                                        shadowOffset: { width: 0, height: 6 },
-                                        shadowOpacity: 0.12,
-                                        shadowRadius: 16,
-                                   },
-                                   android: {
-                                        elevation: 10,
-                                   },
-                              }),
-                         },
+                         tabBarStyle,
+                         tabBarLabelPosition: 'below-icon',
                          tabBarLabelStyle: {
                               fontSize: 11,
                               fontWeight: '600',
                               marginTop: 2,
+                              marginBottom: 0,
                          },
                          tabBarItemStyle: {
-                              paddingVertical: 6,
+                              height: TAB_BAR_HEIGHT,
+                              paddingTop: 10,
+                              paddingBottom: 10,
+                              justifyContent: 'center',
+                              alignItems: 'center',
                          },
                     }}
                >
@@ -133,33 +153,7 @@ const AgentTabs = (): JSX.Element => {
                          component={HomeStack}
                          options={({ route }) => ({
                               tabBarIcon: ({ color, focused }) => <TabBarIcon name="home" color={color} focused={focused} />,
-                              // Hide tab bar when on AgentMatchDetail
-                              tabBarStyle:
-                                   getFocusedRouteNameFromRoute(route) === 'AgentMatchDetail' || getFocusedRouteNameFromRoute(route) === 'ListingScreen'
-                                        ? { display: 'none' }
-                                        : {
-                                               position: 'absolute',
-                                               left: 20,
-                                               right: 20,
-                                               bottom: insets.bottom + 12,
-                                               height: 64,
-                                               marginInline: 10,
-                                               backgroundColor: '#FFFFFF',
-                                               borderRadius: 32,
-                                               borderTopWidth: 0,
-                                               paddingHorizontal: 8,
-                                               ...Platform.select({
-                                                    ios: {
-                                                         shadowColor: '#000',
-                                                         shadowOffset: { width: 0, height: 6 },
-                                                         shadowOpacity: 0.12,
-                                                         shadowRadius: 16,
-                                                    },
-                                                    android: {
-                                                         elevation: 10,
-                                                    },
-                                               }),
-                                          },
+                              tabBarStyle: shouldHideTabBar(route, ['AgentMatchDetail', 'ListingScreen']) ? { display: 'none' } : tabBarStyle,
                          })}
                     />
                     <Tab.Screen
@@ -167,32 +161,7 @@ const AgentTabs = (): JSX.Element => {
                          component={ListStack}
                          options={({ route }) => ({
                               tabBarIcon: ({ color, focused }) => <TabBarIcon name="list" color={color} focused={focused} />,
-                              tabBarStyle:
-                                   getFocusedRouteNameFromRoute(route) === 'ListingScreen' || getFocusedRouteNameFromRoute(route) === 'SingleAprtment'
-                                        ? { display: 'none' }
-                                        : {
-                                               position: 'absolute',
-                                               left: 20,
-                                               right: 20,
-                                               bottom: insets.bottom + 12,
-                                               height: 64,
-                                               marginInline: 10,
-                                               backgroundColor: '#FFFFFF',
-                                               borderRadius: 32,
-                                               borderTopWidth: 0,
-                                               paddingHorizontal: 8,
-                                               ...Platform.select({
-                                                    ios: {
-                                                         shadowColor: '#000',
-                                                         shadowOffset: { width: 0, height: 6 },
-                                                         shadowOpacity: 0.12,
-                                                         shadowRadius: 16,
-                                                    },
-                                                    android: {
-                                                         elevation: 10,
-                                                    },
-                                               }),
-                                          },
+                              tabBarStyle: shouldHideTabBar(route, ['ListingScreen', 'SingleAprtment']) ? { display: 'none' } : tabBarStyle,
                          })}
                     />
                     <Tab.Screen
@@ -200,35 +169,7 @@ const AgentTabs = (): JSX.Element => {
                          component={ProfileStack}
                          options={({ route }) => ({
                               tabBarIcon: ({ color, focused }) => <TabBarIcon name="person" color={color} focused={focused} />,
-                              tabBarStyle:
-                                   getFocusedRouteNameFromRoute(route) === 'EditProfileScreen' ||
-                                   getFocusedRouteNameFromRoute(route) === 'ChangePasswordScreen' ||
-                                   getFocusedRouteNameFromRoute(route) === 'SubscriptionManagment' ||
-                                   getFocusedRouteNameFromRoute(route) === 'PrivacyPolicyScreen'
-                                        ? { display: 'none' }
-                                        : {
-                                               position: 'absolute',
-                                               left: 20,
-                                               right: 20,
-                                               bottom: insets.bottom + 12,
-                                               height: 64,
-                                               marginInline: 10,
-                                               backgroundColor: '#FFFFFF',
-                                               borderRadius: 32,
-                                               borderTopWidth: 0,
-                                               paddingHorizontal: 8,
-                                               ...Platform.select({
-                                                    ios: {
-                                                         shadowColor: '#000',
-                                                         shadowOffset: { width: 0, height: 6 },
-                                                         shadowOpacity: 0.12,
-                                                         shadowRadius: 16,
-                                                    },
-                                                    android: {
-                                                         elevation: 10,
-                                                    },
-                                               }),
-                                          },
+                              tabBarStyle: shouldHideTabBar(route, ['EditProfileScreen', 'ChangePasswordScreen', 'SubscriptionManagment', 'PrivacyPolicyScreen']) ? { display: 'none' } : tabBarStyle,
                          })}
                     />
                </Tab.Navigator>
@@ -241,8 +182,8 @@ const styles = StyleSheet.create({
           alignItems: 'center',
           justifyContent: 'center',
           width: 44,
-          height: 36,
-          borderRadius: 18,
+          height: 32,
+          borderRadius: 16,
      },
      iconContainerActive: {
           backgroundColor: `${colors.PrimaryColor}15`,

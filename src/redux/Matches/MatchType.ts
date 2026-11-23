@@ -25,8 +25,8 @@ export interface GetSinglePropertyType {
           furnished: 'Furnished' | 'Semi-Furnished' | 'Unfurnished';
           amenities: string[];
           availability: 'Available' | 'Sold' | 'Rented';
-          image: string;
-          featuredImages: string[];
+          featuredImage: string;
+          galleryImages: string[];
           description: string;
           createdAt: string;
           updatedAt: string;
@@ -134,8 +134,8 @@ export interface Apartment {
      furnished: 'Furnished' | 'Semi-Furnished' | 'Unfurnished';
      amenities: string[];
      availability: 'Available' | 'Sold' | 'Rented';
-     image: string;
-     featuredImages: string[];
+     featuredImage: string;
+     galleryImages: string[];
      description: string;
      createdAt: string;
      updatedAt: string;

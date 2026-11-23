@@ -13,7 +13,7 @@ import Ismessage from '../../components/IsMessage/Ismessage';
 
 interface Apartment {
      id: string;
-     image: string;
+     featuredImage: string;
      title: string;
      location: string;
      price: number;
@@ -57,11 +57,12 @@ const ApartmentsScreen = ({ navigation }: { navigation: Navigation }) => {
 
      const renderItem = (item: any) => {
           const apartment = item?.item;
+          console.log(apartment, 'apartment');
           return (
                <View key={apartment.id} style={styles.card}>
                     {/* Image Container */}
                     <View style={styles.imageContainer}>
-                         <Image source={{ uri: apartment.image }} style={styles.apartmentImage} />
+                         <Image source={{ uri: apartment.featuredImage }} style={styles.apartmentImage} />
                          {/* Match Badge */}
                          <View style={styles.matchBadge}>
                               <Text style={styles.matchText}>{apartment.availability}</Text>
@@ -118,7 +119,7 @@ const ApartmentsScreen = ({ navigation }: { navigation: Navigation }) => {
 
           const MatchesList: Apartment[] = (GetApartmentData || []).map(item => ({
                id: item?._id,
-               image: item?.image,
+               featuredImage: item?.featuredImage,
                title: item?.title,
                location: item?.location,
                price: item?.price,

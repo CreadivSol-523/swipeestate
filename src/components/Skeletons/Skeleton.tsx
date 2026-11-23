@@ -1,34 +1,36 @@
-import React from 'react';
-import { StyleSheet, Animated } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, Animated, DimensionValue } from 'react-native';
 
-interface skeletonProps {
-     width: number;
+interface SkeletonProps {
+     width: DimensionValue;
      height: number;
-     borderRadius: number;
+     borderRadius?: number;
 }
 
-const Skeleton = ({ width, height, borderRadius = 0 }: skeletonProps) => {
-     const animatedValue = new Animated.Value(0);
+const Skeleton = ({ width, height, borderRadius = 0 }: SkeletonProps) => {
+     const opacity = useRef(new Animated.Value(0.5)).current;
 
-     Animated.loop(
-          Animated.sequence([
-               Animated.timing(animatedValue, {
-                    toValue: 1,
-                    duration: 1000,
-                    useNativeDriver: true,
-               }),
-               Animated.timing(animatedValue, {
-                    toValue: 0,
-                    duration: 1000,
-                    useNativeDriver: true,
-               }),
-          ]),
-     ).start();
+     useEffect(() => {
+          const loop = Animated.loop(
+               Animated.sequence([
+                    Animated.timing(opacity, {
+                         toValue: 1,
+                         duration: 800,
+                         useNativeDriver: true,
+                    }),
+                    Animated.timing(opacity, {
+                         toValue: 0.5,
+                         duration: 800,
+                         useNativeDriver: true,
+                    }),
+               ]),
+          );
 
-     const backgroundColor = animatedValue.interpolate({
-          inputRange: [0, 1],
-          outputRange: ['#E3E3E3', '#C6C6C6'], // Adjusted colors
-     });
+          loop.start();
+
+          return () => loop.stop();
+     }, [opacity]);
+
      return (
           <Animated.View
                style={[
@@ -37,7 +39,7 @@ const Skeleton = ({ width, height, borderRadius = 0 }: skeletonProps) => {
                          width,
                          height,
                          borderRadius,
-                         backgroundColor,
+                         opacity,
                     },
                ]}
           />
@@ -48,6 +50,6 @@ export default Skeleton;
 
 const styles = StyleSheet.create({
      skeleton: {
-          backgroundColor: '#E0E0E0',
+          backgroundColor: '#D9D9D9',
      },
 });

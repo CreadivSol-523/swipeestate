@@ -36,12 +36,14 @@ export const useCreateApartmentHandler = () => {
                     location,
                     price,
                     balcony,
-                    featuredImages,
+                    galleryImages,
                     floor,
-                    images,
+                    featuredImage,
                     parking,
+                    issue_note,
+                    video,
                } = data;
-
+               console.log(data);
                if (!title || !type || !area || !availability || !bathrooms || !bedrooms || !description || !furnished || !location || !price) {
                     return ResToast({ title: 'All Fields Required', type: 'warning' });
                }
@@ -49,10 +51,10 @@ export const useCreateApartmentHandler = () => {
                const formData = new FormData();
 
                // Append featured images (multiple)
-               images?.forEach((uri, index) => {
+               galleryImages?.forEach((uri, index) => {
                     if (!uri) return;
                     const imgType = uri.split('.').pop() || 'jpg';
-                    formData.append('featuredImages', {
+                    formData.append('galleryImages', {
                          uri,
                          type: `image/${imgType}`,
                          name: `featuredImages_${index}.${imgType}`,
@@ -65,12 +67,21 @@ export const useCreateApartmentHandler = () => {
                });
 
                // Append main featured image
-               if (featuredImages) {
-                    const imgType = featuredImages.split('.').pop() || 'jpg';
-                    formData.append('image', {
-                         uri: featuredImages,
+               if (featuredImage) {
+                    const imgType = featuredImage.split('.').pop() || 'jpg';
+                    formData.append('featuredImage', {
+                         uri: featuredImage,
                          type: `image/${imgType}`,
                          name: `image.${imgType}`,
+                    } as any);
+               }
+
+               if (video) {
+                    const imgType = video.split('.').pop() || 'mp4';
+                    formData.append('video', {
+                         uri: video,
+                         type: `video/${imgType}`,
+                         name: `video.${imgType}`,
                     } as any);
                }
 
@@ -99,7 +110,10 @@ export const useCreateApartmentHandler = () => {
                formData.append('availability', String(availability));
                formData.append('featured', String(featured));
                formData.append('description', String(description));
+               formData.append('issue_note', String(issue_note));
+
                const res = await CreateApartmentAPI({ userId, formData });
+               console.log({ res, formData });
 
                if (!res.error) {
                     setState({
@@ -121,6 +135,7 @@ export const useCreateApartmentHandler = () => {
                          proof_of_ownership: '',
                          featured: false,
                          description: '',
+                         issue_note: '',
                     });
                     navigation.goBack();
                     return ResToast({ title: 'Apartment Created', type: 'success' });

@@ -8,9 +8,37 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Navigation from '../../utils/NavigationProps/NavigationProps';
 import colors from '../../assests/color/color';
 import Font from '../../assests/fonts/Font';
+import useKeyboardStatus from '../../utils/IsKeyboardStatus/useKeyboardStatus';
+
+// Video ki max size — yahan se change kar sakte hain
+const MAX_VIDEO_SIZE_MB = 10;
+const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
+
+// ApartmentsType me `video` field nahi hai to local extension; type me add karna ho to
+// ApartmentType.ts me `video?: string` add kar dein, phir yeh extension hata sakte hain.
+type ListingFormData = ApartmentsType & { video?: string };
+
+type VideoMeta = {
+     name: string;
+     size: number;
+     duration?: number;
+};
+
+const formatSize = (bytes: number) => {
+     if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+     return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+};
+
+const formatDuration = (seconds?: number) => {
+     if (!seconds && seconds !== 0) return '';
+     const total = Math.round(seconds);
+     const m = Math.floor(total / 60);
+     const s = total % 60;
+     return `${m}:${s.toString().padStart(2, '0')}`;
+};
 
 const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
-     const [formData, setFormData] = useState<ApartmentsType>({
+     const [formData, setFormData] = useState<ListingFormData>({
           title: '',
           type: 'Rent',
           location: '',
@@ -24,20 +52,23 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
           parking: false,
           amenities: [],
           availability: 'Available',
-          images: [],
-          featuredImages: '',
+          galleryImages: [],
+          featuredImage: '',
           proof_of_ownership: '',
+          video: '',
           featured: false,
           description: '',
+          issue_note: '',
      });
      const [currentAmenity, setCurrentAmenity] = useState('');
+     const [videoMeta, setVideoMeta] = useState<VideoMeta | null>(null);
 
      const apartmentTypes: Array<'Rent' | 'Sale'> = ['Rent', 'Sale'];
      const furnishedOptions: Array<'Furnished' | 'Semi-Furnished' | 'Unfurnished'> = ['Furnished', 'Semi-Furnished', 'Unfurnished'];
      const commonAmenities = ['Gym', 'Pool', 'Elevator', 'Security', 'Playground', 'Garden', 'Backup Generator'];
      const availability: ('Available' | 'Sold' | 'Rented')[] = ['Available', 'Sold', 'Rented'];
 
-     const updateField = <K extends keyof ApartmentsType>(field: K, value: ApartmentsType[K]) => {
+     const updateField = <K extends keyof ListingFormData>(field: K, value: ListingFormData[K]) => {
           setFormData(prev => ({ ...prev, [field]: value }));
      };
 
@@ -88,20 +119,77 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
           if (!uri) return;
 
           if (type === 'featuredImages') {
-               updateField('featuredImages', uri);
+               updateField('featuredImage', uri);
           } else if (type === 'proof_of_ownership') {
                updateField('proof_of_ownership', uri);
           } else {
-               updateField('images', [...(formData.images || []), uri]);
+               updateField('galleryImages', [...(formData.galleryImages || []), uri]);
           }
      };
 
-     const removeFeaturedImage = () => updateField('featuredImages', '');
+     // ---- Video picker (max 10 MB) ----
+     const handleVideoPicker = async () => {
+          await requestCameraPermission();
+          Alert.alert(
+               'Add video',
+               `Choose an option (max ${MAX_VIDEO_SIZE_MB} MB)`,
+               [
+                    { text: 'Record video', onPress: openVideoCamera },
+                    { text: 'Choose from gallery', onPress: openVideoGallery },
+                    { text: 'Cancel', style: 'cancel' },
+               ],
+               { cancelable: true },
+          );
+     };
+
+     const openVideoCamera = () => {
+          launchCamera({ mediaType: 'video', cameraType: 'back', videoQuality: 'medium' }, response => handleVideoResponse(response));
+     };
+
+     const openVideoGallery = () => {
+          launchImageLibrary({ mediaType: 'video', videoQuality: 'medium', selectionLimit: 1 }, response => handleVideoResponse(response));
+     };
+
+     const handleVideoResponse = (response?: ImagePickerResponse) => {
+          if (response?.didCancel) return;
+          if (response?.errorCode) {
+               Alert.alert('Error', 'Failed to pick video');
+               return;
+          }
+
+          const asset = response?.assets?.[0];
+          if (!asset?.uri) return;
+
+          const size = asset.fileSize;
+          if (!size) {
+               Alert.alert('Error', 'Could not read the video size. Please try another video.');
+               return;
+          }
+
+          if (size > MAX_VIDEO_SIZE_BYTES) {
+               Alert.alert('Video too large', `Selected video is ${formatSize(size)}. Maximum allowed size is ${MAX_VIDEO_SIZE_MB} MB.`);
+               return;
+          }
+
+          updateField('video', asset.uri);
+          setVideoMeta({
+               name: asset.fileName || 'video',
+               size,
+               duration: asset.duration,
+          });
+     };
+
+     const removeVideo = () => {
+          updateField('video', '');
+          setVideoMeta(null);
+     };
+
+     const removeFeaturedImage = () => updateField('featuredImage', '');
      const removeProofOfimage = () => updateField('proof_of_ownership', '');
      const removeGalleryImage = (url: string) =>
           updateField(
-               'images',
-               formData.images?.filter(img => img !== url),
+               'galleryImages',
+               formData.galleryImages?.filter(img => img !== url),
           );
 
      const { handleBuyPlanAPI, isLoading } = useCreateApartmentHandler();
@@ -109,9 +197,9 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
      const handleSubmit = () => {
           handleBuyPlanAPI(formData, setFormData);
      };
-
+     const KeyboardStatus = useKeyboardStatus();
      return (
-          <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: KeyboardStatus ? 350 : 40 }} showsVerticalScrollIndicator={false}>
                <View style={styles.header}>
                     <View style={styles.headerTopRow}>
                          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -306,12 +394,12 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
 
                {/* Media — URL text inputs removed; "+" opens camera/gallery directly */}
                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Photos & documents</Text>
+                    <Text style={styles.cardTitle}>Photos, video & documents</Text>
 
                     <Text style={styles.label}>Featured image</Text>
-                    {formData.featuredImages ? (
+                    {formData.featuredImage ? (
                          <View style={styles.featuredImageContainer}>
-                              <Image source={{ uri: formData.featuredImages }} style={styles.featuredImagePreview} />
+                              <Image source={{ uri: formData.featuredImage }} style={styles.featuredImagePreview} />
                               <TouchableOpacity style={styles.removeImageButton} onPress={removeFeaturedImage}>
                                    <Ionicons name="close" size={14} color="#fff" />
                               </TouchableOpacity>
@@ -327,7 +415,7 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
 
                     <Text style={[styles.label, styles.galleryLabel]}>Gallery images</Text>
                     <View style={styles.imageGrid}>
-                         {formData.images?.map((url, idx) => (
+                         {formData.galleryImages?.map((url, idx) => (
                               <View key={idx} style={styles.imageContainer}>
                                    <Image source={{ uri: url }} style={styles.imagePreview} />
                                    <TouchableOpacity style={styles.removeImageButton} onPress={() => removeGalleryImage(url)}>
@@ -341,6 +429,36 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
                               </View>
                          </TouchableOpacity>
                     </View>
+
+                    {/* Property video */}
+                    <Text style={[styles.label, styles.galleryLabel]}>Property video</Text>
+                    {formData.video ? (
+                         <View style={styles.videoCard}>
+                              <View style={styles.videoThumb}>
+                                   <Ionicons name="play" size={22} color="#fff" />
+                              </View>
+                              <View style={styles.videoInfo}>
+                                   <Text style={styles.videoName} numberOfLines={1}>
+                                        {videoMeta?.name || 'Selected video'}
+                                   </Text>
+                                   <Text style={styles.videoMetaText}>
+                                        {videoMeta ? formatSize(videoMeta.size) : ''}
+                                        {videoMeta?.duration ? `  •  ${formatDuration(videoMeta.duration)}` : ''}
+                                   </Text>
+                              </View>
+                              <TouchableOpacity style={styles.videoRemoveButton} onPress={removeVideo} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                                   <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                              </TouchableOpacity>
+                         </View>
+                    ) : (
+                         <TouchableOpacity style={styles.uploadBoxWide} onPress={handleVideoPicker}>
+                              <View style={styles.uploadIconCircle}>
+                                   <Ionicons name="videocam-outline" size={20} color={colors.PrimaryColor} />
+                              </View>
+                              <Text style={styles.uploadBoxText}>Add video</Text>
+                              <Text style={styles.uploadHintText}>Max size {MAX_VIDEO_SIZE_MB} MB</Text>
+                         </TouchableOpacity>
+                    )}
 
                     <Text style={[styles.label, styles.galleryLabel]}>Proof of ownership</Text>
                     {formData.proof_of_ownership ? (
@@ -371,6 +489,20 @@ const ListingScreen = ({ navigation }: { navigation: Navigation }) => {
                          numberOfLines={4}
                          value={formData.description}
                          onChangeText={text => updateField('description', text)}
+                    />
+               </View>
+
+               {/* Issue Note */}
+               <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Issue Note (Optional)</Text>
+                    <TextInput
+                         style={[styles.input, styles.textArea]}
+                         placeholder="Issues of property "
+                         placeholderTextColor="#9CA3AF"
+                         multiline
+                         numberOfLines={4}
+                         value={formData.issue_note}
+                         onChangeText={text => updateField('issue_note', text)}
                     />
                </View>
 
@@ -424,7 +556,7 @@ const styles = StyleSheet.create({
           padding: 16,
           marginBottom: 16,
           borderWidth: 1,
-          borderColor: '#F0F0F0,',
+          borderColor: '#F0F0F0',
      },
      cardTitle: {
           fontSize: 15,
@@ -534,7 +666,7 @@ const styles = StyleSheet.create({
      galleryLabel: {
           marginTop: 18,
      },
-     // Single-image upload slot (Featured image / Proof of ownership)
+     // Single-image upload slot (Featured image / Proof of ownership / Video)
      uploadBoxWide: {
           height: 110,
           borderRadius: 12,
@@ -571,6 +703,12 @@ const styles = StyleSheet.create({
           fontFamily: Font.font500,
           color: '#6B7280',
      },
+     uploadHintText: {
+          fontSize: 11,
+          fontFamily: Font.font400,
+          color: '#9CA3AF',
+          marginTop: -4,
+     },
      featuredImageContainer: {
           position: 'relative',
           alignSelf: 'flex-start',
@@ -604,6 +742,49 @@ const styles = StyleSheet.create({
           justifyContent: 'center',
           alignItems: 'center',
      },
+
+     // ---- Video card ----
+     videoCard: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#F9FAFB',
+          borderWidth: 1,
+          borderColor: '#E5E7EB',
+          borderRadius: 14,
+          padding: 12,
+          gap: 12,
+     },
+     videoThumb: {
+          width: 56,
+          height: 56,
+          borderRadius: 12,
+          backgroundColor: '#1F2937',
+          alignItems: 'center',
+          justifyContent: 'center',
+     },
+     videoInfo: {
+          flex: 1,
+     },
+     videoName: {
+          fontSize: 14,
+          fontFamily: Font.font500,
+          color: '#1F2937',
+          marginBottom: 3,
+     },
+     videoMetaText: {
+          fontSize: 12,
+          fontFamily: Font.font400,
+          color: '#6B7280',
+     },
+     videoRemoveButton: {
+          width: 34,
+          height: 34,
+          borderRadius: 17,
+          backgroundColor: '#FEF2F2',
+          alignItems: 'center',
+          justifyContent: 'center',
+     },
+
      textArea: {
           height: 100,
           textAlignVertical: 'top',

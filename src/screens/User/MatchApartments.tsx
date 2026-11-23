@@ -12,7 +12,7 @@ import MatchApartmentCardSkeleton from '../../components/Skeletons/MatchApartmen
 
 interface Apartment {
      id: string;
-     image: string;
+     featuredImage: string;
      title: string;
      location: string;
      price: string;
@@ -59,8 +59,7 @@ const MatchApartments = ({ navigation }: { navigation: Navigation }) => {
      const [filterOpen, setFilterOpen] = useState(false);
 
      const { GetMatches, GetMatchesData, GetMatchesLoading, refetch, isFetching, isError } = useGetMatchesHandler({ page, search: filter, limit: 4 });
-     console.log('API matches:', GetMatchesData?.matches);
-     console.log('UI matches:', matches);
+
      const handleIncreasePage = () => {
           if (GetMatchesData?.meta?.totalPages === page) return;
           if (GetMatches?.data?.matches?.length == 0 || GetMatchesLoading) return;
@@ -72,7 +71,7 @@ const MatchApartments = ({ navigation }: { navigation: Navigation }) => {
 
           const MatchesList: Apartment[] = (GetMatches.data.matches || []).map(item => ({
                id: item?._id ?? '',
-               image: item?.property?.image ? item.property.image : '',
+               featuredImage: item?.property?.featuredImage ? item.property.featuredImage : '',
                title: item?.property?.title ?? '',
                location: item?.property?.location ?? '',
                price: item?.property?.price?.toString() ?? '',
@@ -86,22 +85,21 @@ const MatchApartments = ({ navigation }: { navigation: Navigation }) => {
      };
 
      useEffect(() => {
-          // Important: filter changes can keep old cached data while a new request is in-flight.
-          // To avoid stale items showing together (e.g., rejected showing while API returns requested only),
-          // we only update the UI once fetching is complete.
+          // Filter change par purana cached data in-flight request ke dauran reh sakta hy,
+          // isliye UI sirf tab update karo jab fetching complete ho.
           if (isFetching) return;
 
           const newMatches = structuredMatches() ?? [];
           const newMatchesDetails = GetMatchesData?.matches ?? [];
 
-          // On first page (initial load / filter change), replace entirely so old status can't linger.
+          // Page 1 (initial load / filter change / refresh): poori list replace karo.
           if (page === 1) {
                setMatches(newMatches);
                setMatchesDetail(newMatchesDetails);
                return;
           }
 
-          // For pagination (page > 1), append/merge only when we actually received new items.
+          // Pagination (page > 1): sirf tab merge karo jab naye items aaye hon.
           if (!newMatches.length) return;
 
           setMatches((prev: any) => {
@@ -148,11 +146,15 @@ const MatchApartments = ({ navigation }: { navigation: Navigation }) => {
           setLoader(true);
           setPage(1);
           setMatches([]);
+          setMatchesDetail([]);
           setFilter('');
           refetch().finally(() => setLoader(false));
      };
 
      const activeFilterLabel = FILTER_OPTIONS.find(opt => opt.value === filter)?.label ?? 'All';
+
+     const isLoadingData = !isError && (isFetching || GetMatchesLoading);
+     const isEmpty = (matches?.length ?? 0) === 0;
 
      const renderItem = ({ item: apartment }: { item: Apartment }) => {
           const statusStyle = getStatusStyle(apartment.matchPercentage);
@@ -161,7 +163,7 @@ const MatchApartments = ({ navigation }: { navigation: Navigation }) => {
           return (
                <Pressable style={styles.card} onPress={() => handleNavigate(apartment.id)}>
                     <View style={styles.imageContainer}>
-                         <Image source={{ uri: apartment.image }} style={styles.apartmentImage} resizeMode="cover" />
+                         <Image source={{ uri: apartment.featuredImage }} style={styles.apartmentImage} resizeMode="cover" />
 
                          <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
                               <View style={[styles.statusDot, { backgroundColor: statusStyle.dot }]} />
@@ -212,6 +214,16 @@ const MatchApartments = ({ navigation }: { navigation: Navigation }) => {
           );
      };
 
+     const renderEmpty = () => {
+          // Pehli loading / filter change ke waqt skeleton dikhao
+          if (isLoadingData) return <MatchApartmentCardSkeleton count={3} />;
+          return (
+               <View style={styles.emptyContainer}>
+                    <Ismessage text="No matches available" />
+               </View>
+          );
+     };
+
      return (
           <View style={styles.container}>
                {/* Header */}
@@ -249,31 +261,26 @@ const MatchApartments = ({ navigation }: { navigation: Navigation }) => {
 
                {/* Apartment Cards */}
                <View style={styles.cardsContainer}>
-                    {matches?.length === 0 && !isFetching && !GetMatchesLoading ? (
-                         <Ismessage text="No matches available" />
-                    ) : !isError && (isFetching || GetMatchesLoading) ? (
-                         <MatchApartmentCardSkeleton count={3} />
-                    ) : (
-                         <FlatList
-                              data={matches}
-                              renderItem={renderItem}
-                              keyExtractor={item => item.id}
-                              contentContainerStyle={styles.listContent}
-                              showsVerticalScrollIndicator={false}
-                              onEndReached={handleIncreasePage}
-                              onEndReachedThreshold={0.5}
-                              refreshControl={<RefreshControl onRefresh={onRefresh} colors={[colors.PrimaryColor]} tintColor={colors.PrimaryColor} refreshing={loader} />}
-                              ListFooterComponent={
-                                   !isError && (isFetching || GetMatchesLoading) ? (
-                                        <>
-                                             {Array.from({ length: 3 }).map((_, i) => (
-                                                  <PropertyCardSkeleton key={i + 1} />
-                                             ))}
-                                        </>
-                                   ) : null
-                              }
-                         />
-                    )}
+                    <FlatList
+                         data={matches}
+                         renderItem={renderItem}
+                         keyExtractor={item => item.id}
+                         contentContainerStyle={[styles.listContent, isEmpty && styles.listContentEmpty]}
+                         showsVerticalScrollIndicator={false}
+                         onEndReached={handleIncreasePage}
+                         onEndReachedThreshold={0.5}
+                         ListEmptyComponent={renderEmpty}
+                         refreshControl={<RefreshControl onRefresh={onRefresh} colors={[colors.PrimaryColor]} tintColor={colors.PrimaryColor} refreshing={loader} />}
+                         ListFooterComponent={
+                              !isEmpty && isLoadingData ? (
+                                   <>
+                                        {Array.from({ length: 3 }).map((_, i) => (
+                                             <PropertyCardSkeleton key={i + 1} />
+                                        ))}
+                                   </>
+                              ) : null
+                         }
+                    />
                </View>
           </View>
      );
@@ -373,6 +380,15 @@ const styles = StyleSheet.create({
      listContent: {
           paddingBottom: 120,
           gap: 16,
+     },
+     // Empty state me content ko poori height do taake pull-to-refresh hamesha kaam kare
+     listContentEmpty: {
+          flexGrow: 1,
+     },
+     emptyContainer: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
      },
      card: {
           backgroundColor: '#fff',

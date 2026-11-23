@@ -172,6 +172,10 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
 
      const renderCard = useCallback((property: any) => {
           if (!property) return null;
+          console.log(property);
+
+          const hasIssue = !!property.issue_note && String(property.issue_note).trim().length > 0;
+
           return (
                <View style={styles.card}>
                     {/* Image Section */}
@@ -243,6 +247,28 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
                                    <Icon name="resize-outline" size={20} color={colors.PrimaryColor} />
                                    <Text style={styles.detailValue}>{property.area}</Text>
                                    <Text style={styles.detailLabel}>sq ft</Text>
+                              </View>
+                         </View>
+
+                         {/* Issue Info */}
+                         <View style={styles.issueSection}>
+                              <View style={styles.issueHeader}>
+                                   <View style={[styles.issueHeaderIcon, hasIssue ? styles.issueHeaderIconWarn : styles.issueHeaderIconClear]}>
+                                        <Icon name={hasIssue ? 'alert-circle' : 'checkmark-circle'} size={14} color={hasIssue ? '#F59E0B' : '#16A34A'} />
+                                   </View>
+                                   <Text style={styles.issueTitle}>Issue Info</Text>
+                                   {hasIssue && (
+                                        <View style={styles.issueBadge}>
+                                             <Text style={styles.issueBadgeText}>Reported</Text>
+                                        </View>
+                                   )}
+                              </View>
+
+                              <View style={[styles.issueCard, hasIssue ? styles.issueCardWarn : styles.issueCardClear]}>
+                                   <View style={[styles.issueAccent, { backgroundColor: hasIssue ? '#F59E0B' : '#22C55E' }]} />
+                                   <Text style={[styles.issueText, !hasIssue && styles.issueTextClear]} numberOfLines={3}>
+                                        {hasIssue ? property.issue_note : 'No issues reported for this property.'}
+                                   </Text>
                               </View>
                          </View>
                     </View>
@@ -346,9 +372,10 @@ const HomeScreen = ({ navigation }: { navigation: Navigation }) => {
                bathrooms: item?.bathrooms,
                area: item?.area,
                type: item?.type,
+               issue_note: item?.issue_note,
                rating: 4.5,
                featured: item?.featured,
-               featuredImage: item?.image,
+               featuredImage: item?.featuredImage,
           }));
      };
 
@@ -878,6 +905,79 @@ const styles = StyleSheet.create({
           fontFamily: Font.font400,
           color: '#999',
      },
+
+     // ---- Issue Info ----
+     issueSection: {
+          marginTop: 14,
+     },
+     issueHeader: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: 8,
+          marginLeft: 2,
+     },
+     issueHeaderIcon: {
+          width: 24,
+          height: 24,
+          borderRadius: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 8,
+     },
+     issueHeaderIconWarn: {
+          backgroundColor: '#FEF3C7',
+     },
+     issueHeaderIconClear: {
+          backgroundColor: '#DCFCE7',
+     },
+     issueTitle: {
+          fontSize: 15,
+          fontFamily: Font.font500,
+          color: '#1F2937',
+          flex: 1,
+     },
+     issueBadge: {
+          backgroundColor: '#FEF3C7',
+          paddingHorizontal: 10,
+          paddingVertical: 3,
+          borderRadius: 20,
+     },
+     issueBadgeText: {
+          fontSize: 11,
+          fontFamily: Font.font500,
+          color: '#B45309',
+     },
+     issueCard: {
+          flexDirection: 'row',
+          alignItems: 'stretch',
+          borderRadius: 14,
+          borderWidth: 1,
+          overflow: 'hidden',
+     },
+     issueCardWarn: {
+          backgroundColor: '#FFFBEB',
+          borderColor: '#FDE68A',
+     },
+     issueCardClear: {
+          backgroundColor: '#F0FDF4',
+          borderColor: '#BBF7D0',
+     },
+     issueAccent: {
+          width: 4,
+     },
+     issueText: {
+          flex: 1,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          fontSize: 14,
+          lineHeight: 20,
+          fontFamily: Font.font400,
+          color: '#374151',
+     },
+     issueTextClear: {
+          color: '#166534',
+     },
+
      actionsContainer: {
           flexDirection: 'row',
           justifyContent: 'center',

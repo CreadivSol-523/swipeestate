@@ -26,8 +26,8 @@ export interface GetApartmentType {
      parking: boolean;
      amenities: string[];
      availability: 'Available' | 'Sold' | 'Rented';
-     image: string;
-     featuredImages: string[];
+     featuredImage: string;
+     galleryImages: string[];
      featured: boolean;
      description: string;
      createdAt: string;
@@ -52,9 +52,11 @@ export interface ApartmentsType {
      parking?: boolean;
      amenities: string[];
      availability: 'Available' | 'Sold' | 'Rented';
-     images?: string[];
-     featuredImages?: string;
+     galleryImages?: string[];
+     featuredImage?: string;
      proof_of_ownership: string;
      featured: boolean;
      description: string;
+     issue_note?: string;
+     video?: string
 }

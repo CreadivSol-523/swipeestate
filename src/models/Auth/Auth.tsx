@@ -20,7 +20,7 @@ export const useRegisterHandler = () => {
      const [register, { isLoading, isSuccess, isError }] = useCreateAccountMutation();
 
      type RootStackParamList = {
-          SelectPlanScreen: { user: any };
+          SelectIAPPlanScreen: { user: any };
      };
 
      const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -74,7 +74,7 @@ export const useRegisterHandler = () => {
                          title: 'Pick a subscription plan to unlock all features.',
                          type: 'success',
                     });
-                    return navigation.navigate('SelectPlanScreen', { user: res?.data });
+                    return navigation.navigate('SelectIAPPlanScreen', { user: res?.data });
                } else {
                     ResToast({
                          res: res,
@@ -95,7 +95,7 @@ export const useSellerRegisterHandler = () => {
      const [sellerRegister, { isLoading, isSuccess, isError }] = useCreateSellerAccountMutation();
 
      type RootStackParamList = {
-          SelectPlanScreen: { user: any };
+          SelectIAPPlanScreen: { user: any };
      };
 
      const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -147,7 +147,7 @@ export const useSellerRegisterHandler = () => {
                          title: 'Pick a subscription plan to unlock all features.',
                          type: 'success',
                     });
-                    return navigation.navigate('SelectPlanScreen', { user: res?.data });
+                    return navigation.navigate('SelectIAPPlanScreen', { user: res?.data });
                } else {
                     ResToast({
                          res: res,
@@ -204,7 +204,7 @@ export const useLoginAccountHandler = () => {
 
                          // iOS normal users use Apple In-App Purchases.
                          // Android users and agents keep the existing screen.
-                         const planScreen = Platform.OS === 'ios' && user?.role !== 'Buyer' ? 'SelectIAPPlanScreen' : 'SelectPlanScreen';
+                         const planScreen = Platform.OS === 'ios' && user?.role !== 'Buyer' ? 'SelectIAPPlanScreen' : 'SelectIAPPlanScreen';
                          // const planScreen = user?.role !== 'Seller' ? 'SelectIAPPlanScreen' : 'SelectPlanScreen';
 
                          // const planScreen = 'SelectIAPPlanScreen';
